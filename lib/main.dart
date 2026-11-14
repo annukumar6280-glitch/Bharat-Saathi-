@@ -157,7 +157,7 @@ class _RetailerHomeState extends State<RetailerHome>{
   ExpenseOnlyPage(items:expensesList,onAdd:expense),
   ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,onLanguage:(v){setState(()=>english=v);_persist();},sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products,purchases:purchases,supplierLedger:supplierLedger,salesReturns:salesReturns,stockAdjustments:stockAdjustments)
  ];
- return Scaffold(appBar:AppBar(titleSpacing:17,backgroundColor:tab==0?const Color(0xFFF3F5F8):bg,foregroundColor:navy,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:tab==0?const Color(0xFFE8EEF6):navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:gold)),const SizedBox(width:10),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Bharat Saathi':'भारत साथी',style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(english?'Smart Khata & Expenses':'स्मार्ट खाता और खर्च',style:TextStyle(fontSize:10,color:tab==0?Colors.white70:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=3),icon:const Icon(Icons.person_outline))]),body:SafeArea(child:loaded?IndexedStack(index:tab,children:pages):const Center(child:CircularProgressIndicator())),bottomNavigationBar:NavigationBar(height:68,backgroundColor:Colors.white,indicatorColor:const Color(0xFFE8EEF6),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:const Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:const Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:const Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:const Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]));
+ return Scaffold(appBar:AppBar(titleSpacing:17,backgroundColor:const Color(0xFFF4F6FB),foregroundColor:navy,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:gold)),const SizedBox(width:10),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Bharat Saathi':'भारत साथी',style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(english?'Smart Khata & Expenses':'स्मार्ट खाता और खर्च',style:const TextStyle(fontSize:10,color:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=3),icon:const Icon(Icons.person_outline))]),body:SafeArea(child:loaded?IndexedStack(index:tab,children:pages):const Center(child:CircularProgressIndicator())),bottomNavigationBar:NavigationBar(height:68,backgroundColor:Colors.white,indicatorColor:const Color(0xFFE8EEF6),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:const Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:const Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:const Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:const Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]));
  }
  Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:const Icon(Icons.add),label:Text(s));
 }
@@ -584,14 +584,13 @@ class _CommissionListPageState extends State<CommissionListPage>{
     const SizedBox(height:9),
     _commissionLine('Self Commission',pct(r['self_commission_pct'])),
     _commissionLine('Direct Referral Service Commission',pct(r['referral_commission_pct'])),
-    Text('कुल उपलब्ध प्रदाता कमीशन: ${pct(r['total_provider_commission_pct'])}',style:const TextStyle(color:muted,fontSize:10))
    ])))),
    if(signed)const Card(color:Colors.white,child:Padding(padding:EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Text('पहला सफल Referral Reward',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
     SizedBox(height:5),Text('आपके Referral से जुड़ा यूज़र पहली सफल Recharge या Bill Payment पूरी करेगा, तो आपको एक बार ₹10 मिलेंगे।')
    ]))),
    const SizedBox(height:12),
-   const Text('कमीशन केवल सफल और सत्यापित सर्विस ट्रांजैक्शन पर मिलेगा। कमीशन बैलेंस अभी कमाई का रिकॉर्ड है; बैंक/UPI निकासी या सर्विस भुगतान में उपयोग सक्रिय नहीं है।',style:TextStyle(color:muted,fontSize:11))
+   const Text('कमीशन की दरें एडमिन तय करता है। कमीशन केवल सफल और सत्यापित सर्विस ट्रांजैक्शन पर मिलेगा। सर्विस पर कमीशन डिस्काउंट का विकल्प Gateway और सर्विस पार्टनर जुड़ने के बाद सक्रिय होगा। बैंक / UPI निकासी उपलब्ध नहीं है।',style:TextStyle(color:muted,fontSize:11))
   ]));
  }
  Widget _commissionLine(String label,String value)=>Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Row(children:[Expanded(child:Text(label,style:const TextStyle(color:muted,fontSize:12))),Text(value,style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13))]));
@@ -651,7 +650,7 @@ class _ReferralPageState extends State<ReferralPage>{
   const Card(color:Colors.white,child:Padding(padding:EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
    Text('₹10 First Successful Referral Reward',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
    SizedBox(height:5),Text('आपके Referral से जुड़ा यूज़र पहली सफल Recharge या Bill Payment पूरी करेगा, तो आपको ₹10 एक बार मिलेंगे।'),
-   SizedBox(height:8),Text('इसके बाद उस यूज़र की योग्य सर्विस ट्रांजैक्शन पर आपको केवल Direct Referral Service Commission मिलेगा। Level 2 और Level 3 कमीशन नहीं हैं।')
+   SizedBox(height:8),Text('इसके बाद उस यूज़र की योग्य सर्विस ट्रांजैक्शन पर आपको केवल Direct Referral Service Commission मिलेगा।')
   ])))
  ]));
 }
