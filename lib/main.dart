@@ -299,6 +299,47 @@ class _AuthPageState extends State<AuthPage>{
  ]));
  }
 }
+class CloudBackupPage extends StatefulWidget{final bool supabaseAvailable;final Future<void> Function() onRestore;const CloudBackupPage({super.key,required this.supabaseAvailable,required this.onRestore});@override State<CloudBackupPage> createState()=>_CloudBackupPageState();}
+class _CloudBackupPageState extends State<CloudBackupPage>{
+ bool busy=false;String? notice;bool noticeError=false;final prefs=SharedPreferencesAsync();SupabaseClient get client=>Supabase.instance.client;
+ void showMessage(String text,{bool error=false}){if(mounted)setState((){notice=text;noticeError=error;});}
+ Future<void> _login()async{await Navigator.push<void>(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:widget.supabaseAvailable)));if(mounted)setState(()=>notice=null);}
+ Future<void> backup()async{
+ if(!widget.supabaseAvailable){showMessage('Supabase कनेक्शन उपलब्ध नहीं है।',error:true);return;}
+ final user=client.auth.currentUser;if(user==null){showMessage('पहले लॉगिन करें।',error:true);return;}
+ setState(()=>busy=true);
+ try{final raw=await prefs.getString('bharat_saathi_store_v1');if(raw==null){showMessage('अभी इस डिवाइस पर बैकअप करने के लिए कोई रिकॉर्ड नहीं है।');}else{final payload=jsonDecode(raw);if(payload is! Map<String,dynamic>){showMessage('स्थानीय डेटा का प्रारूप सही नहीं है।',error:true);}else{await client.from('user_backups').upsert({'user_id':user.id,'payload':payload,'schema_version':1,'updated_at':DateTime.now().toUtc().toIso8601String()});showMessage('क्लाउड बैकअप सफलतापूर्वक सेव हुआ।');}}}
+ on PostgrestException catch(e){showMessage('क्लाउड बैकअप त्रुटि: ${e.message}',error:true);}catch(_){showMessage('बैकअप पूरा नहीं हुआ। इंटरनेट और लॉगिन जाँचें।',error:true);}
+ if(mounted)setState(()=>busy=false);
+ }
+ Future<void> restore()async{
+ if(!widget.supabaseAvailable){showMessage('Supabase कनेक्शन उपलब्ध नहीं है।',error:true);return;}
+ final user=client.auth.currentUser;if(user==null){showMessage('पहले लॉगिन करें।',error:true);return;}
+ setState(()=>busy=true);
+ try{
+ final row=await client.from('user_backups').select('payload,schema_version,updated_at').eq('user_id',user.id).maybeSingle();
+ if(row==null){showMessage('इस अकाउंट का कोई क्लाउड बैकअप नहीं मिला।');}
+ else if((row['schema_version'] as num?)?.toInt()!=1){showMessage('यह बैकअप इस ऐप संस्करण के अनुकूल नहीं है।',error:true);}
+ else{
+ final confirmed=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(title:const Text('क्लाउड बैकअप रीस्टोर करें?'),content:const Text('यह इस फोन के मौजूदा स्थानीय रिकॉर्ड को क्लाउड बैकअप से बदल देगा। पहले स्थानीय बैकअप कर लें।'),actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('रीस्टोर करें'))]));
+ if(confirmed==true){await prefs.setString('bharat_saathi_store_v1',jsonEncode(row['payload']));await widget.onRestore();showMessage('क्लाउड बैकअप इस डिवाइस पर रीस्टोर हो गया।');}
+ }
+ }on PostgrestException catch(e){showMessage('रीस्टोर त्रुटि: ${e.message}',error:true);}catch(_){showMessage('रीस्टोर पूरा नहीं हुआ। इंटरनेट और लॉगिन जाँचें।',error:true);}
+ if(mounted)setState(()=>busy=false);
+ }
+ @override Widget build(BuildContext context){
+ final user=widget.supabaseAvailable?client.auth.currentUser:null;
+ return Scaffold(appBar:AppBar(title:const Text('डेटा बैकअप')),body:ListView(padding:const EdgeInsets.all(20),children:[
+ Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपके रिकॉर्ड का सुरक्षित बैकअप',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:7),Text('यह मैनुअल स्नैपशॉट है। अपने अकाउंट से किसी दूसरे डिवाइस पर रिकॉर्ड वापस ला सकते हैं। यह लाइव सिंक नहीं है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
+ const SizedBox(height:18),
+ if(!widget.supabaseAvailable)const Text('Supabase कनेक्शन उपलब्ध नहीं है।',style:TextStyle(color:red))
+ else if(user==null)...[const Text('क्लाउड बैकअप के लिए पहले लॉगिन करें।',style:TextStyle(color:navy,fontWeight:FontWeight.w700)),const SizedBox(height:10),FilledButton(onPressed:busy?null:_login,child:const Text('लॉगिन करें'))]
+ else ...[Text('लॉगिन अकाउंट: ${user.email??'ईमेल उपलब्ध नहीं'}',style:const TextStyle(color:navy,fontWeight:FontWeight.w700)),const SizedBox(height:14),FilledButton.icon(onPressed:busy?null:backup,icon:const Icon(Icons.cloud_upload_outlined),label:const Text('अभी बैकअप सेव करें')),const SizedBox(height:10),OutlinedButton.icon(onPressed:busy?null:restore,icon:const Icon(Icons.cloud_download_outlined),label:const Text('क्लाउड बैकअप रीस्टोर करें'))],
+ if(busy)const Padding(padding:EdgeInsets.all(18),child:Center(child:CircularProgressIndicator())),
+ if(notice!=null)Padding(padding:const EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:noticeError?red:green,fontSize:12,fontWeight:FontWeight.w700)))
+ ]));
+ }
+}
 class ProfilePage extends StatelessWidget{final bool supabaseAvailable;final Future<void> Function() onRestore;const ProfilePage({super.key,required this.supabaseAvailable,required this.onRestore});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('प्रोफाइल और सेटिंग','अपने अकाउंट को मैनेज करें'),const SizedBox(height:18),Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18)),child:Column(children:[const CircleAvatar(radius:34,backgroundColor:navy,child:Icon(Icons.storefront,color:gold,size:31)),const SizedBox(height:10),const Text('मेरा रिटेल स्टोर',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),Text(supabaseAvailable?'स्थानीय मोड • Supabase लॉगिन उपलब्ध':'ऑफ़लाइन प्रोफ़ाइल • क्लाउड लॉगिन अगला चरण',style:const TextStyle(color:muted,fontSize:10))])),setting(Icons.lock_outline,'अकाउंट और सुरक्षा',supabaseAvailable?'ईमेल और पासवर्ड से लॉगिन / रजिस्ट्रेशन':'Coming Soon • Supabase कनेक्शन उपलब्ध नहीं',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),setting(Icons.cloud_upload_outlined,'डेटा बैकअप',supabaseAvailable?'मैनुअल क्लाउड बैकअप और रीस्टोर':'Coming Soon • Supabase कनेक्शन उपलब्ध नहीं',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),setting(Icons.language,'भाषा','हिन्दी'),setting(Icons.help_outline,'सहायता केंद्र','सपोर्ट और संपर्क'),setting(Icons.sms_outlined,'मोबाइल OTP / SMS अलर्ट','Coming Soon • SMS प्रदाता API आवश्यक',()=>openComingSoon(context,'मोबाइल OTP और SMS अलर्ट')),setting(Icons.phone_android,'मोबाइल / DTH / FASTag रिचार्ज','Coming Soon • स्वीकृत प्रदाता API आवश्यक',()=>openComingSoon(context,'रिचार्ज सेवाएँ')),setting(Icons.receipt_long,'BBPS बिल भुगतान','Coming Soon • BBPS पार्टनर आवश्यक',()=>openComingSoon(context,'BBPS बिल भुगतान')),setting(Icons.local_police_outlined,'ट्रैफिक चालान भुगतान','Coming Soon • सरकारी / अधिकृत API आवश्यक',()=>openComingSoon(context,'चालान भुगतान')),setting(Icons.account_balance,'UPI / मनी ट्रांसफर','Coming Soon • बैंकिंग पार्टनर और अनुपालन आवश्यक',()=>openComingSoon(context,'UPI और मनी ट्रांसफर'))]);}
 Widget heading(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),Text(b,style:const TextStyle(color:muted,fontSize:11))]);
 Widget setting(IconData i,String a,String b,[VoidCallback? onTap])=>InkWell(onTap:onTap,borderRadius:BorderRadius.circular(14),child:Container(margin:const EdgeInsets.only(top:9),padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[Icon(i,color:blue),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(b,style:const TextStyle(color:muted,fontSize:10))])),const Icon(Icons.chevron_right,color:muted)])));
