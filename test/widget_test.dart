@@ -35,6 +35,7 @@ void main() {
   setUp(() async {
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     await LocalStore.clear();
+    appDarkMode.value = false;
   });
   tearDown(() { SharedPreferencesAsyncPlatform.instance = null; });
 
@@ -126,6 +127,24 @@ void main() {
     expect(find.text('सर्विस वॉलेट और कमाई'), findsNothing);
   });
 
+
+  testWidgets('Transaction History is available in the bottom navigation', (tester) async {
+    await pumpDashboardPhone(tester);
+    await tester.tap(find.text('इतिहास'));
+    await tester.pumpAndSettle();
+    expect(find.text('ट्रांजैक्शन हिस्ट्री'), findsOneWidget);
+    expect(find.text('अभी कोई ट्रांजैक्शन नहीं है'), findsOneWidget);
+  });
+
+  testWidgets('Dark theme switch changes the app theme', (tester) async {
+    await pumpDashboardPhone(tester);
+    await tester.tap(find.text('प्रोफाइल'));
+    await tester.pumpAndSettle();
+    expect(find.text('डार्क थीम'), findsOneWidget);
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+    expect(Theme.of(tester.element(find.byType(NavigationBar))).brightness, Brightness.dark);
+  });
 
   testWidgets('Account and Security is first in profile and exposes login and register', (tester) async {
     await pumpApp(tester);
