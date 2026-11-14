@@ -162,29 +162,15 @@ class _RetailerHomeState extends State<RetailerHome>{
  Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:const Icon(Icons.add),label:Text(s));
 }
 
-class HomeServiceWalletCard extends StatefulWidget{
+class HomeServiceWalletCard extends StatelessWidget{
  final bool supabaseAvailable,english;final VoidCallback onTap;
  const HomeServiceWalletCard({super.key,required this.supabaseAvailable,required this.onTap,required this.english});
- @override State<HomeServiceWalletCard> createState()=>_HomeServiceWalletCardState();
-}
-class _HomeServiceWalletCardState extends State<HomeServiceWalletCard>{
- double service=0,commission=0;bool loading=true;
- @override void initState(){super.initState();_load();}
- Future<void> _load()async{
-  final user=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
-  if(user==null){if(mounted)setState(()=>loading=false);return;}
-  try{final row=await Supabase.instance.client.from('commerce_wallets').select('service_balance,commission_balance').eq('user_id',user.id).maybeSingle();if(mounted)setState((){service=(row?['service_balance'] as num?)?.toDouble()??0;commission=(row?['commission_balance'] as num?)?.toDouble()??0;loading=false;});}
-  catch(_){if(mounted)setState(()=>loading=false);}
- }
- @override Widget build(BuildContext context)=>Material(color:Colors.transparent,child:InkWell(onTap:widget.onTap,borderRadius:BorderRadius.circular(19),child:Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF176B72),Color(0xFF203F69)]),borderRadius:BorderRadius.circular(19),boxShadow:[BoxShadow(color:const Color(0xFF173B5B).withValues(alpha:.13),blurRadius:16,offset:const Offset(0,7))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-  Row(children:[const Icon(Icons.account_balance_wallet_rounded,color:Color(0xFFFFD58A),size:23),const SizedBox(width:9),Expanded(child:Text(widget.english?'Service Wallet':'सर्विस वॉलेट',style:const TextStyle(color:Colors.white,fontSize:16,fontWeight:FontWeight.w900))),const Icon(Icons.open_in_new,color:Colors.white70,size:17)]),
-  const SizedBox(height:5),Text(widget.english?'Ready for recharges and bill payments':'रिचार्ज और बिल पेमेंट के लिए बैलेंस',style:const TextStyle(color:Colors.white70,fontSize:11)),
-  const SizedBox(height:13),Row(children:[
-   Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Service Balance',style:TextStyle(color:Colors.white70,fontSize:10)),const SizedBox(height:3),Text(loading?'—':'₹${money(service)}',style:const TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900))])),
-   Container(width:1,height:37,color:Colors.white24),const SizedBox(width:14),
-   Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Commission Balance',style:TextStyle(color:Colors.white70,fontSize:10)),const SizedBox(height:3),Text(loading?'—':'₹${money(commission)}',style:const TextStyle(color:Color(0xFFFFD58A),fontSize:20,fontWeight:FontWeight.w900))]))
-  ]),
-  if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Padding(padding:EdgeInsets.only(top:7),child:Text('बैलेंस देखने के लिए लॉगिन करें',style:TextStyle(color:Colors.white70,fontSize:10)))
+ @override Widget build(BuildContext context)=>Material(color:Colors.transparent,child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(19),child:Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF176B72),Color(0xFF203F69)]),borderRadius:BorderRadius.circular(19),boxShadow:[BoxShadow(color:const Color(0xFF173B5B).withValues(alpha:.13),blurRadius:16,offset:const Offset(0,7))]),child:Row(children:[
+  const Icon(Icons.account_balance_wallet_rounded,color:Color(0xFFFFD58A),size:25),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+   Text(english?'Commission Wallet':'कमीशन वॉलेट',style:const TextStyle(color:Colors.white,fontSize:16,fontWeight:FontWeight.w900)),
+   const SizedBox(height:4),Text(english?'Your service and referral earnings':'आपकी सेल्फ और रेफरल कमीशन की कमाई',style:const TextStyle(color:Colors.white70,fontSize:11)),
+   const SizedBox(height:5),Text(english?'Services are paid directly at checkout':'हर सर्विस का भुगतान सीधे UPI / Gateway से होगा',style:const TextStyle(color:Color(0xFFFFD58A),fontSize:10,fontWeight:FontWeight.w700))
+  ])),const Icon(Icons.chevron_right,color:Colors.white70)
  ]))));
 }
 
@@ -618,30 +604,24 @@ class _CommerceWalletPageState extends State<CommerceWalletPage>{
  Map<String,dynamic>? wallet;List<Map<String,dynamic>> history=[];bool loading=true;String? error;
  Future<void> _load()async{
   final user=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
-  if(user==null){setState(()=>loading=false);return;}
+  if(user==null){if(mounted)setState(()=>loading=false);return;}
   try{
-   final w=await Supabase.instance.client.from('commerce_wallets').select().eq('user_id',user.id).maybeSingle();
-   final h=await Supabase.instance.client.from('commerce_wallet_transactions').select().eq('user_id',user.id).order('created_at',ascending:false).limit(30);
+   final w=await Supabase.instance.client.from('commerce_wallets').select('commission_balance').eq('user_id',user.id).maybeSingle();
+   final h=await Supabase.instance.client.from('commerce_wallet_transactions').select().eq('user_id',user.id).eq('wallet_type','commission').order('created_at',ascending:false).limit(30);
    if(mounted)setState((){wallet=w;history=h.map((e)=>Map<String,dynamic>.from(e)).toList();loading=false;});
   }catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
  }
  @override void initState(){super.initState();_load();}
- Future<void> _transfer()async{
-  final c=TextEditingController();final amount=await showDialog<double>(context:context,builder:(ctx)=>AlertDialog(title:const Text('कमीशन से सर्विस वॉलेट में ट्रांसफर'),content:TextField(controller:c,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'राशि (₹)')),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,double.tryParse(c.text)),child:const Text('ट्रांसफर करें'))]));
-  if(amount==null||amount<=0)return;
-  try{await Supabase.instance.client.rpc('transfer_commission_to_service_wallet',params:{'p_amount':amount});await _load();if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('राशि सर्विस वॉलेट में ट्रांसफर हो गई।')));}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('ट्रांसफर नहीं हुआ: $e')));}
- }
- @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Service Wallet & Earnings')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
-  if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Text('वॉलेट देखने के लिए पहले लॉगिन करें।'),
+ @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Commission Wallet')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
+  if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Text('कमीशन देखने के लिए पहले लॉगिन करें।'),
   if(error!=null)Text(error!,style:const TextStyle(color:red)),
-  _walletCard('Service Wallet','सर्विस इस्तेमाल करने और रिचार्ज के लिए','₹${(wallet?['service_balance'] as num?)?.toStringAsFixed(2)??'0.00'}',Icons.account_balance_wallet),
-  const SizedBox(height:10),_walletCard('Commission Wallet','Self और Referral Commission की कमाई','₹${(wallet?['commission_balance'] as num?)?.toStringAsFixed(2)??'0.00'}',Icons.savings_outlined),
+  _walletCard('Commission Wallet','Self और Direct Referral Commission की कमाई','₹${(wallet?['commission_balance'] as num?)?.toStringAsFixed(2)??'0.00'}',Icons.savings_outlined),
   const SizedBox(height:12),
-  FilledButton.icon(onPressed:_transfer,icon:const Icon(Icons.swap_horiz),label:const Text('कमीशन से सर्विस वॉलेट में डालें')),
-  OutlinedButton.icon(onPressed:()=>ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Service Wallet में पैसे जोड़ने के लिए payment gateway जोड़ना बाकी है।'))),icon:const Icon(Icons.add_card),label:const Text('Add Money')),
-  const Text('कमीशन बैंक या UPI में withdraw नहीं होगा। इसे केवल Service Wallet में ट्रांसफर किया जा सकता है।',style:TextStyle(color:muted,fontSize:11)),
-  const SizedBox(height:16),const Text('Wallet Transactions',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:16)),
-  ...history.map((e)=>ListTile(dense:true,leading:Icon(e['wallet_type']=='service'?Icons.account_balance_wallet:Icons.savings_outlined,color:blue),title:Text(e['description']?.toString()??e['transaction_type'].toString()),subtitle:Text('${e['wallet_type']} • ${e['created_at']}'),trailing:Text('₹${(e['amount'] as num).toStringAsFixed(2)}')))
+  const Text('रिचार्ज और बिल का भुगतान हर बार सीधे UPI / कार्ड / नेट बैंकिंग से होगा। ऐप में Service Wallet या Add Money सुविधा नहीं है।',style:TextStyle(color:muted,fontSize:12)),
+  const SizedBox(height:8),
+  const Text('कमीशन बैलेंस केवल कमाई का रिकॉर्ड है। बैंक / UPI निकासी या सर्विस भुगतान में उपयोग की सुविधा अभी सक्रिय नहीं है।',style:TextStyle(color:muted,fontSize:11)),
+  const SizedBox(height:16),const Text('Commission Transactions',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:16)),
+  ...history.map((e)=>ListTile(dense:true,leading:const Icon(Icons.savings_outlined,color:blue),title:Text(e['description']?.toString()??e['transaction_type'].toString()),subtitle:Text('${e['created_at']}'),trailing:Text('₹${(e['amount'] as num).toStringAsFixed(2)}')))
  ]));
  Widget _walletCard(String title,String subtitle,String amount,IconData icon)=>Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(17)),child:Row(children:[Icon(icon,color:gold,size:28),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900)),Text(subtitle,style:const TextStyle(color:Colors.white70,fontSize:11))])),Text(amount,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:18))]));
 }
