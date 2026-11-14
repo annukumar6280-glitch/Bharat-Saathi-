@@ -34,13 +34,28 @@ class LocalStore {
   });
  }
 }
-const navy=Color(0xFF14233B),blue=Color(0xFF29496D),gold=Color(0xFFF2A93B),bg=Color(0xFFE7EBF1),muted=Color(0xFF788596),green=Color(0xFF16845B),red=Color(0xFFD95454);
-class BharatSaathiApp extends StatelessWidget{final bool supabaseAvailable;const BharatSaathiApp({super.key,this.supabaseAvailable=false});@override Widget build(BuildContext context)=>MaterialApp(title:'Bharat Saathi',debugShowCheckedModeBanner:false,theme:ThemeData(useMaterial3:true,scaffoldBackgroundColor:const Color(0xFFF4F6FB),colorScheme:ColorScheme.fromSeed(seedColor:blue).copyWith(primary:navy,secondary:const Color(0xFF168C86),surface:const Color(0xFFF8FAFD)),appBarTheme:const AppBarTheme(backgroundColor:Color(0xFFF4F6FB),foregroundColor:navy,elevation:0,centerTitle:false),inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:Colors.white,contentPadding:const EdgeInsets.symmetric(horizontal:14,vertical:14),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFFE1E7F0))),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFFE1E7F0))),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:blue,width:1.5))),filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:navy,foregroundColor:Colors.white,minimumSize:const Size(0,48),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:navy,minimumSize:const Size(0,46),side:const BorderSide(color:Color(0xFFCCD6E4)),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating)),home:RetailerHome(supabaseAvailable:supabaseAvailable));}
+final ValueNotifier<bool> appDarkMode=ValueNotifier<bool>(false);
+bool get darkModeEnabled=>appDarkMode.value;
+Color get navy=>darkModeEnabled?Color(0xFFE5EEFF):Color(0xFF14233B);
+Color get blue=>darkModeEnabled?Color(0xFF8FB8F0):Color(0xFF29496D);
+Color get gold=>Color(0xFFF2A93B);
+Color get bg=>darkModeEnabled?Color(0xFF26364D):Color(0xFFE7EBF1);
+Color get muted=>darkModeEnabled?Color(0xFFA9B8CC):Color(0xFF788596);
+Color get green=>darkModeEnabled?Color(0xFF62C99A):Color(0xFF16845B);
+Color get red=>darkModeEnabled?Color(0xFFFF8585):Color(0xFFD95454);
+Color get surfaceColor=>darkModeEnabled?Color(0xFF17263B):Colors.white;
+Color get appBgColor=>darkModeEnabled?Color(0xFF0D1728):Color(0xFFF4F6FB);
+Color get borderColor=>darkModeEnabled?Color(0xFF30435D):Color(0xFFE1E7F0);
+ThemeData buildAppTheme(bool dark){
+ final scheme=ColorScheme.fromSeed(seedColor:dark?const Color(0xFF6FA4E8):const Color(0xFF29496D),brightness:dark?Brightness.dark:Brightness.light).copyWith(primary:dark?const Color(0xFF9CC3FF):const Color(0xFF14233B),secondary:dark?const Color(0xFF64C9C1):const Color(0xFF168C86),surface:dark?const Color(0xFF17263B):const Color(0xFFF8FAFD),onSurface:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B));
+ return ThemeData(useMaterial3:true,brightness:dark?Brightness.dark:Brightness.light,scaffoldBackgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF4F6FB),colorScheme:scheme,appBarTheme:AppBarTheme(backgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF4F6FB),foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),elevation:0,centerTitle:false),cardTheme:CardThemeData(color:dark?const Color(0xFF17263B):Colors.white),inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:dark?const Color(0xFF17263B):Colors.white,contentPadding:const EdgeInsets.symmetric(horizontal:14,vertical:14),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFF6FA4E8),width:1.5))),filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:dark?const Color(0xFF315A8A):const Color(0xFF14233B),foregroundColor:Colors.white,minimumSize:const Size(0,48),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),minimumSize:const Size(0,46),side:BorderSide(color:dark?const Color(0xFF526985):const Color(0xFFCCD6E4)),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating));
+}
+class BharatSaathiApp extends StatelessWidget{final bool supabaseAvailable;const BharatSaathiApp({super.key,this.supabaseAvailable=false});@override Widget build(BuildContext context)=>ValueListenableBuilder<bool>(valueListenable:appDarkMode,builder:(context,isDark,_)=>MaterialApp(title:'Bharat Saathi',debugShowCheckedModeBanner:false,theme:buildAppTheme(false),darkTheme:buildAppTheme(true),themeMode:isDark?ThemeMode.dark:ThemeMode.light,home:RetailerHome(supabaseAvailable:supabaseAvailable)));}
 class Item{String name,detail;int qty;double price;Item(this.name,this.detail,this.qty,this.price);Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'qty':qty,'price':price};factory Item.fromJson(Map<String,dynamic> j)=>Item(j['name'] as String,j['detail'] as String,(j['qty'] as num).toInt(),(j['price'] as num).toDouble());}
 class Record{String name,detail;double amount;IconData icon;DateTime? createdAt;Record(this.name,this.detail,this.amount,this.icon,[DateTime? timestamp]):createdAt=timestamp??DateTime.now();Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint,'createdAt':createdAt?.toIso8601String()};factory Record.fromJson(Map<String,dynamic> j){final timestamp=j['createdAt'] is String?DateTime.tryParse(j['createdAt'] as String):null;return Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long,timestamp)..createdAt=timestamp;}}
 class RetailerHome extends StatefulWidget{final bool supabaseAvailable;const RetailerHome({super.key,this.supabaseAvailable=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
 class _RetailerHomeState extends State<RetailerHome>{
- int tab=0;double cash=0,expenses=0,personalBudget=0;String personalBudgetName='व्यक्तिगत खर्च सीमा';bool loaded=false,english=false;
+ int tab=0;double cash=0,expenses=0,personalBudget=0;String personalBudgetName='व्यक्तिगत खर्च सीमा';bool loaded=false,english=false,darkMode=false;
  final _prefs=SharedPreferencesAsync();
  final products=<Item>[];
  final sales=<Record>[];
@@ -51,18 +66,18 @@ class _RetailerHomeState extends State<RetailerHome>{
  final purchases=<Record>[];
  final supplierLedger=<Record>[];
  final salesReturns=<Record>[];
- final stockAdjustments=<Record>[];
+ final stockAdjustments=<Record>[];final serviceTransactions=<Record>[];
  @override void initState(){super.initState();_restore();}
- Future<void> _restore()async{if(mounted)setState(()=>loaded=false);cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';products.clear();sales.clear();expensesList.clear();khata.clear();personalTransactions.clear();purchases.clear();supplierLedger.clear();salesReturns.clear();stockAdjustments.clear();try{var raw=await LocalStore.read().timeout(const Duration(seconds:2));if(raw==null){raw=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));if(raw!=null){await LocalStore.write(raw);}}if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));products.addAll((d['products'] as List? ?? []).map((e)=>Item.fromJson(Map<String,dynamic>.from(e as Map))));sales.addAll((d['sales'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));purchases.addAll((d['purchases'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));supplierLedger.addAll((d['supplierLedger'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));salesReturns.addAll((d['salesReturns'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));stockAdjustments.addAll((d['stockAdjustments'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));}}catch(_){}if(mounted)setState(()=>loaded=true);}
- Future<void> _persist()async{try{await LocalStore.write(jsonEncode({'cash':cash,'expenses':expenses,'personalBudget':personalBudget,'personalBudgetName':personalBudgetName,'products':products.map((e)=>e.toJson()).toList(),'sales':sales.map((e)=>e.toJson()).toList(),'expensesList':expensesList.map((e)=>e.toJson()).toList(),'khata':khata.map((e)=>e.toJson()).toList(),'personalTransactions':personalTransactions.map((e)=>e.toJson()).toList(),'personalKhata':personalKhata.map((e)=>e.toJson()).toList(),'language':english?'en':'hi','purchases':purchases.map((e)=>e.toJson()).toList(),'supplierLedger':supplierLedger.map((e)=>e.toJson()).toList(),'salesReturns':salesReturns.map((e)=>e.toJson()).toList(),'stockAdjustments':stockAdjustments.map((e)=>e.toJson()).toList()}));}catch(_){if(mounted)msg('डेटा इस डिवाइस पर डेटाबेस में सेव नहीं हो पाया');}}
+ Future<void> _restore()async{if(mounted)setState(()=>loaded=false);cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';products.clear();sales.clear();expensesList.clear();khata.clear();personalTransactions.clear();purchases.clear();supplierLedger.clear();salesReturns.clear();stockAdjustments.clear();serviceTransactions.clear();try{var raw=await LocalStore.read().timeout(const Duration(seconds:2));if(raw==null){raw=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));if(raw!=null){await LocalStore.write(raw);}}if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));products.addAll((d['products'] as List? ?? []).map((e)=>Item.fromJson(Map<String,dynamic>.from(e as Map))));sales.addAll((d['sales'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));purchases.addAll((d['purchases'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));supplierLedger.addAll((d['supplierLedger'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));salesReturns.addAll((d['salesReturns'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));stockAdjustments.addAll((d['stockAdjustments'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));}}catch(_){}if(mounted)setState(()=>loaded=true);}
+ Future<void> _persist()async{try{await LocalStore.write(jsonEncode({'cash':cash,'expenses':expenses,'personalBudget':personalBudget,'personalBudgetName':personalBudgetName,'products':products.map((e)=>e.toJson()).toList(),'sales':sales.map((e)=>e.toJson()).toList(),'expensesList':expensesList.map((e)=>e.toJson()).toList(),'khata':khata.map((e)=>e.toJson()).toList(),'personalTransactions':personalTransactions.map((e)=>e.toJson()).toList(),'personalKhata':personalKhata.map((e)=>e.toJson()).toList(),'language':english?'en':'hi','darkMode':darkMode,'serviceTransactions':serviceTransactions.map((e)=>e.toJson()).toList(),'purchases':purchases.map((e)=>e.toJson()).toList(),'supplierLedger':supplierLedger.map((e)=>e.toJson()).toList(),'salesReturns':salesReturns.map((e)=>e.toJson()).toList(),'stockAdjustments':stockAdjustments.map((e)=>e.toJson()).toList()}));}catch(_){if(mounted)msg('डेटा इस डिवाइस पर डेटाबेस में सेव नहीं हो पाया');}}
  void msg(String s)=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s),behavior:SnackBarBehavior.floating));
  Future<void> form(String title,String label,String valueLabel,void Function(String,double) save)async{
  final n=TextEditingController(),v=TextEditingController();
  await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(c)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(c).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- Text(title,style:const TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),const SizedBox(height:16),
+ Text(title,style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:16),
  TextField(controller:n,decoration:InputDecoration(labelText:label,prefixIcon:const Icon(Icons.edit_outlined))),
  const SizedBox(height:10),TextField(controller:v,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:InputDecoration(labelText:valueLabel,prefixIcon:const Icon(Icons.currency_rupee))),
- const SizedBox(height:18),SizedBox(width:double.infinity,child:FilledButton(style:FilledButton.styleFrom(backgroundColor:navy,padding:const EdgeInsets.all(15)),onPressed:(){final a=double.tryParse(v.text);if(n.text.trim().isEmpty||a==null||a<=0){msg('सही जानकारी भरें');return;}save(n.text.trim(),a);Navigator.pop(c);},child:const Text('सेव करें')))
+ SizedBox(height:18),SizedBox(width:double.infinity,child:FilledButton(style:FilledButton.styleFrom(backgroundColor:navy,padding:EdgeInsets.all(15)),onPressed:(){final a=double.tryParse(v.text);if(n.text.trim().isEmpty||a==null||a<=0){msg('सही जानकारी भरें');return;}save(n.text.trim(),a);Navigator.pop(c);},child:Text('सेव करें')))
  ])));
  }
  Future<void> sale()async{
@@ -71,13 +86,13 @@ class _RetailerHomeState extends State<RetailerHome>{
  final quantity=TextEditingController(text:'1');
  Item selected=products.first;String paymentMode='नकद';
  await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(sheetContext)=>StatefulBuilder(builder:(context,refresh)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(context).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- const Text('नई बिक्री / बिल',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),const SizedBox(height:15),
+ Text('नई बिक्री / बिल',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:15),
  TextField(controller:customer,decoration:const InputDecoration(labelText:'ग्राहक का नाम')),
  const SizedBox(height:10),
  DropdownButtonFormField<Item>(initialValue:selected,decoration:const InputDecoration(labelText:'प्रोडक्ट'),items:products.map((p)=>DropdownMenuItem<Item>(value:p,child:Text('${p.name} • स्टॉक ${p.qty}'))).toList(),onChanged:(p){if(p!=null)refresh(()=>selected=p);}),
  const SizedBox(height:10),TextField(controller:quantity,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'मात्रा')),
  const SizedBox(height:10),DropdownButtonFormField<String>(initialValue:paymentMode,decoration:const InputDecoration(labelText:'भुगतान प्रकार'),items:const[DropdownMenuItem(value:'नकद',child:Text('नकद / बैंक भुगतान')),DropdownMenuItem(value:'उधार',child:Text('ग्राहक उधार'))],onChanged:(v){if(v!=null)refresh(()=>paymentMode=v);}),
- const SizedBox(height:12),Align(alignment:Alignment.centerLeft,child:Text('बिक्री मूल्य: ₹${money(selected.price)} प्रति यूनिट',style:const TextStyle(color:muted,fontSize:12))),
+ SizedBox(height:12),Align(alignment:Alignment.centerLeft,child:Text('बिक्री मूल्य: ₹${money(selected.price)} प्रति यूनिट',style:TextStyle(color:muted,fontSize:12))),
  const SizedBox(height:16),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){final q=int.tryParse(quantity.text);if(customer.text.trim().isEmpty||q==null||q<1){msg('ग्राहक और सही मात्रा भरें');return;}if(q>selected.qty){msg('उपलब्ध स्टॉक से अधिक मात्रा नहीं बेच सकते');return;}if(selected.price<=0){msg('इस प्रोडक्ट का बिक्री मूल्य पहले सेट करें');return;}final total=selected.price*q;setState((){selected.qty-=q;sales.insert(0,Record(customer.text.trim(),'${selected.name} × $q • $paymentMode',total,Icons.receipt_long));if(paymentMode=='नकद'){cash+=total;}else{khata.insert(0,Record(customer.text.trim(),'बिक्री उधार • अभी',total,Icons.person));}});_persist();Navigator.pop(sheetContext);msg('बिक्री सेव हुई और स्टॉक अपडेट हुआ');},child:const Text('बिक्री सेव करें')))
  ]))));
 }
@@ -100,7 +115,7 @@ class _RetailerHomeState extends State<RetailerHome>{
  final supplier=TextEditingController(),quantity=TextEditingController(text:'1'),cost=TextEditingController(text:products.first.price.toStringAsFixed(2));
  Item selected=products.first;String paymentMode='नकद';
  await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(sheetContext)=>StatefulBuilder(builder:(context,refresh)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(context).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- const Text('नई खरीद / स्टॉक प्राप्ति',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),const SizedBox(height:15),
+ Text('नई खरीद / स्टॉक प्राप्ति',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:15),
  TextField(controller:supplier,decoration:const InputDecoration(labelText:'सप्लायर / विक्रेता का नाम')),
  const SizedBox(height:10),DropdownButtonFormField<Item>(initialValue:selected,decoration:const InputDecoration(labelText:'प्रोडक्ट'),items:products.map((p)=>DropdownMenuItem<Item>(value:p,child:Text(p.name))).toList(),onChanged:(p){if(p!=null)refresh(()=>selected=p);}),
  const SizedBox(height:10),TextField(controller:quantity,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'प्राप्त मात्रा (यूनिट)')),
@@ -113,7 +128,7 @@ class _RetailerHomeState extends State<RetailerHome>{
  if(products.isEmpty||sales.isEmpty){msg('बिक्री वापसी के लिए पहले बिक्री रिकॉर्ड होना चाहिए');return;}
  final customer=TextEditingController();final quantity=TextEditingController(text:'1');Item selected=products.first;String refundMode='नकद वापसी';
  await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(c)=>StatefulBuilder(builder:(context,refresh)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(context).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- const Text('बिक्री वापसी / रिफंड',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),const SizedBox(height:14),
+ Text('बिक्री वापसी / रिफंड',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:14),
  TextField(controller:customer,decoration:const InputDecoration(labelText:'ग्राहक का नाम')),
  const SizedBox(height:10),DropdownButtonFormField<Item>(initialValue:selected,decoration:const InputDecoration(labelText:'वापस आया प्रोडक्ट'),items:products.map((p)=>DropdownMenuItem<Item>(value:p,child:Text(p.name))).toList(),onChanged:(v){if(v!=null)refresh(()=>selected=v);}),
  const SizedBox(height:10),TextField(controller:quantity,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'वापसी मात्रा')),
@@ -134,7 +149,7 @@ class _RetailerHomeState extends State<RetailerHome>{
  Future<void> supplierPayment()async{
  final name=TextEditingController(),amount=TextEditingController();
  await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(c)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(c).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- const Text('सप्लायर भुगतान',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),const SizedBox(height:14),
+ Text('सप्लायर भुगतान',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:14),
  TextField(controller:name,decoration:const InputDecoration(labelText:'सप्लायर का नाम')),
  const SizedBox(height:10),TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'भुगतान राशि (₹)')),
  const SizedBox(height:15),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){final a=double.tryParse(amount.text);final due=supplierLedger.where((e)=>e.name.toLowerCase()==name.text.trim().toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);if(name.text.trim().isEmpty||a==null||a<=0||a>due){msg(due<=0?'इस सप्लायर का बकाया नहीं मिला':'भुगतान बकाया से अधिक नहीं हो सकता');return;}setState((){supplierLedger.insert(0,Record(name.text.trim(),'सप्लायर भुगतान',-a,Icons.payments_outlined));cash-=a;});_persist();Navigator.pop(c);msg('सप्लायर भुगतान दर्ज हुआ');},child:const Text('भुगतान सेव करें')))
@@ -143,7 +158,7 @@ class _RetailerHomeState extends State<RetailerHome>{
  Future<void> product()async{
  final name=TextEditingController(),stock=TextEditingController(text:'0'),price=TextEditingController();
  await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(sheetContext)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(sheetContext).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- const Text('नया प्रोडक्ट',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),const SizedBox(height:15),
+ Text('नया प्रोडक्ट',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:15),
  TextField(controller:name,decoration:const InputDecoration(labelText:'प्रोडक्ट का नाम')),
  const SizedBox(height:10),TextField(controller:stock,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'शुरुआती स्टॉक (यूनिट)')),
  const SizedBox(height:10),TextField(controller:price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'बिक्री मूल्य (₹)')),
@@ -155,16 +170,16 @@ class _RetailerHomeState extends State<RetailerHome>{
   Dashboard(english:english,supabaseAvailable:widget.supabaseAvailable,onWallet:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommerceWalletPage(supabaseAvailable:widget.supabaseAvailable))),shopDue:khata.fold<double>(0,(s,e)=>s+e.amount),personalDue:personalKhata.fold<double>(0,(s,e)=>s+e.amount),monthExpense:expensesList.where((e)=>e.createdAt!=null&&e.createdAt!.year==DateTime.now().year&&e.createdAt!.month==DateTime.now().month).fold<double>(0,(s,e)=>s+e.amount),onKhata:()=>setState(()=>tab=1),onExpense:()=>setState(()=>tab=2),onRecharge:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'recharge',english:english))),onBills:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'bills',english:english))),onChallan:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'challan',english:english)))),
   KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onCredit:()=>entry(),onPayment:()=>entry(true)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onCredit:()=>personalLoanEntry(),onPayment:()=>personalLoanEntry(true)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
   ExpenseOnlyPage(items:expensesList,onAdd:expense),
-  ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,onLanguage:(v){setState(()=>english=v);_persist();},sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products,purchases:purchases,supplierLedger:supplierLedger,salesReturns:salesReturns,stockAdjustments:stockAdjustments)
+  TransactionHistoryPage(items:serviceTransactions,english:english),\n   ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,darkMode:darkMode,onDarkMode:(v){setState(()=>darkMode=v);appDarkMode.value=v;_persist();},onLanguage:(v){setState(()=>english=v);_persist();},sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products,purchases:purchases,supplierLedger:supplierLedger,salesReturns:salesReturns,stockAdjustments:stockAdjustments)
  ];
- return Scaffold(appBar:AppBar(titleSpacing:17,backgroundColor:const Color(0xFFF4F6FB),foregroundColor:navy,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:gold)),const SizedBox(width:10),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Bharat Saathi':'भारत साथी',style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(english?'Smart Khata & Expenses':'स्मार्ट खाता और खर्च',style:const TextStyle(fontSize:10,color:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=3),icon:const Icon(Icons.person_outline))]),body:SafeArea(child:loaded?IndexedStack(index:tab,children:pages):const Center(child:CircularProgressIndicator())),bottomNavigationBar:NavigationBar(height:68,backgroundColor:Colors.white,indicatorColor:const Color(0xFFE8EEF6),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:const Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:const Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:const Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:const Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]));
+ return Scaffold(appBar:AppBar(titleSpacing:17,backgroundColor:appBgColor,foregroundColor:navy,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:Icon(Icons.account_balance_wallet,color:gold)),SizedBox(width:10),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Bharat Saathi':'भारत साथी',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(english?'Smart Khata & Expenses':'स्मार्ट खाता और खर्च',style:TextStyle(fontSize:10,color:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=3),icon:Icon(Icons.person_outline))]),body:SafeArea(child:loaded?IndexedStack(index:tab,children:pages):Center(child:CircularProgressIndicator())),bottomNavigationBar:NavigationBar(height:68,backgroundColor:surfaceColor,indicatorColor:darkMode?Color(0xFF29496D):Color(0xFFE8EEF6),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:Icon(Icons.receipt_long_outlined),label:english?'History':'इतिहास'),NavigationDestination(icon:Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]));
  }
- Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:const Icon(Icons.add),label:Text(s));
+ Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:Icon(Icons.add),label:Text(s));
 }
 
 class HomeServiceWalletCard extends StatelessWidget{
  final bool supabaseAvailable,english;final VoidCallback onTap;
- const HomeServiceWalletCard({super.key,required this.supabaseAvailable,required this.onTap,required this.english});
+ HomeServiceWalletCard({super.key,required this.supabaseAvailable,required this.onTap,required this.english});
  @override Widget build(BuildContext context)=>Material(color:Colors.transparent,child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(19),child:Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF176B72),Color(0xFF203F69)]),borderRadius:BorderRadius.circular(19),boxShadow:[BoxShadow(color:const Color(0xFF173B5B).withValues(alpha:.13),blurRadius:16,offset:const Offset(0,7))]),child:Row(children:[
   const Icon(Icons.account_balance_wallet_rounded,color:Color(0xFFFFD58A),size:25),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
    Text(english?'Commission Wallet':'कमीशन वॉलेट',style:const TextStyle(color:Colors.white,fontSize:16,fontWeight:FontWeight.w900)),
@@ -176,7 +191,7 @@ class HomeServiceWalletCard extends StatelessWidget{
 
 class Dashboard extends StatelessWidget{
  final bool english,supabaseAvailable;final double shopDue,personalDue,monthExpense;final VoidCallback onKhata,onExpense,onRecharge,onBills,onChallan,onWallet;
- const Dashboard({super.key,required this.english,required this.supabaseAvailable,required this.onWallet,required this.shopDue,required this.personalDue,required this.monthExpense,required this.onKhata,required this.onExpense,required this.onRecharge,required this.onBills,required this.onChallan});
+ Dashboard({super.key,required this.english,required this.supabaseAvailable,required this.onWallet,required this.shopDue,required this.personalDue,required this.monthExpense,required this.onKhata,required this.onExpense,required this.onRecharge,required this.onBills,required this.onChallan});
  @override Widget build(BuildContext context)=>Container(
   color:const Color(0xFFF3F5F8),
   child:ListView(padding:const EdgeInsets.fromLTRB(16,14,16,24),children:[
@@ -187,17 +202,17 @@ class Dashboard extends StatelessWidget{
     Text(english?'A clear view of your daily business':'आपके रोज़ के कारोबार का साफ़ और आसान हिसाब',style:const TextStyle(color:Color(0xFFD5DFEA),fontSize:12))
    ])),
    const SizedBox(height:14),
-   Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xFFE6EAF0))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Text(english?'This month’s expenses':'इस महीने का खर्च',style:const TextStyle(color:muted,fontSize:12,fontWeight:FontWeight.w700)),
-    const SizedBox(height:4),Text('₹'+money(monthExpense),style:const TextStyle(color:navy,fontSize:27,fontWeight:FontWeight.w900)),
+   Container(padding:EdgeInsets.all(15),decoration:BoxDecoration(color:surfaceColor,borderRadius:BorderRadius.circular(18),border:Border.all(color:Color(0xFFE6EAF0))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text(english?'This month’s expenses':'इस महीने का खर्च',style:TextStyle(color:muted,fontSize:12,fontWeight:FontWeight.w700)),
+    SizedBox(height:4),Text('₹'+money(monthExpense),style:TextStyle(color:navy,fontSize:27,fontWeight:FontWeight.w900)),
     const SizedBox(height:13),Container(height:1,color:const Color(0xFFE9EDF2)),const SizedBox(height:12),
     Row(children:[Expanded(child:_summary(english?'Shop receivable':'दुकान का बकाया',shopDue)),Container(width:1,height:35,color:const Color(0xFFE5EAF0)),const SizedBox(width:13),Expanded(child:_summary(english?'Personal receivable':'पर्सनल बकाया',personalDue))])
    ])),
    const SizedBox(height:14),
    HomeServiceWalletCard(supabaseAvailable:supabaseAvailable,onTap:onWallet,english:english),
    const SizedBox(height:21),
-   Row(children:[Expanded(child:Text(english?'Services':'मुख्य सेवाएँ',style:const TextStyle(color:navy,fontSize:18,fontWeight:FontWeight.w900))),Text(english?'Quick access':'आसान पहुँच',style:const TextStyle(color:muted,fontSize:11))]),
-   const SizedBox(height:4),Text(english?'Select a service to continue':'जिस सुविधा की जरूरत हो, उसे चुनें',style:const TextStyle(color:muted,fontSize:11)),
+   Row(children:[Expanded(child:Text(english?'Services':'मुख्य सेवाएँ',style:TextStyle(color:navy,fontSize:18,fontWeight:FontWeight.w900))),Text(english?'Quick access':'आसान पहुँच',style:TextStyle(color:muted,fontSize:11))]),
+   SizedBox(height:4),Text(english?'Select a service to continue':'जिस सुविधा की जरूरत हो, उसे चुनें',style:TextStyle(color:muted,fontSize:11)),
    const SizedBox(height:12),
    GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.52,children:[
     _tile(english?'Khata Book':'खाता बुक',english?'Personal and shop ledger':'दुकान और पर्सनल हिसाब',Icons.menu_book_rounded,const Color(0xFFE8F0FF),onKhata),
@@ -206,47 +221,47 @@ class Dashboard extends StatelessWidget{
     _tile(english?'Challan Payment':'चालान पेमेंट',english?'Traffic challan services':'ट्रैफिक चालान सुविधा',Icons.local_police_rounded,const Color(0xFFF1EAFE),onChallan)
    ]),
    const SizedBox(height:15),
-   Material(color:Colors.white,borderRadius:BorderRadius.circular(16),child:InkWell(onTap:onExpense,borderRadius:BorderRadius.circular(16),child:Padding(padding:const EdgeInsets.all(14),child:Row(children:[
+   Material(color:surfaceColor,borderRadius:BorderRadius.circular(16),child:InkWell(onTap:onExpense,borderRadius:BorderRadius.circular(16),child:Padding(padding:EdgeInsets.all(14),child:Row(children:[
     Container(width:42,height:42,decoration:BoxDecoration(color:const Color(0xFFFFEEEE),borderRadius:BorderRadius.circular(13)),child:const Icon(Icons.payments_outlined,color:Color(0xFFCB625B))),
-    const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Monthly expenses':'महीने का खर्च',style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:13)),Text(english?'View and add expense entries':'खर्च देखें और नई एंट्री जोड़ें',style:const TextStyle(color:muted,fontSize:10))])),
-    Text('₹'+money(monthExpense),style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:14)),const SizedBox(width:5),const Icon(Icons.chevron_right,color:muted)
+    SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Monthly expenses':'महीने का खर्च',style:TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:13)),Text(english?'View and add expense entries':'खर्च देखें और नई एंट्री जोड़ें',style:TextStyle(color:muted,fontSize:10))])),
+    Text('₹'+money(monthExpense),style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:14)),SizedBox(width:5),Icon(Icons.chevron_right,color:muted)
    ])))),
    const SizedBox(height:12),
-   Text(english?'Recharge, bill and challan services are being connected.':'रिचार्ज, बिल और चालान सेवाओं को जोड़ा जा रहा है।',style:const TextStyle(color:muted,fontSize:10))
+   Text(english?'Recharge, bill and challan services are being connected.':'रिचार्ज, बिल और चालान सेवाओं को जोड़ा जा रहा है।',style:TextStyle(color:muted,fontSize:10))
   ])
  );
- Widget _summary(String label,double amount)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:const TextStyle(color:muted,fontSize:10)),const SizedBox(height:4),Text('₹'+money(amount),style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:15))]);
+ Widget _summary(String label,double amount)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:TextStyle(color:muted,fontSize:10)),SizedBox(height:4),Text('₹'+money(amount),style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:15))]);
  Widget _tile(String title,String subtitle,IconData icon,Color iconBg,VoidCallback tap)=>Material(color:Colors.white,borderRadius:BorderRadius.circular(17),child:InkWell(onTap:tap,borderRadius:BorderRadius.circular(17),child:Container(padding:const EdgeInsets.all(13),decoration:BoxDecoration(borderRadius:BorderRadius.circular(17),border:Border.all(color:const Color(0xFFE6EAF0))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
   Container(width:40,height:40,decoration:BoxDecoration(color:iconBg,borderRadius:BorderRadius.circular(12)),child:Icon(icon,color:navy,size:22)),
-  const Spacer(),Text(title,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13)),const SizedBox(height:3),Text(subtitle,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(color:muted,fontSize:10))
+  Spacer(),Text(title,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13)),SizedBox(height:3),Text(subtitle,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(color:muted,fontSize:10))
  ]))));
 }
 class KhataHubPage extends StatelessWidget{
  final List<Record> shop,personal;final VoidCallback onShop,onPersonal,onLinked;
- const KhataHubPage({super.key,required this.shop,required this.personal,required this.onShop,required this.onPersonal,required this.onLinked});
+ KhataHubPage({super.key,required this.shop,required this.personal,required this.onShop,required this.onPersonal,required this.onLinked});
  double _sum(List<Record> a)=>a.fold<double>(0,(s,e)=>s+e.amount);
- @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('खाता बुक','दुकान और पर्सनल उधार'),_card('दुकानदार का खाता','ग्राहक को कितना उधार दिया और कितना वापस मिला','₹'+money(_sum(shop)),onShop),_card('पर्सनल उधार','दोस्तों और रिश्तेदारों का हिसाब','₹'+money(_sum(personal)),onPersonal),_card('ऐप वाले ग्राहक से जोड़ें','मोबाइल नंबर से साझा खाता लिंक करें','',onLinked),const Text('यह डिजिटल खाता है; बैंक या UPI से अपने-आप पैसे नहीं कटते।',style:TextStyle(color:muted,fontSize:11))]);
- Widget _card(String a,String b,String c,VoidCallback f)=>Card(color:Colors.white,child:ListTile(title:Text(a,style:const TextStyle(color:navy,fontWeight:FontWeight.w900)),subtitle:Text(b),trailing:c.isEmpty?const Icon(Icons.chevron_right):Text(c),onTap:f));
+ @override Widget build(BuildContext context)=>ListView(padding:EdgeInsets.all(17),children:[heading('खाता बुक','दुकान और पर्सनल उधार'),_card('दुकानदार का खाता','ग्राहक को कितना उधार दिया और कितना वापस मिला','₹'+money(_sum(shop)),onShop),_card('पर्सनल उधार','दोस्तों और रिश्तेदारों का हिसाब','₹'+money(_sum(personal)),onPersonal),_card('ऐप वाले ग्राहक से जोड़ें','मोबाइल नंबर से साझा खाता लिंक करें','',onLinked),Text('यह डिजिटल खाता है; बैंक या UPI से अपने-आप पैसे नहीं कटते।',style:TextStyle(color:muted,fontSize:11))]);
+ Widget _card(String a,String b,String c,VoidCallback f)=>Card(color:surfaceColor,child:ListTile(title:Text(a,style:TextStyle(color:navy,fontWeight:FontWeight.w900)),subtitle:Text(b),trailing:c.isEmpty?Icon(Icons.chevron_right):Text(c),onTap:f));
 }
 class LocalLedgerPage extends StatefulWidget{
  final String title;final List<Record> items;final Future<void> Function() onCredit,onPayment;
- const LocalLedgerPage({super.key,required this.title,required this.items,required this.onCredit,required this.onPayment});
+ LocalLedgerPage({super.key,required this.title,required this.items,required this.onCredit,required this.onPayment});
  @override State<LocalLedgerPage> createState()=>_LocalLedgerPageState();
 }
 class _LocalLedgerPageState extends State<LocalLedgerPage>{
- @override Widget build(BuildContext context){final people=<String,double>{};for(final e in widget.items){people[e.name]=(people[e.name]??0)+e.amount;}return Scaffold(appBar:AppBar(title:Text(widget.title)),body:ListView(padding:const EdgeInsets.all(16),children:[Text('कुल बकाया: ₹'+money(widget.items.fold<double>(0,(s,e)=>s+e.amount)),style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:21)),Row(children:[Expanded(child:FilledButton(onPressed:()async{await widget.onCredit();if(mounted)setState((){});},child:const Text('उधार दें'))),const SizedBox(width:8),Expanded(child:OutlinedButton(onPressed:()async{await widget.onPayment();if(mounted)setState((){});},child:const Text('वापसी दर्ज करें')))]),...people.entries.map((e)=>ListTile(title:Text(e.key),trailing:Text('₹'+money(e.value),style:const TextStyle(color:navy,fontWeight:FontWeight.w900))))]));}
+ @override Widget build(BuildContext context){final people=<String,double>{};for(final e in widget.items){people[e.name]=(people[e.name]??0)+e.amount;}return Scaffold(appBar:AppBar(title:Text(widget.title)),body:ListView(padding:EdgeInsets.all(16),children:[Text('कुल बकाया: ₹'+money(widget.items.fold<double>(0,(s,e)=>s+e.amount)),style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:21)),Row(children:[Expanded(child:FilledButton(onPressed:()async{await widget.onCredit();if(mounted)setState((){});},child:Text('उधार दें'))),SizedBox(width:8),Expanded(child:OutlinedButton(onPressed:()async{await widget.onPayment();if(mounted)setState((){});},child:Text('वापसी दर्ज करें')))]),...people.entries.map((e)=>ListTile(title:Text(e.key),trailing:Text('₹'+money(e.value),style:TextStyle(color:navy,fontWeight:FontWeight.w900))))]));}
 }
 class ExpenseOnlyPage extends StatefulWidget{
  final List<Record> items;final Future<void> Function() onAdd;
- const ExpenseOnlyPage({super.key,required this.items,required this.onAdd});
+ ExpenseOnlyPage({super.key,required this.items,required this.onAdd});
  @override State<ExpenseOnlyPage> createState()=>_ExpenseOnlyPageState();
 }
 class _ExpenseOnlyPageState extends State<ExpenseOnlyPage>{
- @override Widget build(BuildContext context){final now=DateTime.now();final rows=widget.items.where((e)=>e.createdAt!=null&&e.createdAt!.year==now.year&&e.createdAt!.month==now.month).toList();final total=rows.fold<double>(0,(s,e)=>s+e.amount);return Scaffold(appBar:AppBar(title:const Text('महीने का खर्च')),body:ListView(padding:const EdgeInsets.all(16),children:[Text('इस महीने का खर्च: ₹'+money(total),style:const TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),FilledButton.icon(onPressed:()async{await widget.onAdd();if(mounted)setState((){});},icon:const Icon(Icons.add),label:const Text('खर्च जोड़ें')),...rows.map((e)=>ListTile(title:Text(e.name),subtitle:Text(e.detail),trailing:Text('₹'+money(e.amount))))]));}
+ @override Widget build(BuildContext context){final now=DateTime.now();final rows=widget.items.where((e)=>e.createdAt!=null&&e.createdAt!.year==now.year&&e.createdAt!.month==now.month).toList();final total=rows.fold<double>(0,(s,e)=>s+e.amount);return Scaffold(appBar:AppBar(title:Text('महीने का खर्च')),body:ListView(padding:EdgeInsets.all(16),children:[Text('इस महीने का खर्च: ₹'+money(total),style:TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),FilledButton.icon(onPressed:()async{await widget.onAdd();if(mounted)setState((){});},icon:Icon(Icons.add),label:Text('खर्च जोड़ें')),...rows.map((e)=>ListTile(title:Text(e.name),subtitle:Text(e.detail),trailing:Text('₹'+money(e.amount))))]));}
 }
-class ServiceCategoryPage extends StatelessWidget{final String kind;final bool english;const ServiceCategoryPage({super.key,required this.kind,required this.english});@override Widget build(BuildContext context){final opts=kind=='recharge'?(english?['Prepaid mobile recharge','Postpaid mobile bill']:['प्रीपेड मोबाइल रिचार्ज','पोस्टपेड मोबाइल बिल']):kind=='bills'?(english?['Electricity bill','Water bill','Gas bill','DTH recharge','Broadband / internet bill','Landline bill','FASTag recharge (Coming Soon)']:['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल','FASTag रिचार्ज (Coming Soon)']):(english?['Traffic challan','Vehicle challan status']:['ट्रैफिक चालान','वाहन चालान की स्थिति']);return Scaffold(appBar:AppBar(title:Text(kind=='recharge'?(english?'Mobile Recharge':'मोबाइल रिचार्ज'):kind=='bills'?(english?'Bill Payment':'बिल पेमेंट'):(english?'Challan Payment':'चालान पेमेंट'))),body:ListView(padding:const EdgeInsets.all(16),children:opts.map((x)=>Card(color:Colors.white,child:ListTile(title:Text(x),trailing:const Chip(label:Text('COMING SOON')),onTap:()=>openComingSoon(context,x)))).toList()));}
+class ServiceCategoryPage extends StatelessWidget{final String kind;final bool english;ServiceCategoryPage({super.key,required this.kind,required this.english});@override Widget build(BuildContext context){final opts=kind=='recharge'?(english?['Prepaid mobile recharge','Postpaid mobile bill']:['प्रीपेड मोबाइल रिचार्ज','पोस्टपेड मोबाइल बिल']):kind=='bills'?(english?['Electricity bill','Water bill','Gas bill','DTH recharge','Broadband / internet bill','Landline bill','FASTag recharge (Coming Soon)']:['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल','FASTag रिचार्ज (Coming Soon)']):(english?['Traffic challan','Vehicle challan status']:['ट्रैफिक चालान','वाहन चालान की स्थिति']);return Scaffold(appBar:AppBar(title:Text(kind=='recharge'?(english?'Mobile Recharge':'मोबाइल रिचार्ज'):kind=='bills'?(english?'Bill Payment':'बिल पेमेंट'):(english?'Challan Payment':'चालान पेमेंट'))),body:ListView(padding:EdgeInsets.all(16),children:opts.map((x)=>Card(color:Colors.white,child:ListTile(title:Text(x),trailing:Chip(label:Text('COMING SOON')),onTap:()=>openComingSoon(context,x)))).toList()));}
 }
-class LinkedKhataPage extends StatefulWidget{final bool supabaseAvailable;const LinkedKhataPage({super.key,required this.supabaseAvailable});@override State<LinkedKhataPage> createState()=>_LinkedKhataPageState();}
+class LinkedKhataPage extends StatefulWidget{final bool supabaseAvailable;LinkedKhataPage({super.key,required this.supabaseAvailable});@override State<LinkedKhataPage> createState()=>_LinkedKhataPageState();}
 class _LinkedKhataPageState extends State<LinkedKhataPage>{
  List<Map<String,dynamic>> rows=[];bool busy=false;SupabaseClient get c=>Supabase.instance.client;
  @override void initState(){super.initState();load();}
@@ -269,7 +284,7 @@ class _LinkedKhataPageState extends State<LinkedKhataPage>{
    },child:const Text('सेव करें'))
   ])));
  }
- @override Widget build(BuildContext context){final u=c.auth.currentUser;if(!widget.supabaseAvailable||u==null)return Scaffold(appBar:AppBar(title:const Text('लिंक किया हुआ खाता')),body:const Center(child:Text('पहले ईमेल और पासवर्ड से लॉगिन करें।')));return Scaffold(appBar:AppBar(title:const Text('लिंक किया हुआ खाता'),actions:[IconButton(onPressed:load,icon:const Icon(Icons.refresh))]),body:ListView(padding:const EdgeInsets.all(16),children:[const Text('ग्राहक का रजिस्टर्ड मोबाइल नंबर डालें। ग्राहक की स्वीकृति के बाद दोनों तरफ एक ही खाता दिखेगा।'),FilledButton(onPressed:request,child:const Text('ग्राहक को जोड़ें')),if(busy)const LinearProgressIndicator(),...rows.map((r){final retailer=r['retailer_id']==u.id;final pending=r['status']=='pending';final name=retailer?(r['customer_name']??'ग्राहक'):(r['retailer_name']??'दुकानदार');return Card(color:Colors.white,child:ListTile(title:Text(name.toString()),subtitle:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(r['status'].toString()),if(r['status']=='accepted')_LinkedDetails(link:r,retailer:retailer,onCredit:()=>addEntry(r,'credit'),onPayment:()=>addEntry(r,'payment'))]),trailing:pending&&!retailer?TextButton(onPressed:()=>respond(r['id'],true),child:const Text('स्वीकार करें')):null));})]));}
+ @override Widget build(BuildContext context){final u=c.auth.currentUser;if(!widget.supabaseAvailable||u==null)return Scaffold(appBar:AppBar(title:Text('लिंक किया हुआ खाता')),body:Center(child:Text('पहले ईमेल और पासवर्ड से लॉगिन करें।')));return Scaffold(appBar:AppBar(title:Text('लिंक किया हुआ खाता'),actions:[IconButton(onPressed:load,icon:Icon(Icons.refresh))]),body:ListView(padding:EdgeInsets.all(16),children:[Text('ग्राहक का रजिस्टर्ड मोबाइल नंबर डालें। ग्राहक की स्वीकृति के बाद दोनों तरफ एक ही खाता दिखेगा।'),FilledButton(onPressed:request,child:Text('ग्राहक को जोड़ें')),if(busy)LinearProgressIndicator(),...rows.map((r){final retailer=r['retailer_id']==u.id;final pending=r['status']=='pending';final name=retailer?(r['customer_name']??'ग्राहक'):(r['retailer_name']??'दुकानदार');return Card(color:Colors.white,child:ListTile(title:Text(name.toString()),subtitle:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(r['status'].toString()),if(r['status']=='accepted')_LinkedDetails(link:r,retailer:retailer,onCredit:()=>addEntry(r,'credit'),onPayment:()=>addEntry(r,'payment'))]),trailing:pending&&!retailer?TextButton(onPressed:()=>respond(r['id'],true),child:Text('स्वीकार करें')):null));})]));}
 }
 class Chart extends StatelessWidget {
   const Chart({super.key});
@@ -280,17 +295,17 @@ class Chart extends StatelessWidget {
     const days = ['सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि', 'रवि'];
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(color: surfaceColor, borderRadius: BorderRadius.circular(18)),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('₹24,860', style: TextStyle(color: navy, fontSize: 20, fontWeight: FontWeight.w900)),
+              Text('₹24,860', style: TextStyle(color: navy, fontSize: 20, fontWeight: FontWeight.w900)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(color: const Color(0xFFE8F5EE), borderRadius: BorderRadius.circular(20)),
-                child: const Text('+12.8%', style: TextStyle(color: green, fontSize: 10, fontWeight: FontWeight.w800)),
+                child: Text('+12.8%', style: TextStyle(color: green, fontSize: 10, fontWeight: FontWeight.w800)),
               ),
             ],
           ),
@@ -313,14 +328,14 @@ class Chart extends StatelessWidget {
                               width: 19,
                               height: 70 * values[i],
                               decoration: BoxDecoration(
-                                color: i == 5 ? gold : const Color(0xFFDCE5EF),
+                                color: i == 5 ? gold : Color(0xFFDCE5EF),
                                 borderRadius: BorderRadius.circular(7),
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 7),
-                        Text(days[i], style: const TextStyle(fontSize: 9, color: muted)),
+                        Text(days[i], style: TextStyle(fontSize: 9, color: muted)),
                       ],
                     ),
                   ),
@@ -333,36 +348,36 @@ class Chart extends StatelessWidget {
     );
   }
 }
-Widget mini(String a,String b,IconData i)=>Row(children:[Icon(i,color:gold,size:14),const SizedBox(width:4),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:Colors.white60,fontSize:9)),Text(b,style:const TextStyle(color:Colors.white,fontSize:10,fontWeight:FontWeight.w800))])]);
-Widget metric(String a,String b,IconData i,Color c)=>Container(padding:const EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Expanded(child:Text(a,style:const TextStyle(color:muted,fontSize:10))),Icon(i,color:c,size:18)]),const SizedBox(height:7),FittedBox(alignment:Alignment.centerLeft,child:Text(b,style:const TextStyle(color:navy,fontSize:18,fontWeight:FontWeight.w900)))]));
-Widget section(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontSize:16,fontWeight:FontWeight.w900)),Text(b,style:const TextStyle(color:muted,fontSize:10))]);
-Widget quick(String a,IconData i,Color bgc,Color fg,VoidCallback f)=>InkWell(onTap:f,borderRadius:BorderRadius.circular(16),child:Container(padding:const EdgeInsets.symmetric(vertical:14,horizontal:3),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16)),child:Column(children:[Container(width:42,height:42,decoration:BoxDecoration(color:bgc,borderRadius:BorderRadius.circular(13)),child:Icon(i,color:fg)),const SizedBox(height:8),Text(a,style:const TextStyle(color:navy,fontSize:10,fontWeight:FontWeight.w800))])));
-Widget activity(Record r)=>Container(margin:const EdgeInsets.only(top:7),padding:const EdgeInsets.all(12),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[CircleAvatar(backgroundColor:const Color(0xFFEAF0F6),child:Icon(r.icon,color:blue,size:18)),const SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(r.name,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(r.detail,style:const TextStyle(color:muted,fontSize:10))])),Text('₹${money(r.amount)}',style:const TextStyle(color:green,fontWeight:FontWeight.w900,fontSize:12))]));
+Widget mini(String a,String b,IconData i)=>Row(children:[Icon(i,color:gold,size:14),SizedBox(width:4),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:TextStyle(color:Colors.white60,fontSize:9)),Text(b,style:TextStyle(color:Colors.white,fontSize:10,fontWeight:FontWeight.w800))])]);
+Widget metric(String a,String b,IconData i,Color c)=>Container(padding:EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Expanded(child:Text(a,style:TextStyle(color:muted,fontSize:10))),Icon(i,color:c,size:18)]),SizedBox(height:7),FittedBox(alignment:Alignment.centerLeft,child:Text(b,style:TextStyle(color:navy,fontSize:18,fontWeight:FontWeight.w900)))]));
+Widget section(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:TextStyle(color:navy,fontSize:16,fontWeight:FontWeight.w900)),Text(b,style:TextStyle(color:muted,fontSize:10))]);
+Widget quick(String a,IconData i,Color bgc,Color fg,VoidCallback f)=>InkWell(onTap:f,borderRadius:BorderRadius.circular(16),child:Container(padding:EdgeInsets.symmetric(vertical:14,horizontal:3),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16)),child:Column(children:[Container(width:42,height:42,decoration:BoxDecoration(color:bgc,borderRadius:BorderRadius.circular(13)),child:Icon(i,color:fg)),SizedBox(height:8),Text(a,style:TextStyle(color:navy,fontSize:10,fontWeight:FontWeight.w800))])));
+Widget activity(Record r)=>Container(margin:EdgeInsets.only(top:7),padding:EdgeInsets.all(12),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[CircleAvatar(backgroundColor:Color(0xFFEAF0F6),child:Icon(r.icon,color:blue,size:18)),SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(r.name,style:TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(r.detail,style:TextStyle(color:muted,fontSize:10))])),Text('₹${money(r.amount)}',style:TextStyle(color:green,fontWeight:FontWeight.w900,fontSize:12))]));
 class PersonalFinancePage extends StatelessWidget{
  final List<Record> items;final double budget;final String budgetName;final VoidCallback onSetBudget,onIncome,onExpense;
- const PersonalFinancePage({super.key,required this.items,required this.budget,required this.budgetName,required this.onSetBudget,required this.onIncome,required this.onExpense});
+ PersonalFinancePage({super.key,required this.items,required this.budget,required this.budgetName,required this.onSetBudget,required this.onIncome,required this.onExpense});
  @override Widget build(BuildContext context){
  final income=items.where((e)=>e.amount>0).fold<double>(0,(s,e)=>s+e.amount);
  final now=DateTime.now();final spent=items.where((e){final d=e.createdAt;return e.amount<0&&d!=null&&d.year==now.year&&d.month==now.month;}).fold<double>(0,(s,e)=>s+e.amount.abs());
  return ListView(padding:const EdgeInsets.all(17),children:[
  heading('पर्सनल फाइनेंस','अपनी आय और मासिक खर्च का हिसाब रखें'),const SizedBox(height:14),
- Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+ Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
  const Text('कुल बचत / शेष',style:TextStyle(color:Colors.white70,fontSize:11)),
  Text('₹${money(income-spent)}',style:const TextStyle(color:Colors.white,fontSize:28,fontWeight:FontWeight.w900)),
  const SizedBox(height:12),Row(children:[Expanded(child:mini('कुल आय','₹${money(income)}',Icons.trending_up)),Expanded(child:mini('कुल खर्च','₹${money(spent)}',Icons.payments_outlined))])
  ])),const SizedBox(height:14),
- Row(children:[Expanded(child:FilledButton.icon(onPressed:onIncome,icon:const Icon(Icons.add),label:const Text('आय जोड़ें'),style:FilledButton.styleFrom(backgroundColor:green))),const SizedBox(width:9),Expanded(child:FilledButton.icon(onPressed:onExpense,icon:const Icon(Icons.remove),label:const Text('खर्च जोड़ें'),style:FilledButton.styleFrom(backgroundColor:red)))]),
- const SizedBox(height:20),section('मासिक खर्च सीमा',budgetName),const SizedBox(height:8),Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(budget>0?'₹${money(spent)} / ₹${money(budget)}':'सीमा तय नहीं है',style:const TextStyle(color:navy,fontWeight:FontWeight.w800)),TextButton(onPressed:onSetBudget,child:Text(budget>0?'बदलें':'सेट करें'))]),if(budget>0)LinearProgressIndicator(value:(spent/budget).clamp(0.0,1.0).toDouble(),backgroundColor:bg,color:spent>budget?red:green),if(budget>0)Padding(padding:const EdgeInsets.only(top:7),child:Text(spent>budget?'खर्च तय सीमा से अधिक है।':'सीमा में शेष ₹${money((budget-spent).clamp(0.0,double.infinity))}',style:TextStyle(color:spent>budget?red:muted,fontSize:11)))])),const SizedBox(height:20),section('लेन-देन','इस डिवाइस पर सेव रिकॉर्ड'),
- if(items.isEmpty)const Padding(padding:EdgeInsets.symmetric(vertical:24),child:Center(child:Text('अभी कोई व्यक्तिगत लेन-देन नहीं है।',style:TextStyle(color:muted))))
- else ...items.map((e)=>Container(margin:const EdgeInsets.only(top:8),padding:const EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[CircleAvatar(backgroundColor:e.amount>=0?const Color(0xFFE3F4EC):const Color(0xFFFFE8E8),child:Icon(e.icon,color:e.amount>=0?green:red)),const SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(e.name,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(e.detail,style:const TextStyle(color:muted,fontSize:10))])),Text('${e.amount>=0?'+':'−'} ₹${money(e.amount.abs())}',style:TextStyle(color:e.amount>=0?green:red,fontWeight:FontWeight.w900))])))
+ Row(children:[Expanded(child:FilledButton.icon(onPressed:onIncome,icon:Icon(Icons.add),label:Text('आय जोड़ें'),style:FilledButton.styleFrom(backgroundColor:green))),SizedBox(width:9),Expanded(child:FilledButton.icon(onPressed:onExpense,icon:Icon(Icons.remove),label:Text('खर्च जोड़ें'),style:FilledButton.styleFrom(backgroundColor:red)))]),
+ SizedBox(height:20),section('मासिक खर्च सीमा',budgetName),SizedBox(height:8),Container(padding:EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(budget>0?'₹${money(spent)} / ₹${money(budget)}':'सीमा तय नहीं है',style:TextStyle(color:navy,fontWeight:FontWeight.w800)),TextButton(onPressed:onSetBudget,child:Text(budget>0?'बदलें':'सेट करें'))]),if(budget>0)LinearProgressIndicator(value:(spent/budget).clamp(0.0,1.0).toDouble(),backgroundColor:bg,color:spent>budget?red:green),if(budget>0)Padding(padding:EdgeInsets.only(top:7),child:Text(spent>budget?'खर्च तय सीमा से अधिक है।':'सीमा में शेष ₹${money((budget-spent).clamp(0.0,double.infinity))}',style:TextStyle(color:spent>budget?red:muted,fontSize:11)))])),SizedBox(height:20),section('लेन-देन','इस डिवाइस पर सेव रिकॉर्ड'),
+ if(items.isEmpty)Padding(padding:EdgeInsets.symmetric(vertical:24),child:Center(child:Text('अभी कोई व्यक्तिगत लेन-देन नहीं है।',style:TextStyle(color:muted))))
+ else ...items.map((e)=>Container(margin:EdgeInsets.only(top:8),padding:EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[CircleAvatar(backgroundColor:e.amount>=0?Color(0xFFE3F4EC):Color(0xFFFFE8E8),child:Icon(e.icon,color:e.amount>=0?green:red)),SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(e.name,style:TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(e.detail,style:TextStyle(color:muted,fontSize:10))])),Text('${e.amount>=0?'+':'−'} ₹${money(e.amount.abs())}',style:TextStyle(color:e.amount>=0?green:red,fontWeight:FontWeight.w900))])))
  ]);
  }
 }
-class ProductPage extends StatelessWidget{final List<Item> items;final List<Record> purchases,supplierLedger,stockAdjustments;final void Function(Item) onRestock;final VoidCallback onPurchase,onSupplierPayment;const ProductPage({super.key,required this.items,required this.purchases,required this.supplierLedger,required this.stockAdjustments,required this.onRestock,required this.onPurchase,required this.onSupplierPayment});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('प्रोडक्ट और स्टॉक','इन्वेंट्री और खरीद प्रबंधन'),const SizedBox(height:12),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:onPurchase,icon:const Icon(Icons.add_shopping_cart),label:const Text('खरीद दर्ज करें'))),const SizedBox(height:8),OutlinedButton.icon(onPressed:onSupplierPayment,icon:const Icon(Icons.payments_outlined),label:const Text('सप्लायर भुगतान दर्ज करें')),const SizedBox(height:12),Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Text('कुल प्रोडक्ट: ${items.length}     •     कम स्टॉक: ${items.where((e)=>e.qty<15).length}',style:const TextStyle(color:navy,fontWeight:FontWeight.w800))),...items.map((p)=>Container(margin:const EdgeInsets.only(top:9),padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[const Icon(Icons.inventory_2_outlined,color:blue,size:25),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(p.name,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(p.detail,style:const TextStyle(color:muted,fontSize:10)),Text('₹${money(p.price)} बिक्री मूल्य',style:const TextStyle(color:muted,fontSize:10))])),Column(children:[Text('${p.qty}',style:TextStyle(color:p.qty<15?red:green,fontWeight:FontWeight.w900,fontSize:17)),const Text('यूनिट',style:TextStyle(color:muted,fontSize:9)),IconButton(tooltip:'स्टॉक जोड़ें',onPressed:()=>onRestock(p),icon:const Icon(Icons.add_circle_outline,color:blue,size:20))])]))),if(purchases.isNotEmpty) ...[const SizedBox(height:20),section('सप्लायर हिस्ट्री','सप्लायर के नाम और हाल की खरीद'),...purchases.take(10).map(activity)],if(supplierLedger.isNotEmpty) ...[const SizedBox(height:14),section('सप्लायर बकाया हिस्ट्री','खरीद उधार और किए गए भुगतान'),...supplierLedger.take(20).map(activity)],if(stockAdjustments.isNotEmpty) ...[const SizedBox(height:14),section('स्टॉक बदलाव हिस्ट्री','मैनुअल स्टॉक वृद्धि'),...stockAdjustments.take(20).map(activity)]]);}
-class SalesPage extends StatelessWidget{final List<Record> items,expenses,returns;final VoidCallback onReturn;const SalesPage({super.key,required this.items,required this.expenses,required this.returns,required this.onReturn});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('बिक्री और खर्च','कारोबार के सभी रिकॉर्ड'),const SizedBox(height:12),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:onReturn,icon:const Icon(Icons.assignment_return),label:const Text('बिक्री वापसी दर्ज करें'))),const SizedBox(height:12),section('बिक्री','दर्ज की गई बिक्री'),if(items.isEmpty)const Text('अभी कोई बिक्री नहीं।',style:TextStyle(color:muted)) else ...items.map(activity),const SizedBox(height:20),section('खर्च','दर्ज किए गए खर्च'),if(expenses.isEmpty)const Text('अभी कोई खर्च नहीं।',style:TextStyle(color:muted)) else ...expenses.map(activity),const SizedBox(height:20),section('बिक्री वापसी','दर्ज किए गए रिफंड और स्टॉक वापसी'),if(returns.isEmpty)const Text('अभी कोई बिक्री वापसी नहीं।',style:TextStyle(color:muted)) else ...returns.map(activity)]); }
+class ProductPage extends StatelessWidget{final List<Item> items;final List<Record> purchases,supplierLedger,stockAdjustments;final void Function(Item) onRestock;final VoidCallback onPurchase,onSupplierPayment;ProductPage({super.key,required this.items,required this.purchases,required this.supplierLedger,required this.stockAdjustments,required this.onRestock,required this.onPurchase,required this.onSupplierPayment});@override Widget build(BuildContext context)=>ListView(padding:EdgeInsets.all(17),children:[heading('प्रोडक्ट और स्टॉक','इन्वेंट्री और खरीद प्रबंधन'),SizedBox(height:12),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:onPurchase,icon:Icon(Icons.add_shopping_cart),label:Text('खरीद दर्ज करें'))),SizedBox(height:8),OutlinedButton.icon(onPressed:onSupplierPayment,icon:Icon(Icons.payments_outlined),label:Text('सप्लायर भुगतान दर्ज करें')),SizedBox(height:12),Container(padding:EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Text('कुल प्रोडक्ट: ${items.length}     •     कम स्टॉक: ${items.where((e)=>e.qty<15).length}',style:TextStyle(color:navy,fontWeight:FontWeight.w800))),...items.map((p)=>Container(margin:EdgeInsets.only(top:9),padding:EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[Icon(Icons.inventory_2_outlined,color:blue,size:25),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(p.name,style:TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(p.detail,style:TextStyle(color:muted,fontSize:10)),Text('₹${money(p.price)} बिक्री मूल्य',style:TextStyle(color:muted,fontSize:10))])),Column(children:[Text('${p.qty}',style:TextStyle(color:p.qty<15?red:green,fontWeight:FontWeight.w900,fontSize:17)),Text('यूनिट',style:TextStyle(color:muted,fontSize:9)),IconButton(tooltip:'स्टॉक जोड़ें',onPressed:()=>onRestock(p),icon:Icon(Icons.add_circle_outline,color:blue,size:20))])]))),if(purchases.isNotEmpty) ...[SizedBox(height:20),section('सप्लायर हिस्ट्री','सप्लायर के नाम और हाल की खरीद'),...purchases.take(10).map(activity)],if(supplierLedger.isNotEmpty) ...[SizedBox(height:14),section('सप्लायर बकाया हिस्ट्री','खरीद उधार और किए गए भुगतान'),...supplierLedger.take(20).map(activity)],if(stockAdjustments.isNotEmpty) ...[SizedBox(height:14),section('स्टॉक बदलाव हिस्ट्री','मैनुअल स्टॉक वृद्धि'),...stockAdjustments.take(20).map(activity)]]);}
+class SalesPage extends StatelessWidget{final List<Record> items,expenses,returns;final VoidCallback onReturn;SalesPage({super.key,required this.items,required this.expenses,required this.returns,required this.onReturn});@override Widget build(BuildContext context)=>ListView(padding:EdgeInsets.all(17),children:[heading('बिक्री और खर्च','कारोबार के सभी रिकॉर्ड'),SizedBox(height:12),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:onReturn,icon:Icon(Icons.assignment_return),label:Text('बिक्री वापसी दर्ज करें'))),SizedBox(height:12),section('बिक्री','दर्ज की गई बिक्री'),if(items.isEmpty)Text('अभी कोई बिक्री नहीं।',style:TextStyle(color:muted)) else ...items.map(activity),SizedBox(height:20),section('खर्च','दर्ज किए गए खर्च'),if(expenses.isEmpty)Text('अभी कोई खर्च नहीं।',style:TextStyle(color:muted)) else ...expenses.map(activity),SizedBox(height:20),section('बिक्री वापसी','दर्ज किए गए रिफंड और स्टॉक वापसी'),if(returns.isEmpty)Text('अभी कोई बिक्री वापसी नहीं।',style:TextStyle(color:muted)) else ...returns.map(activity)]); }
 class KhataPage extends StatelessWidget {
   final List<Record> items;final VoidCallback onPayment;
-  const KhataPage({super.key, required this.items,required this.onPayment});
+  KhataPage({super.key, required this.items,required this.onPayment});
 
   @override
   Widget build(BuildContext context) {
@@ -383,7 +398,7 @@ class KhataPage extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:onPayment,icon:const Icon(Icons.payments_outlined),label:const Text('ग्राहक से भुगतान दर्ज करें'),style:FilledButton.styleFrom(backgroundColor:green))),
+        SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:onPayment,icon:Icon(Icons.payments_outlined),label:Text('ग्राहक से भुगतान दर्ज करें'),style:FilledButton.styleFrom(backgroundColor:green))),
         const SizedBox(height:8),
         ...items.map((entry) {
           return Container(
@@ -394,15 +409,15 @@ class KhataPage extends StatelessWidget {
               children: [
                 CircleAvatar(
                   backgroundColor: const Color(0xFFEAF0F6),
-                  child: Text(entry.name[0], style: const TextStyle(color: navy, fontWeight: FontWeight.w800)),
+                  child: Text(entry.name[0], style: TextStyle(color: navy, fontWeight: FontWeight.w800)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(entry.name, style: const TextStyle(color: navy, fontWeight: FontWeight.w800, fontSize: 12)),
-                      Text(entry.detail, style: const TextStyle(color: muted, fontSize: 10)),
+                      Text(entry.name, style: TextStyle(color: navy, fontWeight: FontWeight.w800, fontSize: 12)),
+                      Text(entry.detail, style: TextStyle(color: muted, fontSize: 10)),
                     ],
                   ),
                 ),
@@ -419,7 +434,7 @@ class KhataPage extends StatelessWidget {
   }
 }
 String _uuidV4(){final random=Random.secure();final bytes=List<int>.generate(16,(_)=>random.nextInt(256));bytes[6]=(bytes[6]&0x0f)|0x40;bytes[8]=(bytes[8]&0x3f)|0x80;final h=bytes.map((b)=>b.toRadixString(16).padLeft(2,'0')).join();return '${h.substring(0,8)}-${h.substring(8,12)}-${h.substring(12,16)}-${h.substring(16,20)}-${h.substring(20)}';}
-class AuthPage extends StatefulWidget{final bool supabaseAvailable;const AuthPage({super.key,required this.supabaseAvailable});@override State<AuthPage> createState()=>_AuthPageState();}
+class AuthPage extends StatefulWidget{final bool supabaseAvailable;AuthPage({super.key,required this.supabaseAvailable});@override State<AuthPage> createState()=>_AuthPageState();}
 class _AuthPageState extends State<AuthPage>{
  final email=TextEditingController(),password=TextEditingController(),fullName=TextEditingController(),phone=TextEditingController();bool signUp=false,busy=false,showPassword=false;String? notice;bool errorNotice=false;
  SupabaseClient get client=>Supabase.instance.client;
@@ -468,11 +483,11 @@ class _AuthPageState extends State<AuthPage>{
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
  return Scaffold(appBar:AppBar(title:const Text('अकाउंट और सुरक्षा')),body:ListView(padding:const EdgeInsets.all(20),children:[
- Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Bharat Saathi अकाउंट',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),SizedBox(height:6),Text('ईमेल से सुरक्षित लॉगिन। SMS OTP अभी Coming Soon है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
+ Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Bharat Saathi अकाउंट',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),SizedBox(height:6),Text('ईमेल से सुरक्षित लॉगिन। SMS OTP अभी Coming Soon है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
  const SizedBox(height:18),
- if(!widget.supabaseAvailable)const Text('अकाउंट सेवा से कनेक्शन उपलब्ध नहीं है। इंटरनेट कनेक्शन जाँचें।',style:TextStyle(color:red)),
+ if(!widget.supabaseAvailable)Text('अकाउंट सेवा से कनेक्शन उपलब्ध नहीं है। इंटरनेट कनेक्शन जाँचें।',style:TextStyle(color:red)),
  if(user!=null)...[
- const Text('लॉगिन सक्रिय',style:TextStyle(color:green,fontSize:18,fontWeight:FontWeight.w900)),const SizedBox(height:6),Text(user.email??'',style:const TextStyle(color:navy)),const SizedBox(height:12),const Text('आपके लिए व्यक्तिगत और रिटेलर खाते डेटाबेस में तैयार किए जाते हैं। मौजूदा ऑफलाइन रिकॉर्ड अभी क्लाउड से सिंक नहीं होते।',style:TextStyle(color:muted,fontSize:12)),const SizedBox(height:18),FilledButton(onPressed:busy?null:signOut,child:Text(busy?'कृपया प्रतीक्षा करें':'लॉगआउट करें'))
+ Text('लॉगिन सक्रिय',style:TextStyle(color:green,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:6),Text(user.email??'',style:TextStyle(color:navy)),SizedBox(height:12),Text('आपके लिए व्यक्तिगत और रिटेलर खाते डेटाबेस में तैयार किए जाते हैं। मौजूदा ऑफलाइन रिकॉर्ड अभी क्लाउड से सिंक नहीं होते।',style:TextStyle(color:muted,fontSize:12)),SizedBox(height:18),FilledButton(onPressed:busy?null:signOut,child:Text(busy?'कृपया प्रतीक्षा करें':'लॉगआउट करें'))
  ]else...[
  if(signUp)TextField(controller:fullName,decoration:const InputDecoration(labelText:'पूरा नाम',prefixIcon:Icon(Icons.person_outline))),
  if(signUp)const SizedBox(height:10),
@@ -480,15 +495,15 @@ class _AuthPageState extends State<AuthPage>{
   if(signUp)const SizedBox(height:10),
   TextField(controller:email,keyboardType:TextInputType.emailAddress,autocorrect:false,decoration:const InputDecoration(labelText:'ईमेल',prefixIcon:Icon(Icons.email_outlined))),
  const SizedBox(height:10),TextField(controller:password,obscureText:!showPassword,decoration:InputDecoration(labelText:'पासवर्ड (कम-से-कम 8 अक्षर)',prefixIcon:const Icon(Icons.lock_outline),suffixIcon:IconButton(onPressed:()=>setState(()=>showPassword=!showPassword),icon:Icon(showPassword?Icons.visibility_off:Icons.visibility)))),
- const SizedBox(height:16),FilledButton(onPressed:busy?null:submit,style:FilledButton.styleFrom(backgroundColor:navy,padding:const EdgeInsets.all(15)),child:Text(busy?'कृपया प्रतीक्षा करें':signUp?'अकाउंट बनाएं':'लॉगिन करें')),
+ SizedBox(height:16),FilledButton(onPressed:busy?null:submit,style:FilledButton.styleFrom(backgroundColor:navy,padding:EdgeInsets.all(15)),child:Text(busy?'कृपया प्रतीक्षा करें':signUp?'अकाउंट बनाएं':'लॉगिन करें')),
  Row(children:[Expanded(child:signUp?OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=false),child:const Text('लॉगिन करें')):FilledButton(onPressed:busy?null:()=>setState(()=>signUp=false),child:const Text('लॉगिन करें'))),const SizedBox(width:10),Expanded(child:signUp?FilledButton(onPressed:busy?null:()=>setState(()=>signUp=true),child:const Text('रजिस्टर करें')):OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=true),child:const Text('रजिस्टर करें')))]),
  if(!signUp)TextButton(onPressed:busy?null:resetPassword,child:const Text('पासवर्ड भूल गए? रीसेट ईमेल भेजें'))
  ],
- if(notice!=null)Padding(padding:const EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:errorNotice?red:green,fontSize:12,fontWeight:FontWeight.w700)))
+ if(notice!=null)Padding(padding:EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:errorNotice?red:green,fontSize:12,fontWeight:FontWeight.w700)))
  ]));
  }
 }
-class CloudBackupPage extends StatefulWidget{final bool supabaseAvailable;final Future<void> Function() onRestore;const CloudBackupPage({super.key,required this.supabaseAvailable,required this.onRestore});@override State<CloudBackupPage> createState()=>_CloudBackupPageState();}
+class CloudBackupPage extends StatefulWidget{final bool supabaseAvailable;final Future<void> Function() onRestore;CloudBackupPage({super.key,required this.supabaseAvailable,required this.onRestore});@override State<CloudBackupPage> createState()=>_CloudBackupPageState();}
 class _CloudBackupPageState extends State<CloudBackupPage>{
  bool busy=false;String? notice;bool noticeError=false;SupabaseClient get client=>Supabase.instance.client;
  void showMessage(String text,{bool error=false}){if(mounted)setState((){notice=text;noticeError=error;});}
@@ -520,28 +535,54 @@ class _CloudBackupPageState extends State<CloudBackupPage>{
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
  return Scaffold(appBar:AppBar(title:const Text('डेटा बैकअप')),body:ListView(padding:const EdgeInsets.all(20),children:[
- Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपके रिकॉर्ड का सुरक्षित बैकअप',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:7),Text('यह मैनुअल स्नैपशॉट है। अपने अकाउंट से किसी दूसरे डिवाइस पर रिकॉर्ड वापस ला सकते हैं। यह लाइव सिंक नहीं है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
+ Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपके रिकॉर्ड का सुरक्षित बैकअप',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:7),Text('यह मैनुअल स्नैपशॉट है। अपने अकाउंट से किसी दूसरे डिवाइस पर रिकॉर्ड वापस ला सकते हैं। यह लाइव सिंक नहीं है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
  const SizedBox(height:18),
- if(!widget.supabaseAvailable)const Text('Supabase कनेक्शन उपलब्ध नहीं है।',style:TextStyle(color:red))
- else if(user==null)...[const Text('क्लाउड बैकअप के लिए पहले लॉगिन करें।',style:TextStyle(color:navy,fontWeight:FontWeight.w700)),const SizedBox(height:10),FilledButton(onPressed:busy?null:_login,child:const Text('लॉगिन करें'))]
- else ...[Text('लॉगिन अकाउंट: ${user.email??'ईमेल उपलब्ध नहीं'}',style:const TextStyle(color:navy,fontWeight:FontWeight.w700)),const SizedBox(height:14),FilledButton.icon(onPressed:busy?null:backup,icon:const Icon(Icons.cloud_upload_outlined),label:const Text('अभी बैकअप सेव करें')),const SizedBox(height:10),OutlinedButton.icon(onPressed:busy?null:restore,icon:const Icon(Icons.cloud_download_outlined),label:const Text('क्लाउड बैकअप रीस्टोर करें'))],
+ if(!widget.supabaseAvailable)Text('Supabase कनेक्शन उपलब्ध नहीं है।',style:TextStyle(color:red))
+ else if(user==null)...[Text('क्लाउड बैकअप के लिए पहले लॉगिन करें।',style:TextStyle(color:navy,fontWeight:FontWeight.w700)),SizedBox(height:10),FilledButton(onPressed:busy?null:_login,child:Text('लॉगिन करें'))]
+ else ...[Text('लॉगिन अकाउंट: ${user.email??'ईमेल उपलब्ध नहीं'}',style:TextStyle(color:navy,fontWeight:FontWeight.w700)),SizedBox(height:14),FilledButton.icon(onPressed:busy?null:backup,icon:Icon(Icons.cloud_upload_outlined),label:Text('अभी बैकअप सेव करें')),SizedBox(height:10),OutlinedButton.icon(onPressed:busy?null:restore,icon:Icon(Icons.cloud_download_outlined),label:Text('क्लाउड बैकअप रीस्टोर करें'))],
  if(busy)const Padding(padding:EdgeInsets.all(18),child:Center(child:CircularProgressIndicator())),
- if(notice!=null)Padding(padding:const EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:noticeError?red:green,fontSize:12,fontWeight:FontWeight.w700)))
+ if(notice!=null)Padding(padding:EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:noticeError?red:green,fontSize:12,fontWeight:FontWeight.w700)))
  ]));
  }
 }
+class TransactionHistoryPage extends StatelessWidget{
+ final List<Record> items;final bool english;
+ TransactionHistoryPage({super.key,required this.items,required this.english});
+ @override Widget build(BuildContext context){
+  final sorted=[...items]..sort((a,b)=>(b.createdAt??DateTime(2000)).compareTo(a.createdAt??DateTime(2000)));
+  return ListView(padding:const EdgeInsets.all(17),children:[
+   heading(english?'Transaction History':'ट्रांजैक्शन हिस्ट्री',english?'Successful mobile recharges and bill payments':'रिचार्ज और बिल पेमेंट के सफल रिकॉर्ड'),
+   const SizedBox(height:14),
+   if(sorted.isEmpty)Container(padding:EdgeInsets.all(22),decoration:BoxDecoration(color:surfaceColor,borderRadius:BorderRadius.circular(18),border:Border.all(color:borderColor)),child:Column(children:[
+    Icon(Icons.receipt_long_outlined,color:blue,size:42),SizedBox(height:12),
+    Text(english?'No transactions yet':'अभी कोई ट्रांजैक्शन नहीं है',style:TextStyle(color:navy,fontSize:16,fontWeight:FontWeight.w900)),
+    const SizedBox(height:7),
+    Text(english?'Successful recharge and bill payment records will appear here.':'जब रिचार्ज और बिल पेमेंट सेवा सक्रिय होगी, सफल भुगतान का रिकॉर्ड यहाँ दिखेगा।',style:TextStyle(color:muted,fontSize:12),textAlign:TextAlign.center),
+   ]))
+   else ...sorted.map((e)=>Container(margin:EdgeInsets.only(bottom:9),padding:EdgeInsets.all(14),decoration:BoxDecoration(color:surfaceColor,borderRadius:BorderRadius.circular(15),border:Border.all(color:borderColor)),child:Row(children:[
+    CircleAvatar(backgroundColor:darkModeEnabled?Color(0xFF29496D):Color(0xFFE8EEF6),child:Icon(e.icon,color:blue)),
+    const SizedBox(width:11),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+     Text(e.name,style:TextStyle(color:navy,fontWeight:FontWeight.w800)),Text(e.detail,style:TextStyle(color:muted,fontSize:11)),
+     Text(e.createdAt?.toLocal().toString()??'',style:TextStyle(color:muted,fontSize:10))
+    ])),Text('₹${money(e.amount)}',style:TextStyle(color:green,fontWeight:FontWeight.w900))
+   ]))),
+   const SizedBox(height:8),
+   Text(english?'Only successful service transactions are listed.':'इस सूची में केवल सफल सर्विस ट्रांजैक्शन दिखेंगे।',style:TextStyle(color:muted,fontSize:10))
+  ]);
+ }
+}
 class ProfilePage extends StatelessWidget{
- final bool supabaseAvailable,english;final Future<void> Function() onRestore;final ValueChanged<bool> onLanguage;
+ final bool supabaseAvailable,english,darkMode;final Future<void> Function() onRestore;final ValueChanged<bool> onLanguage,onDarkMode;
  final List<Record> sales,expensesList,khata,personalTransactions;final List<Item> products;final List<Record> purchases,supplierLedger,salesReturns,stockAdjustments;
- const ProfilePage({super.key,required this.supabaseAvailable,required this.onRestore,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products,required this.purchases,required this.supplierLedger,required this.salesReturns,required this.stockAdjustments,required this.english,required this.onLanguage});
+ ProfilePage({super.key,required this.supabaseAvailable,required this.onRestore,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products,required this.purchases,required this.supplierLedger,required this.salesReturns,required this.stockAdjustments,required this.english,required this.onLanguage,required this.darkMode,required this.onDarkMode});
  @override Widget build(BuildContext context){
   final user=supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
   final admin=user!=null&&(user.appMetadata['role']=='admin'||user.appMetadata['role']=='super_admin');
   return ListView(padding:const EdgeInsets.all(17),children:[
    heading(english?'Profile & Settings':'प्रोफाइल और सेटिंग',english?'Manage your account':'अपने अकाउंट को मैनेज करें'),
    setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
-   Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.language),title:const Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
-   setting(Icons.percent_rounded,english?'Commission List':'कमीशन लिस्ट',english?'Self and referral commission by service':'हर सर्विस का सेल्फ और रेफरल कमीशन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommissionListPage(supabaseAvailable:supabaseAvailable)))),
+   Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
+   SwitchListTile(secondary:Icon(Icons.dark_mode_outlined,color:blue),title:Text(english?'Dark theme':'डार्क थीम',style:TextStyle(color:navy,fontWeight:FontWeight.w800)),subtitle:Text(english?'Professional deep-blue appearance':'ऑन करने पर पूरे ऐप में प्रोफेशनल ब्लू डार्क थीम लागू होगी',style:TextStyle(color:muted,fontSize:11)),value:darkMode,onChanged:onDarkMode,activeThumbColor:blue,contentPadding:EdgeInsets.symmetric(horizontal:14)),\n    setting(Icons.percent_rounded,english?'Commission List':'कमीशन लिस्ट',english?'Self and referral commission by service':'हर सर्विस का सेल्फ और रेफरल कमीशन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommissionListPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.share_outlined,english?'Refer & Earn':'रेफर करें और कमाएँ',english?'Your referral code and referral history':'आपका रेफरल कोड और रेफरल जानकारी',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
    if(admin)setting(Icons.admin_panel_settings_outlined,english?'Admin Commission Settings':'एडमिन कमीशन सेटिंग',english?'Configure service and referral rates':'सर्विस और रेफरल कमीशन की दरें सेट करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const AdminCommissionPage()))),
    setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
@@ -551,7 +592,7 @@ class ProfilePage extends StatelessWidget{
  }
 }
 class CommissionListPage extends StatefulWidget{
- final bool supabaseAvailable;const CommissionListPage({super.key,required this.supabaseAvailable});
+ final bool supabaseAvailable;CommissionListPage({super.key,required this.supabaseAvailable});
  @override State<CommissionListPage> createState()=>_CommissionListPageState();
 }
 class _CommissionListPageState extends State<CommissionListPage>{
@@ -572,15 +613,15 @@ class _CommissionListPageState extends State<CommissionListPage>{
   final signed=widget.supabaseAvailable&&Supabase.instance.client.auth.currentUser!=null;
   return Scaffold(appBar:AppBar(title:const Text('कमीशन लिस्ट')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
    if(!signed)Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.lock_outline),title:const Text('कमीशन देखने के लिए लॉगिन करें'),subtitle:const Text('Self और Direct Referral Commission सभी यूज़र के लिए उपलब्ध हैं'),onTap:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:widget.supabaseAvailable))))),
-   if(error!=null)Text(error!,style:const TextStyle(color:red)),
-   if(signed)Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    const Text('BHARAT SAATHI • FREE',style:TextStyle(color:gold,fontWeight:FontWeight.w900,letterSpacing:1)),
+   if(error!=null)Text(error!,style:TextStyle(color:red)),
+   if(signed)Container(padding:EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text('BHARAT SAATHI • FREE',style:TextStyle(color:gold,fontWeight:FontWeight.w900,letterSpacing:1)),
     const SizedBox(height:5),const Text('कोई Paid Membership नहीं। सभी योग्य यूज़र Self और Direct Referral Service Commission के पात्र हैं।',style:TextStyle(color:Colors.white,fontSize:13,fontWeight:FontWeight.w700)),
     if(referralCode.isNotEmpty)Text('Referral ID: $referralCode',style:const TextStyle(color:Colors.white70,fontSize:11))
    ])),
    if(signed&&rules.isEmpty)const Padding(padding:EdgeInsets.all(12),child:Text('अभी एडमिन ने किसी सर्विस की कमीशन दर सेट नहीं की है।')),
    ...rules.map((r)=>Card(color:Colors.white,child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Text(r['service_name']?.toString()??r['service_code']?.toString()??'Service',style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:15)),
+    Text(r['service_name']?.toString()??r['service_code']?.toString()??'Service',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:15)),
     const SizedBox(height:9),
     _commissionLine('Self Commission',pct(r['self_commission_pct'])),
     _commissionLine('Direct Referral Service Commission',pct(r['referral_commission_pct'])),
@@ -590,13 +631,13 @@ class _CommissionListPageState extends State<CommissionListPage>{
     SizedBox(height:5),Text('आपके Referral से जुड़ा यूज़र पहली सफल Recharge या Bill Payment पूरी करेगा, तो आपको एक बार ₹10 मिलेंगे।')
    ]))),
    const SizedBox(height:12),
-   const Text('कमीशन की दरें एडमिन तय करता है। कमीशन केवल सफल और सत्यापित सर्विस ट्रांजैक्शन पर मिलेगा। सर्विस पर कमीशन डिस्काउंट का विकल्प Gateway और सर्विस पार्टनर जुड़ने के बाद सक्रिय होगा। बैंक / UPI निकासी उपलब्ध नहीं है।',style:TextStyle(color:muted,fontSize:11))
+   Text('कमीशन की दरें एडमिन तय करता है। कमीशन केवल सफल और सत्यापित सर्विस ट्रांजैक्शन पर मिलेगा। सर्विस पर कमीशन डिस्काउंट का विकल्प Gateway और सर्विस पार्टनर जुड़ने के बाद सक्रिय होगा। बैंक / UPI निकासी उपलब्ध नहीं है।',style:TextStyle(color:muted,fontSize:11))
   ]));
  }
- Widget _commissionLine(String label,String value)=>Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Row(children:[Expanded(child:Text(label,style:const TextStyle(color:muted,fontSize:12))),Text(value,style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13))]));
+ Widget _commissionLine(String label,String value)=>Padding(padding:EdgeInsets.symmetric(vertical:3),child:Row(children:[Expanded(child:Text(label,style:TextStyle(color:muted,fontSize:12))),Text(value,style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13))]));
 }
 class CommerceWalletPage extends StatefulWidget{
- final bool supabaseAvailable;const CommerceWalletPage({super.key,required this.supabaseAvailable});
+ final bool supabaseAvailable;CommerceWalletPage({super.key,required this.supabaseAvailable});
  @override State<CommerceWalletPage> createState()=>_CommerceWalletPageState();
 }
 class _CommerceWalletPageState extends State<CommerceWalletPage>{
@@ -613,19 +654,19 @@ class _CommerceWalletPageState extends State<CommerceWalletPage>{
  @override void initState(){super.initState();_load();}
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Commission Wallet')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
   if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Text('कमीशन देखने के लिए पहले लॉगिन करें।'),
-  if(error!=null)Text(error!,style:const TextStyle(color:red)),
+  if(error!=null)Text(error!,style:TextStyle(color:red)),
   _walletCard('Commission Wallet','Self और Direct Referral Commission की कमाई','₹${(wallet?['commission_balance'] as num?)?.toStringAsFixed(2)??'0.00'}',Icons.savings_outlined),
   const SizedBox(height:12),
-  const Text('कमीशन राशि अगली Recharge या Bill Payment के checkout पर छूट के रूप में लगाई जाएगी। Add Money या अलग Service Wallet नहीं होगा।',style:TextStyle(color:muted,fontSize:12)),
+  Text('कमीशन राशि अगली Recharge या Bill Payment के checkout पर छूट के रूप में लगाई जाएगी। Add Money या अलग Service Wallet नहीं होगा।',style:TextStyle(color:muted,fontSize:12)),
   const SizedBox(height:8),
-  const Text('सुरक्षित आरक्षण और असफल भुगतान पर कमीशन वापसी का सर्वर सिस्टम तैयार है। Recharge/Bill Payment अभी Coming Soon हैं; Gateway और सर्विस पार्टनर जुड़ने के बाद checkout पर “कमीशन इस्तेमाल करें” विकल्प सक्रिय होगा। बैंक / UPI निकासी उपलब्ध नहीं है।',style:TextStyle(color:muted,fontSize:11)),
-  const SizedBox(height:16),const Text('Commission Transactions',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:16)),
-  ...history.map((e)=>ListTile(dense:true,leading:const Icon(Icons.savings_outlined,color:blue),title:Text(e['description']?.toString()??e['transaction_type'].toString()),subtitle:Text('${e['created_at']}'),trailing:Text('₹${(e['amount'] as num).toStringAsFixed(2)}')))
+  Text('सुरक्षित आरक्षण और असफल भुगतान पर कमीशन वापसी का सर्वर सिस्टम तैयार है। Recharge/Bill Payment अभी Coming Soon हैं; Gateway और सर्विस पार्टनर जुड़ने के बाद checkout पर “कमीशन इस्तेमाल करें” विकल्प सक्रिय होगा। बैंक / UPI निकासी उपलब्ध नहीं है।',style:TextStyle(color:muted,fontSize:11)),
+  SizedBox(height:16),Text('Commission Transactions',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:16)),
+  ...history.map((e)=>ListTile(dense:true,leading:Icon(Icons.savings_outlined,color:blue),title:Text(e['description']?.toString()??e['transaction_type'].toString()),subtitle:Text('${e['created_at']}'),trailing:Text('₹${(e['amount'] as num).toStringAsFixed(2)}')))
  ]));
- Widget _walletCard(String title,String subtitle,String amount,IconData icon)=>Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(17)),child:Row(children:[Icon(icon,color:gold,size:28),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900)),Text(subtitle,style:const TextStyle(color:Colors.white70,fontSize:11))])),Text(amount,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:18))]));
+ Widget _walletCard(String title,String subtitle,String amount,IconData icon)=>Container(padding:EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(17)),child:Row(children:[Icon(icon,color:gold,size:28),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900)),Text(subtitle,style:TextStyle(color:Colors.white70,fontSize:11))])),Text(amount,style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:18))]));
 }
 class ReferralPage extends StatefulWidget{
- final bool supabaseAvailable;const ReferralPage({super.key,required this.supabaseAvailable});
+ final bool supabaseAvailable;ReferralPage({super.key,required this.supabaseAvailable});
  @override State<ReferralPage> createState()=>_ReferralPageState();
 }
 class _ReferralPageState extends State<ReferralPage>{
@@ -644,8 +685,8 @@ class _ReferralPageState extends State<ReferralPage>{
  }
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Refer & Earn')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(18),children:[
   if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Text('रेफरल कोड देखने के लिए लॉगिन करें।'),
-  if(error!=null)Text(error!,style:const TextStyle(color:red)),
-  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('आपका Referral Code',style:TextStyle(color:Colors.white70)),const SizedBox(height:8),Text(code.isEmpty?'—':code,style:const TextStyle(color:gold,fontSize:27,fontWeight:FontWeight.w900)),const SizedBox(height:12),Row(children:[Expanded(child:OutlinedButton(onPressed:code.isEmpty?null:()=>Clipboard.setData(ClipboardData(text:code)),child:const Text('Copy Code'))),const SizedBox(width:8),Expanded(child:FilledButton(onPressed:code.isEmpty?null:()=>Share.share('Bharat Saathi से जुड़ें। मेरा Referral Code: $code'),child:const Text('Share')))])])),
+  if(error!=null)Text(error!,style:TextStyle(color:red)),
+  Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपका Referral Code',style:TextStyle(color:Colors.white70)),SizedBox(height:8),Text(code.isEmpty?'—':code,style:TextStyle(color:gold,fontSize:27,fontWeight:FontWeight.w900)),SizedBox(height:12),Row(children:[Expanded(child:OutlinedButton(onPressed:code.isEmpty?null:()=>Clipboard.setData(ClipboardData(text:code)),child:Text('Copy Code'))),SizedBox(width:8),Expanded(child:FilledButton(onPressed:code.isEmpty?null:()=>Share.share('Bharat Saathi से जुड़ें। मेरा Referral Code: $code'),child:Text('Share')))])])),
   const SizedBox(height:12),OutlinedButton(onPressed:_apply,child:const Text('किसी का Referral Code लगाएँ')),
   const Card(color:Colors.white,child:Padding(padding:EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
    Text('₹10 First Successful Referral Reward',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
@@ -671,9 +712,9 @@ class _AdminCommissionPageState extends State<AdminCommissionPage>{
   try{final c=Supabase.instance.client;await c.from('service_commission_rules').upsert({'service_code':code.text.trim().toLowerCase(),'service_name':name.text.trim(),'total_provider_commission_pct':double.parse(total.text),'company_share_pct':double.parse(company.text),'self_commission_pct':double.parse(self.text),'referral_commission_pct':double.parse(referral.text),'updated_by':c.auth.currentUser!.id,'updated_at':DateTime.now().toUtc().toIso8601String()});await _load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('सेव नहीं हुआ: $e')));}
  }
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Admin Commission Settings')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
-  if(error!=null)Text(error!,style:const TextStyle(color:red)),
-  const Text('Service-wise Commission',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),
-  const Padding(padding:EdgeInsets.only(top:5,bottom:12),child:Text('सभी यूज़र के लिए Self Commission और केवल एक Direct Referral Level सेट करें। ₹10 का First Successful Referral Reward सिस्टम में निश्चित है।',style:TextStyle(color:muted,fontSize:12))),
+  if(error!=null)Text(error!,style:TextStyle(color:red)),
+  Text('Service-wise Commission',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),
+  Padding(padding:EdgeInsets.only(top:5,bottom:12),child:Text('सभी यूज़र के लिए Self Commission और केवल एक Direct Referral Level सेट करें। ₹10 का First Successful Referral Reward सिस्टम में निश्चित है।',style:TextStyle(color:muted,fontSize:12))),
   FilledButton.icon(onPressed:()=>_editRule(),icon:const Icon(Icons.add),label:const Text('नई सर्विस कमीशन जोड़ें')),
   ...rules.map((r)=>Card(color:Colors.white,child:ListTile(title:Text(r['service_name'].toString()),subtitle:Text('Self ${r['self_commission_pct']}% • Direct Referral ${r['referral_commission_pct']}% • Company ${r['company_share_pct']}%'),trailing:IconButton(onPressed:()=>_editRule(r),icon:const Icon(Icons.edit_outlined)))))
  ]));
@@ -681,7 +722,7 @@ class _AdminCommissionPageState extends State<AdminCommissionPage>{
 class ReportsPage extends StatefulWidget{
  final List<Record> sales,expensesList,khata,personalTransactions;
  final List<Item> products;final List<Record> purchases,supplierLedger,salesReturns,stockAdjustments;
- const ReportsPage({super.key,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products,required this.purchases,required this.supplierLedger,required this.salesReturns,required this.stockAdjustments});
+ ReportsPage({super.key,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products,required this.purchases,required this.supplierLedger,required this.salesReturns,required this.stockAdjustments});
  @override State<ReportsPage> createState()=>_ReportsPageState();
 }
 class _ReportsPageState extends State<ReportsPage>{
@@ -731,7 +772,7 @@ class _ReportsPageState extends State<ReportsPage>{
  if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('शेयर विंडो उपलब्ध नहीं हुई। CSV क्लिपबोर्ड में कॉपी कर दी गई।')));
  }
  }
- Widget _metric(String title,String value,IconData icon)=>Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[Icon(icon,color:blue),const SizedBox(width:12),Expanded(child:Text(title,style:const TextStyle(color:muted,fontSize:12))),Text(value,style:const TextStyle(color:navy,fontWeight:FontWeight.w900))]));
+ Widget _metric(String title,String value,IconData icon)=>Container(padding:EdgeInsets.all(15),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[Icon(icon,color:blue),SizedBox(width:12),Expanded(child:Text(title,style:TextStyle(color:muted,fontSize:12))),Text(value,style:TextStyle(color:navy,fontWeight:FontWeight.w900))]));
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('रिपोर्ट और एक्सपोर्ट')),body:ListView(padding:const EdgeInsets.all(17),children:[
  heading('कारोबार का सारांश','इस डिवाइस पर उपलब्ध रिकॉर्ड का कुल योग'),const SizedBox(height:12),
  OutlinedButton.icon(onPressed:_chooseRange,icon:const Icon(Icons.date_range),label:Text(range==null?'तारीख़ के अनुसार फ़िल्टर करें':'${range!.start.day}/${range!.start.month}/${range!.start.year} – ${range!.end.day}/${range!.end.month}/${range!.end.year}')),
@@ -748,17 +789,17 @@ class _ReportsPageState extends State<ReportsPage>{
  const SizedBox(height:18),
  FilledButton.icon(onPressed:()=>_export(context),icon:const Icon(Icons.content_copy),label:const Text('CSV रिपोर्ट डाउनलोड / शेयर करें')),
  const SizedBox(height:10),
- const Text('नोट: एक्सपोर्ट में अभी उपलब्ध स्थानीय रिकॉर्ड शामिल हैं। पुराने रिकॉर्ड की तारीखें संग्रहीत नहीं हैं, इसलिए तारीख-वार रिपोर्ट और PDF अभी उपलब्ध नहीं हैं। यह रिपोर्ट क्लाउड सिंक का विकल्प नहीं है।',style:TextStyle(color:muted,fontSize:11))
+ Text('नोट: एक्सपोर्ट में अभी उपलब्ध स्थानीय रिकॉर्ड शामिल हैं। पुराने रिकॉर्ड की तारीखें संग्रहीत नहीं हैं, इसलिए तारीख-वार रिपोर्ट और PDF अभी उपलब्ध नहीं हैं। यह रिपोर्ट क्लाउड सिंक का विकल्प नहीं है।',style:TextStyle(color:muted,fontSize:11))
  ]));
 }
 
-Widget heading(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),Text(b,style:const TextStyle(color:muted,fontSize:11))]);
-Widget setting(IconData i,String a,String b,[VoidCallback? onTap])=>InkWell(onTap:onTap,borderRadius:BorderRadius.circular(14),child:Container(margin:const EdgeInsets.only(top:9),padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[Icon(i,color:blue),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(b,style:const TextStyle(color:muted,fontSize:10))])),const Icon(Icons.chevron_right,color:muted)])));
+Widget heading(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),Text(b,style:TextStyle(color:muted,fontSize:11))]);
+Widget setting(IconData i,String a,String b,[VoidCallback? onTap])=>InkWell(onTap:onTap,borderRadius:BorderRadius.circular(14),child:Container(margin:EdgeInsets.only(top:9),padding:EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[Icon(i,color:blue),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(b,style:TextStyle(color:muted,fontSize:10))])),Icon(Icons.chevron_right,color:muted)])));
 void openComingSoon(BuildContext context,String feature)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ComingSoonPage(feature:feature)));
 
 class _LinkedDetails extends StatefulWidget{
  final Map<String,dynamic> link;final bool retailer;final VoidCallback onCredit,onPayment;
- const _LinkedDetails({required this.link,required this.retailer,required this.onCredit,required this.onPayment});
+ _LinkedDetails({required this.link,required this.retailer,required this.onCredit,required this.onPayment});
  @override State<_LinkedDetails> createState()=>_LinkedDetailsState();
 }
 class _LinkedDetailsState extends State<_LinkedDetails>{
@@ -768,10 +809,10 @@ class _LinkedDetailsState extends State<_LinkedDetails>{
  Future<void> _load()async{try{final r=await Supabase.instance.client.from('khata_transactions').select('transaction_type,amount,note,created_at').eq('link_id',widget.link['id']).order('created_at',ascending:false);if(mounted)setState((){rows=r.map((e)=>Map<String,dynamic>.from(e)).toList();due=rows.fold<double>(0,(s,e)=>s+((e['transaction_type']=='credit'?1:-1)*(e['amount'] as num).toDouble()));loading=false;});}catch(_){if(mounted)setState(()=>loading=false);}}
  @override Widget build(BuildContext context){final phone=widget.retailer?(widget.link['customer_phone'] as String? ?? ''):(widget.link['retailer_phone'] as String? ?? '');return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
  Text('कुल बाकी: ₹'+money(due),style:TextStyle(color:due>0?red:green,fontWeight:FontWeight.w900)),
- if(widget.retailer)Row(children:[Expanded(child:FilledButton(onPressed:widget.onCredit,child:const Text('उधार दर्ज करें'))),const SizedBox(width:6),Expanded(child:OutlinedButton(onPressed:widget.onPayment,child:const Text('वापसी दर्ज करें')))])else OutlinedButton(onPressed:widget.onPayment,child:const Text('वापसी दर्ज करें')),
+ if(widget.retailer)Row(children:[Expanded(child:FilledButton(onPressed:widget.onCredit,child:Text('उधार दर्ज करें'))),SizedBox(width:6),Expanded(child:OutlinedButton(onPressed:widget.onPayment,child:Text('वापसी दर्ज करें')))])else OutlinedButton(onPressed:widget.onPayment,child:Text('वापसी दर्ज करें')),
  if(widget.retailer&&phone.isNotEmpty)TextButton.icon(onPressed:()=>launchUrl(Uri.parse('https://wa.me/91'+phone.replaceAll(RegExp(r'[^0-9]'),'')+'?text='+Uri.encodeComponent('नमस्ते, आपके Bharat Saathi खाते का बकाया ₹'+money(due)+' है।')),mode:LaunchMode.externalApplication),icon:const Icon(Icons.chat),label:const Text('WhatsApp संदेश')),
- if(loading)const LinearProgressIndicator()else ...rows.take(8).map((e)=>Text((e['transaction_type']=='credit'?'उधार +₹':'वापसी −₹')+money((e['amount'] as num).toDouble())+' • '+(e['note']??''),style:const TextStyle(color:muted,fontSize:11)))
+ if(loading)LinearProgressIndicator()else ...rows.take(8).map((e)=>Text((e['transaction_type']=='credit'?'उधार +₹':'वापसी −₹')+money((e['amount'] as num).toDouble())+' • '+(e['note']??''),style:TextStyle(color:muted,fontSize:11)))
  ]);}
 }
-class ComingSoonPage extends StatelessWidget{final String feature;const ComingSoonPage({super.key,required this.feature});@override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:Text(feature)),body:Center(child:Padding(padding:const EdgeInsets.all(28),child:Column(mainAxisSize:MainAxisSize.min,children:[Container(width:76,height:76,decoration:BoxDecoration(color:const Color(0xFFFFF2D9),borderRadius:BorderRadius.circular(22)),child:const Icon(Icons.hourglass_top_rounded,color:Color(0xFF9A6515),size:38)),const SizedBox(height:18),Text(feature,style:const TextStyle(color:navy,fontSize:21,fontWeight:FontWeight.w900),textAlign:TextAlign.center),const SizedBox(height:9),const Text('यह सुविधा अभी उपलब्ध नहीं है। अधिकृत सेवा प्रदाता, API credentials और आवश्यक सुरक्षा जाँच पूरी होने के बाद ही इसे चालू किया जाएगा।',style:TextStyle(color:muted,fontSize:13),textAlign:TextAlign.center),const SizedBox(height:16),const Chip(label:Text('COMING SOON'))]))));}
+class ComingSoonPage extends StatelessWidget{final String feature;ComingSoonPage({super.key,required this.feature});@override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:Text(feature)),body:Center(child:Padding(padding:EdgeInsets.all(28),child:Column(mainAxisSize:MainAxisSize.min,children:[Container(width:76,height:76,decoration:BoxDecoration(color:Color(0xFFFFF2D9),borderRadius:BorderRadius.circular(22)),child:Icon(Icons.hourglass_top_rounded,color:Color(0xFF9A6515),size:38)),SizedBox(height:18),Text(feature,style:TextStyle(color:navy,fontSize:21,fontWeight:FontWeight.w900),textAlign:TextAlign.center),SizedBox(height:9),Text('यह सुविधा अभी उपलब्ध नहीं है। अधिकृत सेवा प्रदाता, API credentials और आवश्यक सुरक्षा जाँच पूरी होने के बाद ही इसे चालू किया जाएगा।',style:TextStyle(color:muted,fontSize:13),textAlign:TextAlign.center),SizedBox(height:16),Chip(label:Text('COMING SOON'))]))));}
 String money(num n){final s=n.round().toString();if(s.length<=3)return s;var h=s.substring(0,s.length-3);final t=s.substring(s.length-3);final g=<String>[];while(h.length>2){g.insert(0,h.substring(h.length-2));h=h.substring(0,h.length-2);}if(h.isNotEmpty)g.insert(0,h);return '${g.join(',')},$t';}
