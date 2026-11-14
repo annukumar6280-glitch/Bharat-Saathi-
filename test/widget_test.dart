@@ -45,6 +45,7 @@ void main() {
     expect(find.text('मोबाइल रिचार्ज'), findsOneWidget);
     expect(find.text('बिल पेमेंट'), findsOneWidget);
     expect(find.text('चालान पेमेंट'), findsOneWidget);
+    expect(find.text('सर्विस वॉलेट'), findsOneWidget);
     expect(find.text('स्टॉक'), findsNothing);
     expect(find.text('बिक्री'), findsNothing);
   });
@@ -53,10 +54,10 @@ void main() {
     await pumpDashboardPhone(tester);
     await tester.tap(find.text('बिल पेमेंट'));
     await tester.pumpAndSettle();
-    for (final item in ['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल']) {
+    for (final item in ['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल','FASTag रिचार्ज (Coming Soon)']) {
       expect(find.text(item), findsOneWidget);
     }
-    expect(find.text('COMING SOON'), findsNWidgets(6));
+    expect(find.text('COMING SOON'), findsNWidgets(7));
   });
 
   testWidgets('Recharge and challan categories open their sub-options', (tester) async {
@@ -118,6 +119,25 @@ void main() {
     expect(find.text('UPI / मनी ट्रांसफर'), findsNothing);
     expect(find.text('मोबाइल OTP / SMS अलर्ट'), findsNothing);
     expect(find.text('WhatsApp: 6283398317'), findsOneWidget);
+    expect(find.textContaining('मोबाइल नंबर रजिस्ट्रेशन में सेव होगा'), findsNothing);
+    expect(find.textContaining('खाता बुक व्यक्तिगत/दुकान के हिसाब'), findsNothing);
+    expect(find.text('सर्विस वॉलेट और कमाई'), findsNothing);
+  });
+
+
+  testWidgets('Account and Security is first in profile and exposes login and register', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('प्रोफाइल'));
+    await tester.pumpAndSettle();
+    final account = find.text('अकाउंट और सुरक्षा');
+    final language = find.text('भाषा / Language');
+    expect(account, findsOneWidget);
+    expect(language, findsOneWidget);
+    expect(tester.getTopLeft(account).dy, lessThan(tester.getTopLeft(language).dy));
+    await tester.tap(account);
+    await tester.pumpAndSettle();
+    expect(find.text('लॉगिन करें'), findsWidgets);
+    expect(find.text('रजिस्टर करें'), findsOneWidget);
   });
 
   testWidgets('Local SQLite records survive app restart', (tester) async {
