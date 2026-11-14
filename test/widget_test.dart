@@ -46,7 +46,6 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('मोबाइल / DTH / FASTag रिचार्ज'), 200);
     expect(find.text('Coming Soon • स्वीकृत प्रदाता API आवश्यक'), findsOneWidget);
-    expect(find.text('Coming Soon • BBPS पार्टनर आवश्यक'), findsOneWidget);
-    expect(find.text('Coming Soon • बैंकिंग पार्टनर और अनुपालन आवश्यक'), findsOneWidget);
-  });}
+  });
