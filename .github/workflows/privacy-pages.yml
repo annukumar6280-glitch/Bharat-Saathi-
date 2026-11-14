@@ -27,10 +27,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+      - name: Prepare public policy pages only
+        run: |
+          mkdir -p _site
+          cp docs/privacy-policy.html _site/privacy-policy.html
+          cp docs/delete-account.html _site/delete-account.html
       - name: Upload policy website
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: _site
       - name: Deploy policy website
         id: deployment
         uses: actions/deploy-pages@v4
