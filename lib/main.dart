@@ -169,7 +169,7 @@ class Dashboard extends StatelessWidget{
  Text(english?'Your accounts, in one place':'आपका हिसाब, एक ही जगह',style:const TextStyle(color:navy,fontSize:21,fontWeight:FontWeight.w900)),
  Container(margin:const EdgeInsets.only(top:12,bottom:14),padding:const EdgeInsets.all(17),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('इस महीने का खर्च',style:TextStyle(color:Colors.white70)),Text('₹'+money(monthExpense),style:const TextStyle(color:Colors.white,fontSize:27,fontWeight:FontWeight.w900)),Text('दुकान लेना: ₹'+money(shopDue)+'  •  पर्सनल लेना: ₹'+money(personalDue),style:const TextStyle(color:Colors.white70,fontSize:11))])),
  const Text('मुख्य सुविधाएँ',style:TextStyle(color:navy,fontSize:17,fontWeight:FontWeight.w900)),
- GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:10,mainAxisSpacing:10,childAspectRatio:1.25,children:[
+ GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:10,mainAxisSpacing:10,childAspectRatio:1.9,children:[
  _tile('खाता बुक',Icons.menu_book,onKhata),_tile('मोबाइल रिचार्ज',Icons.phone_android,onRecharge),_tile('बिल पेमेंट',Icons.receipt_long,onBills),_tile('चालान पेमेंट',Icons.local_police,onChallan)]),
  ListTile(tileColor:Colors.white,leading:const Icon(Icons.payments,color:red),title:const Text('महीने का खर्च'),trailing:Text('₹'+money(monthExpense)),onTap:onExpense),
  const Text('रिचार्ज, बिल और चालान के विकल्प Coming Soon हैं।',style:TextStyle(color:muted,fontSize:11))
