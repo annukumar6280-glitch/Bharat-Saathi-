@@ -35,7 +35,7 @@ class LocalStore {
  }
 }
 const navy=Color(0xFF14233B),blue=Color(0xFF29496D),gold=Color(0xFFF2A93B),bg=Color(0xFFE7EBF1),muted=Color(0xFF788596),green=Color(0xFF16845B),red=Color(0xFFD95454);
-class BharatSaathiApp extends StatelessWidget{final bool supabaseAvailable;const BharatSaathiApp({super.key,this.supabaseAvailable=false});@override Widget build(BuildContext context)=>MaterialApp(title:'Bharat Saathi',debugShowCheckedModeBanner:false,theme:ThemeData(useMaterial3:true,scaffoldBackgroundColor:bg,colorScheme:ColorScheme.fromSeed(seedColor:navy),appBarTheme:const AppBarTheme(backgroundColor:bg,foregroundColor:navy,elevation:0)),home:RetailerHome(supabaseAvailable:supabaseAvailable));}
+class BharatSaathiApp extends StatelessWidget{final bool supabaseAvailable;const BharatSaathiApp({super.key,this.supabaseAvailable=false});@override Widget build(BuildContext context)=>MaterialApp(title:'Bharat Saathi',debugShowCheckedModeBanner:false,theme:ThemeData(useMaterial3:true,scaffoldBackgroundColor:const Color(0xFFF4F6FB),colorScheme:ColorScheme.fromSeed(seedColor:blue).copyWith(primary:navy,secondary:const Color(0xFF168C86),surface:const Color(0xFFF8FAFD)),appBarTheme:const AppBarTheme(backgroundColor:Color(0xFFF4F6FB),foregroundColor:navy,elevation:0,centerTitle:false),inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:Colors.white,contentPadding:const EdgeInsets.symmetric(horizontal:14,vertical:14),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFFE1E7F0))),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFFE1E7F0))),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:blue,width:1.5))),filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:navy,foregroundColor:Colors.white,minimumSize:const Size(0,48),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:navy,minimumSize:const Size(0,46),side:const BorderSide(color:Color(0xFFCCD6E4)),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating)),home:RetailerHome(supabaseAvailable:supabaseAvailable));}
 class Item{String name,detail;int qty;double price;Item(this.name,this.detail,this.qty,this.price);Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'qty':qty,'price':price};factory Item.fromJson(Map<String,dynamic> j)=>Item(j['name'] as String,j['detail'] as String,(j['qty'] as num).toInt(),(j['price'] as num).toDouble());}
 class Record{String name,detail;double amount;IconData icon;DateTime? createdAt;Record(this.name,this.detail,this.amount,this.icon,[DateTime? timestamp]):createdAt=timestamp??DateTime.now();Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint,'createdAt':createdAt?.toIso8601String()};factory Record.fromJson(Map<String,dynamic> j){final timestamp=j['createdAt'] is String?DateTime.tryParse(j['createdAt'] as String):null;return Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long,timestamp)..createdAt=timestamp;}}
 class RetailerHome extends StatefulWidget{final bool supabaseAvailable;const RetailerHome({super.key,this.supabaseAvailable=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
@@ -152,7 +152,7 @@ class _RetailerHomeState extends State<RetailerHome>{
 }
  @override Widget build(BuildContext context){
  final pages=<Widget>[
-  Dashboard(english:english,shopDue:khata.fold<double>(0,(s,e)=>s+e.amount),personalDue:personalKhata.fold<double>(0,(s,e)=>s+e.amount),monthExpense:expensesList.where((e)=>e.createdAt!=null&&e.createdAt!.year==DateTime.now().year&&e.createdAt!.month==DateTime.now().month).fold<double>(0,(s,e)=>s+e.amount),onKhata:()=>setState(()=>tab=1),onExpense:()=>setState(()=>tab=2),onRecharge:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'recharge',english:english))),onBills:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'bills',english:english))),onChallan:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'challan',english:english)))),
+  Dashboard(english:english,supabaseAvailable:widget.supabaseAvailable,onWallet:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommerceWalletPage(supabaseAvailable:widget.supabaseAvailable))),shopDue:khata.fold<double>(0,(s,e)=>s+e.amount),personalDue:personalKhata.fold<double>(0,(s,e)=>s+e.amount),monthExpense:expensesList.where((e)=>e.createdAt!=null&&e.createdAt!.year==DateTime.now().year&&e.createdAt!.month==DateTime.now().month).fold<double>(0,(s,e)=>s+e.amount),onKhata:()=>setState(()=>tab=1),onExpense:()=>setState(()=>tab=2),onRecharge:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'recharge',english:english))),onBills:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'bills',english:english))),onChallan:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'challan',english:english)))),
   KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onCredit:()=>entry(),onPayment:()=>entry(true)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onCredit:()=>personalLoanEntry(),onPayment:()=>personalLoanEntry(true)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
   ExpenseOnlyPage(items:expensesList,onAdd:expense),
   ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,onLanguage:(v){setState(()=>english=v);_persist();},sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products,purchases:purchases,supplierLedger:supplierLedger,salesReturns:salesReturns,stockAdjustments:stockAdjustments)
@@ -162,9 +162,35 @@ class _RetailerHomeState extends State<RetailerHome>{
  Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:const Icon(Icons.add),label:Text(s));
 }
 
+class HomeServiceWalletCard extends StatefulWidget{
+ final bool supabaseAvailable,english;final VoidCallback onTap;
+ const HomeServiceWalletCard({super.key,required this.supabaseAvailable,required this.onTap,required this.english});
+ @override State<HomeServiceWalletCard> createState()=>_HomeServiceWalletCardState();
+}
+class _HomeServiceWalletCardState extends State<HomeServiceWalletCard>{
+ double service=0,commission=0;bool loading=true;
+ @override void initState(){super.initState();_load();}
+ Future<void> _load()async{
+  final user=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
+  if(user==null){if(mounted)setState(()=>loading=false);return;}
+  try{final row=await Supabase.instance.client.from('commerce_wallets').select('service_balance,commission_balance').eq('user_id',user.id).maybeSingle();if(mounted)setState((){service=(row?['service_balance'] as num?)?.toDouble()??0;commission=(row?['commission_balance'] as num?)?.toDouble()??0;loading=false;});}
+  catch(_){if(mounted)setState(()=>loading=false);}
+ }
+ @override Widget build(BuildContext context)=>Material(color:Colors.transparent,child:InkWell(onTap:widget.onTap,borderRadius:BorderRadius.circular(19),child:Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF176B72),Color(0xFF203F69)]),borderRadius:BorderRadius.circular(19),boxShadow:[BoxShadow(color:const Color(0xFF173B5B).withOpacity(.13),blurRadius:16,offset:const Offset(0,7))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+  Row(children:[const Icon(Icons.account_balance_wallet_rounded,color:Color(0xFFFFD58A),size:23),const SizedBox(width:9),Expanded(child:Text(widget.english?'Service Wallet':'सर्विस वॉलेट',style:const TextStyle(color:Colors.white,fontSize:16,fontWeight:FontWeight.w900))),const Icon(Icons.open_in_new,color:Colors.white70,size:17)]),
+  const SizedBox(height:5),Text(widget.english?'Ready for recharges and bill payments':'रिचार्ज और बिल पेमेंट के लिए बैलेंस',style:const TextStyle(color:Colors.white70,fontSize:11)),
+  const SizedBox(height:13),Row(children:[
+   Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Service Balance',style:TextStyle(color:Colors.white70,fontSize:10)),const SizedBox(height:3),Text(loading?'—':'₹${money(service)}',style:const TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900))])),
+   Container(width:1,height:37,color:Colors.white24),const SizedBox(width:14),
+   Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Commission Balance',style:TextStyle(color:Colors.white70,fontSize:10)),const SizedBox(height:3),Text(loading?'—':'₹${money(commission)}',style:const TextStyle(color:Color(0xFFFFD58A),fontSize:20,fontWeight:FontWeight.w900))]))
+  ]),
+  if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Padding(padding:EdgeInsets.only(top:7),child:Text('बैलेंस देखने के लिए लॉगिन करें',style:TextStyle(color:Colors.white70,fontSize:10)))
+ ]))));
+}
+
 class Dashboard extends StatelessWidget{
- final bool english;final double shopDue,personalDue,monthExpense;final VoidCallback onKhata,onExpense,onRecharge,onBills,onChallan;
- const Dashboard({super.key,required this.english,required this.shopDue,required this.personalDue,required this.monthExpense,required this.onKhata,required this.onExpense,required this.onRecharge,required this.onBills,required this.onChallan});
+ final bool english,supabaseAvailable;final double shopDue,personalDue,monthExpense;final VoidCallback onKhata,onExpense,onRecharge,onBills,onChallan,onWallet;
+ const Dashboard({super.key,required this.english,required this.supabaseAvailable,required this.onWallet,required this.shopDue,required this.personalDue,required this.monthExpense,required this.onKhata,required this.onExpense,required this.onRecharge,required this.onBills,required this.onChallan});
  @override Widget build(BuildContext context)=>Container(
   color:const Color(0xFFF3F5F8),
   child:ListView(padding:const EdgeInsets.fromLTRB(16,14,16,24),children:[
@@ -181,6 +207,8 @@ class Dashboard extends StatelessWidget{
     const SizedBox(height:13),Container(height:1,color:const Color(0xFFE9EDF2)),const SizedBox(height:12),
     Row(children:[Expanded(child:_summary(english?'Shop receivable':'दुकान का बकाया',shopDue)),Container(width:1,height:35,color:const Color(0xFFE5EAF0)),const SizedBox(width:13),Expanded(child:_summary(english?'Personal receivable':'पर्सनल बकाया',personalDue))])
    ])),
+   const SizedBox(height:14),
+   HomeServiceWalletCard(supabaseAvailable:supabaseAvailable,onTap:onWallet,english:english),
    const SizedBox(height:21),
    Row(children:[Expanded(child:Text(english?'Services':'मुख्य सेवाएँ',style:const TextStyle(color:navy,fontSize:18,fontWeight:FontWeight.w900))),Text(english?'Quick access':'आसान पहुँच',style:const TextStyle(color:muted,fontSize:11))]),
    const SizedBox(height:4),Text(english?'Select a service to continue':'जिस सुविधा की जरूरत हो, उसे चुनें',style:const TextStyle(color:muted,fontSize:11)),
@@ -230,7 +258,7 @@ class ExpenseOnlyPage extends StatefulWidget{
 class _ExpenseOnlyPageState extends State<ExpenseOnlyPage>{
  @override Widget build(BuildContext context){final now=DateTime.now();final rows=widget.items.where((e)=>e.createdAt!=null&&e.createdAt!.year==now.year&&e.createdAt!.month==now.month).toList();final total=rows.fold<double>(0,(s,e)=>s+e.amount);return Scaffold(appBar:AppBar(title:const Text('महीने का खर्च')),body:ListView(padding:const EdgeInsets.all(16),children:[Text('इस महीने का खर्च: ₹'+money(total),style:const TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),FilledButton.icon(onPressed:()async{await widget.onAdd();if(mounted)setState((){});},icon:const Icon(Icons.add),label:const Text('खर्च जोड़ें')),...rows.map((e)=>ListTile(title:Text(e.name),subtitle:Text(e.detail),trailing:Text('₹'+money(e.amount))))]));}
 }
-class ServiceCategoryPage extends StatelessWidget{final String kind;final bool english;const ServiceCategoryPage({super.key,required this.kind,required this.english});@override Widget build(BuildContext context){final opts=kind=='recharge'?(english?['Prepaid mobile recharge','Postpaid mobile bill']:['प्रीपेड मोबाइल रिचार्ज','पोस्टपेड मोबाइल बिल']):kind=='bills'?(english?['Electricity bill','Water bill','Gas bill','DTH recharge','Broadband / internet bill','Landline bill']:['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल']):(english?['Traffic challan','Vehicle challan status']:['ट्रैफिक चालान','वाहन चालान की स्थिति']);return Scaffold(appBar:AppBar(title:Text(kind=='recharge'?(english?'Mobile Recharge':'मोबाइल रिचार्ज'):kind=='bills'?(english?'Bill Payment':'बिल पेमेंट'):(english?'Challan Payment':'चालान पेमेंट'))),body:ListView(padding:const EdgeInsets.all(16),children:opts.map((x)=>Card(color:Colors.white,child:ListTile(title:Text(x),trailing:const Chip(label:Text('COMING SOON')),onTap:()=>openComingSoon(context,x)))).toList()));}
+class ServiceCategoryPage extends StatelessWidget{final String kind;final bool english;const ServiceCategoryPage({super.key,required this.kind,required this.english});@override Widget build(BuildContext context){final opts=kind=='recharge'?(english?['Prepaid mobile recharge','Postpaid mobile bill']:['प्रीपेड मोबाइल रिचार्ज','पोस्टपेड मोबाइल बिल']):kind=='bills'?(english?['Electricity bill','Water bill','Gas bill','DTH recharge','Broadband / internet bill','Landline bill','FASTag recharge (Coming Soon)']:['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल','FASTag रिचार्ज (Coming Soon)']):(english?['Traffic challan','Vehicle challan status']:['ट्रैफिक चालान','वाहन चालान की स्थिति']);return Scaffold(appBar:AppBar(title:Text(kind=='recharge'?(english?'Mobile Recharge':'मोबाइल रिचार्ज'):kind=='bills'?(english?'Bill Payment':'बिल पेमेंट'):(english?'Challan Payment':'चालान पेमेंट'))),body:ListView(padding:const EdgeInsets.all(16),children:opts.map((x)=>Card(color:Colors.white,child:ListTile(title:Text(x),trailing:const Chip(label:Text('COMING SOON')),onTap:()=>openComingSoon(context,x)))).toList()));}
 }
 class LinkedKhataPage extends StatefulWidget{final bool supabaseAvailable;const LinkedKhataPage({super.key,required this.supabaseAvailable});@override State<LinkedKhataPage> createState()=>_LinkedKhataPageState();}
 class _LinkedKhataPageState extends State<LinkedKhataPage>{
@@ -456,8 +484,8 @@ class _AuthPageState extends State<AuthPage>{
  return Scaffold(appBar:AppBar(title:const Text('अकाउंट और सुरक्षा')),body:ListView(padding:const EdgeInsets.all(20),children:[
  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Bharat Saathi अकाउंट',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),SizedBox(height:6),Text('ईमेल से सुरक्षित लॉगिन। SMS OTP अभी Coming Soon है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
  const SizedBox(height:18),
- if(!widget.supabaseAvailable)const Text('Supabase कनेक्शन शुरू नहीं हो पाया। अभी स्थानीय ऑफलाइन सुविधाएँ उपयोग करें।',style:TextStyle(color:red))
- else if(user!=null)...[
+ if(!widget.supabaseAvailable)const Text('अकाउंट सेवा से कनेक्शन उपलब्ध नहीं है। इंटरनेट कनेक्शन जाँचें।',style:TextStyle(color:red)),
+ if(user!=null)...[
  const Text('लॉगिन सक्रिय',style:TextStyle(color:green,fontSize:18,fontWeight:FontWeight.w900)),const SizedBox(height:6),Text(user.email??'',style:const TextStyle(color:navy)),const SizedBox(height:12),const Text('आपके लिए व्यक्तिगत और रिटेलर खाते डेटाबेस में तैयार किए जाते हैं। मौजूदा ऑफलाइन रिकॉर्ड अभी क्लाउड से सिंक नहीं होते।',style:TextStyle(color:muted,fontSize:12)),const SizedBox(height:18),FilledButton(onPressed:busy?null:signOut,child:Text(busy?'कृपया प्रतीक्षा करें':'लॉगआउट करें'))
  ]else...[
  if(signUp)TextField(controller:fullName,decoration:const InputDecoration(labelText:'पूरा नाम',prefixIcon:Icon(Icons.person_outline))),
@@ -467,8 +495,8 @@ class _AuthPageState extends State<AuthPage>{
   TextField(controller:email,keyboardType:TextInputType.emailAddress,autocorrect:false,decoration:const InputDecoration(labelText:'ईमेल',prefixIcon:Icon(Icons.email_outlined))),
  const SizedBox(height:10),TextField(controller:password,obscureText:!showPassword,decoration:InputDecoration(labelText:'पासवर्ड (कम-से-कम 8 अक्षर)',prefixIcon:const Icon(Icons.lock_outline),suffixIcon:IconButton(onPressed:()=>setState(()=>showPassword=!showPassword),icon:Icon(showPassword?Icons.visibility_off:Icons.visibility)))),
  const SizedBox(height:16),FilledButton(onPressed:busy?null:submit,style:FilledButton.styleFrom(backgroundColor:navy,padding:const EdgeInsets.all(15)),child:Text(busy?'कृपया प्रतीक्षा करें':signUp?'अकाउंट बनाएं':'लॉगिन करें')),
- if(!signUp)TextButton(onPressed:busy?null:resetPassword,child:const Text('पासवर्ड भूल गए? रीसेट ईमेल भेजें')),
- TextButton(onPressed:busy?null:()=>setState(()=>signUp=!signUp),child:Text(signUp?'पहले से अकाउंट है? लॉगिन करें':'नया अकाउंट बनाना है? रजिस्टर करें'))
+ Row(children:[Expanded(child:signUp?OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=false),child:const Text('लॉगिन करें')):FilledButton(onPressed:busy?null:()=>setState(()=>signUp=false),child:const Text('लॉगिन करें'))),const SizedBox(width:10),Expanded(child:signUp?FilledButton(onPressed:busy?null:()=>setState(()=>signUp=true),child:const Text('रजिस्टर करें')):OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=true),child:const Text('रजिस्टर करें')))]),
+ if(!signUp)TextButton(onPressed:busy?null:resetPassword,child:const Text('पासवर्ड भूल गए? रीसेट ईमेल भेजें'))
  ],
  if(notice!=null)Padding(padding:const EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:errorNotice?red:green,fontSize:12,fontWeight:FontWeight.w700)))
  ]));
@@ -526,16 +554,13 @@ class ProfilePage extends StatelessWidget{
   return ListView(padding:const EdgeInsets.all(17),children:[
    heading(english?'Profile & Settings':'प्रोफाइल और सेटिंग',english?'Manage your account':'अपने अकाउंट को मैनेज करें'),
    Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.language),title:const Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
-   setting(Icons.account_balance_wallet_outlined,english?'Service Wallet & Earnings':'सर्विस वॉलेट और कमाई',english?'Service balance and commission balance':'सर्विस बैलेंस और कमीशन की कमाई',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommerceWalletPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.percent_rounded,english?'Commission List':'कमीशन लिस्ट',english?'Self and referral commission by service':'हर सर्विस का सेल्फ और रेफरल कमीशन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommissionListPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.share_outlined,english?'Refer & Earn':'रेफर करें और कमाएँ',english?'Your referral code and referral history':'आपका रेफरल कोड और रेफरल जानकारी',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
    if(admin)setting(Icons.admin_panel_settings_outlined,english?'Admin Commission Settings':'एडमिन कमीशन सेटिंग',english?'Configure service and referral rates':'सर्विस और रेफरल कमीशन की दरें सेट करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const AdminCommissionPage()))),
-   setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Email/password login; phone collected at registration':'ईमेल और पासवर्ड लॉगिन; रजिस्ट्रेशन में मोबाइल नंबर',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
+   setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),
    setting(Icons.cloud_upload_outlined,english?'Data backup':'डेटा बैकअप',english?'Manual cloud backup':'मैनुअल क्लाउड बैकअप',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),
-   Text(english?'Your mobile number is saved at registration. Login uses email and password. OTP is not enabled. SMS and email alerts need provider setup.':'मोबाइल नंबर रजिस्ट्रेशन में सेव होगा। लॉगिन ईमेल और पासवर्ड से होगा। OTP अभी नहीं है। SMS और ईमेल अलर्ट के लिए सेवा सेटअप बाकी है.',style:const TextStyle(color:muted,fontSize:11)),
-   const Text('खाता बुक व्यक्तिगत/दुकान के हिसाब के लिए अलग रहेगा। सर्विस वॉलेट और कमीशन बैलेंस अलग हैं।',style:TextStyle(color:muted,fontSize:11))
   ]);
  }
 }
