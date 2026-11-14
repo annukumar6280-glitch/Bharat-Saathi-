@@ -9,19 +9,21 @@ This file is the source of truth for what is implemented, what is local-only, an
 - Retailer ledger: products, stock count, sales, expenses and customer receivables.
 - Sales select an existing product and quantity, validate available stock, and deduct inventory.
 - Sales distinguish cash/bank payment from customer credit. Credit sales create a khata receivable; recorded customer payments reduce receivables and add to recorded cash flow.
-- Retailer purchase entry records supplier name, product, quantity and unit purchase cost; it increases stock, reduces recorded cash flow by the purchase total, and appears in supplier history and CSV reports. Supplier credit/payables are not yet implemented.
-- Records persist on the current device through SharedPreferences.
+- Retailer purchase entry records supplier, product, quantity and unit cost. Cash purchases reduce cash; credit purchases increase supplier payable. Supplier payments reduce payable and cash.
+- Sales returns validate the customer's recorded sold quantity, restore stock, and record either a cash refund or a customer-credit adjustment.
+- Manual stock increases are recorded in a stock-adjustment history.
+- Records persist in a transactional SQLite app-state table. Existing SharedPreferences JSON is imported into SQLite when no database snapshot exists.
 - First launch contains no fabricated customer, invoice, stock or balance data.
 - Provider-dependent service tiles display Coming Soon.
 - Local reports summarize sales, business expenses, customer khata, personal income/expenses and estimated stock value. CSV rows can be copied to the clipboard for use in a spreadsheet.
 
 ## Reports and export limitation
 
-The reports page and CSV clipboard export operate only on the current device snapshot. New financial records store a timestamp and CSV includes it; records created before this update have no historical timestamp and export with a blank date. Date-range filters and PDF statements are not available yet. CSV export does not imply cloud synchronization.
+The reports page operates on the current device snapshot, supports date-range filtering, and shares CSV files. New financial records store a timestamp; older records without a timestamp are excluded from a date-filtered report. PDF statements are not available yet. CSV export does not imply cloud synchronization.
 
 ## Important data limitation
 
-The current local prototype uses a key-value store. It is not a production accounting database, is not encrypted as a financial vault, has no automatic cloud backup, and does not synchronize between devices. Do not use it as the final ledger for real business transactions. Before production, migrate to SQLite/Drift or another transactional local database, add schema migrations, audit history, export/restore, and a conflict-safe Supabase sync engine.
+SQLite currently stores the full app state as one transactional JSON snapshot. It is more resilient than the previous key-value-only write but is not yet a normalized accounting ledger, is not encrypted as a financial vault, has no automatic cloud backup, and does not synchronize between devices. Do not use it as the final ledger for real business transactions. Before production, normalize the schema, add audit history, encryption strategy and conflict-safe Supabase sync.
 
 ## Supabase backend already present
 
@@ -48,10 +50,10 @@ Never simulate a successful external transaction or fabricate balances, commissi
 
 ## Remaining product work
 
-1. Replace local key-value storage with a transactional offline database and migrations.
+1. Normalize the SQLite snapshot into transaction, inventory and audit tables with schema migrations.
 2. Extend the current Supabase email auth/account provisioning with account switching, session lifecycle handling, password recovery and verified email delivery.
 3. Sync personal finance, budgets, parties, khata, products, purchases, sales and stock movements through RLS-protected tables/RPCs.
-4. Add full customer and supplier profiles/contact details, supplier payables, invoice details, sales returns, stock adjustment history and tax fields.
+4. Add full customer/supplier profiles and contacts, invoice numbering/printable tax invoices, stock adjustment reversals and tax fields.
 5. Add live sync from local records to normalized tables with conflict handling; add categories, recurring bills/reminders, family accounts, date filters, reports and CSV/PDF export.
 6. Add backup/restore, account deletion/export flows, privacy policy, terms, support and accessibility review.
 7. Complete security advisor review, API exposure verification, end-to-end tests and Android release signing.
