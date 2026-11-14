@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 const supabaseUrl='https://nlfdqkkrwthobvwqfepl.supabase.co';
 const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
+const privacyPolicyUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/privacy-policy.html';
 Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready));}
 
 bool bannerAdsEnabled=true;
@@ -499,6 +500,29 @@ class _AuthPageState extends State<AuthPage>{
  if(mounted)setState(()=>busy=false);
  }
  Future<void> signOut()async{setState(()=>busy=true);try{await client.auth.signOut();message('लॉगआउट हो गया।');}catch(_){message('लॉगआउट पूरा नहीं हुआ।',error:true);}if(mounted)setState(()=>busy=false);}
+ Future<void> deleteAccount()async{
+  final confirmed=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(
+   title:const Text('अकाउंट हमेशा के लिए डिलीट करें?'),
+   content:const Text('आपका लॉगिन अकाउंट, क्लाउड बैकअप और अकाउंट से जुड़े सर्वर रिकॉर्ड डिलीट होंगे। इस डिवाइस के Bharat Saathi रिकॉर्ड भी मिट जाएंगे। यह कार्रवाई वापस नहीं हो सकती।'),
+   actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,true),style:FilledButton.styleFrom(backgroundColor:red),child:const Text('डिलीट करें'))],
+  ));
+  if(confirmed!=true)return;
+  setState(()=>busy=true);
+  try{
+   final response=await client.functions.invoke('delete-account');
+   if(response.status!=200)throw Exception('डिलीशन सर्वर ने अनुरोध पूरा नहीं किया।');
+   await client.auth.signOut(scope:SignOutScope.local);
+   await LocalStore.clear();
+   final prefs=await SharedPreferences.getInstance();
+   await prefs.remove('bharat_saathi_store_v1');
+   if(!mounted)return;
+   Navigator.of(context).pop();
+   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('अकाउंट और इस डिवाइस के ऐप रिकॉर्ड डिलीट हो गए।')));
+  }catch(e){
+   message('अकाउंट डिलीट नहीं हो पाया। कृपया दोबारा प्रयास करें।',error:true);
+   if(mounted)setState(()=>busy=false);
+  }
+ }
  @override void dispose(){email.dispose();password.dispose();fullName.dispose();phone.dispose();super.dispose();}
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
@@ -507,7 +531,7 @@ class _AuthPageState extends State<AuthPage>{
  const SizedBox(height:18),
  if(!widget.supabaseAvailable)Text('अकाउंट सेवा से कनेक्शन उपलब्ध नहीं है। इंटरनेट कनेक्शन जाँचें।',style:TextStyle(color:red)),
  if(user!=null)...[
- Text('लॉगिन सक्रिय',style:TextStyle(color:green,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:6),Text(user.email??'',style:TextStyle(color:navy)),SizedBox(height:12),Text('आपके लिए व्यक्तिगत और रिटेलर खाते डेटाबेस में तैयार किए जाते हैं। मौजूदा ऑफलाइन रिकॉर्ड अभी क्लाउड से सिंक नहीं होते।',style:TextStyle(color:muted,fontSize:12)),SizedBox(height:18),FilledButton(onPressed:busy?null:signOut,child:Text(busy?'कृपया प्रतीक्षा करें':'लॉगआउट करें'))
+ Text('लॉगिन सक्रिय',style:TextStyle(color:green,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:6),Text(user.email??'',style:TextStyle(color:navy)),SizedBox(height:12),Text('आपके लिए व्यक्तिगत और रिटेलर खाते डेटाबेस में तैयार किए जाते हैं। मौजूदा ऑफलाइन रिकॉर्ड अभी क्लाउड से सिंक नहीं होते।',style:TextStyle(color:muted,fontSize:12)),SizedBox(height:18),FilledButton(onPressed:busy?null:signOut,child:Text(busy?'कृपया प्रतीक्षा करें':'लॉगआउट करें')),SizedBox(height:10),OutlinedButton.icon(onPressed:busy?null:deleteAccount,icon:Icon(Icons.delete_forever_outlined,color:red),label:Text('अकाउंट डिलीट करें',style:TextStyle(color:red)))
  ]else...[
  if(signUp)TextField(controller:fullName,decoration:const InputDecoration(labelText:'पूरा नाम',prefixIcon:Icon(Icons.person_outline))),
  if(signUp)const SizedBox(height:10),
@@ -601,6 +625,7 @@ class ProfilePage extends StatelessWidget{
   return ListView(padding:const EdgeInsets.all(17),children:[
    heading(english?'Profile & Settings':'प्रोफाइल और सेटिंग',english?'Manage your account':'अपने अकाउंट को मैनेज करें'),
    setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
+   setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>launchUrl(Uri.parse(privacyPolicyUrl),mode:LaunchMode.externalApplication)),
    Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
    SwitchListTile(secondary:Icon(Icons.dark_mode_outlined,color:blue),title:Text(english?'Dark theme':'डार्क थीम',style:TextStyle(color:navy,fontWeight:FontWeight.w800)),subtitle:Text(english?'Professional deep-blue appearance':'ऑन करने पर पूरे ऐप में प्रोफेशनल ब्लू डार्क थीम लागू होगी',style:TextStyle(color:muted,fontSize:11)),value:darkMode,onChanged:onDarkMode,activeThumbColor:blue,contentPadding:EdgeInsets.symmetric(horizontal:14)),
     setting(Icons.percent_rounded,english?'Commission List':'कमीशन लिस्ट',english?'Self and referral commission by service':'हर सर्विस का सेल्फ और रेफरल कमीशन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommissionListPage(supabaseAvailable:supabaseAvailable)))),
