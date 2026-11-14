@@ -46,8 +46,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('मोबाइल / DTH / FASTag रिचार्ज'), 200);
-    await tester.tap(find.text('मोबाइल / DTH / FASTag रिचार्ज'));
+    final serviceText = find.text('मोबाइल / DTH / FASTag रिचार्ज');
+    final serviceRow = find.ancestor(of: serviceText, matching: find.byType(InkWell)).first;
+    await tester.ensureVisible(serviceRow);
+    await tester.pumpAndSettle();
+    await tester.tap(serviceRow);
     await tester.pumpAndSettle();
     expect(find.text('COMING SOON'), findsOneWidget);
   });
