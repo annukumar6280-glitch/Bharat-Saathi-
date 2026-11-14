@@ -45,9 +45,9 @@ void main() {
     await tester.tap(find.text('रिपोर्ट और डेटा एक्सपोर्ट'));
     await tester.pumpAndSettle();
     expect(find.text('रिपोर्ट और एक्सपोर्ट'), findsOneWidget);
+    expect(find.text('तारीख़ के अनुसार फ़िल्टर करें'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('CSV रिपोर्ट डाउनलोड / शेयर करें'), 200);
     expect(find.text('CSV रिपोर्ट डाउनलोड / शेयर करें'), findsOneWidget);
-    expect(find.text('तारीख़ के अनुसार फ़िल्टर करें'), findsOneWidget);
   });
 
   testWidgets('Provider-dependent services are clearly marked Coming Soon', (tester) async {
