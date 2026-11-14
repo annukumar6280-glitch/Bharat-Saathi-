@@ -14,6 +14,7 @@ const supabaseUrl='https://nlfdqkkrwthobvwqfepl.supabase.co';
 const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
 Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready));}
 
+bool bannerAdsEnabled=true;
 const String _bannerAdUnitId='ca-app-pub-3940256099942544/6300978111';
 
 class BannerAdSlot extends StatefulWidget{
@@ -23,7 +24,7 @@ class BannerAdSlot extends StatefulWidget{
 class _BannerAdSlotState extends State<BannerAdSlot>{
  BannerAd? _banner;
  bool _loaded=false;
- bool get _supported=>!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS);
+ bool get _supported=>bannerAdsEnabled&&!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS);
  @override void initState(){super.initState();if(_supported){final ad=BannerAd(adUnitId:_bannerAdUnitId,size:AdSize.banner,request:const AdRequest(),listener:BannerAdListener(onAdLoaded:(ad){if(mounted)setState(()=>_loaded=true);},onAdFailedToLoad:(ad,error){ad.dispose();if(mounted)setState(()=>_loaded=false);}));_banner=ad;ad.load();}}
  @override void dispose(){_banner?.dispose();super.dispose();}
  @override Widget build(BuildContext context){final ad=_banner;if(!_loaded||ad==null)return const SizedBox.shrink();return Container(width:double.infinity,height:ad.size.height.toDouble(),alignment:Alignment.center,child:AdWidget(ad:ad));}
