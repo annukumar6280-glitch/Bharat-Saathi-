@@ -125,7 +125,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('रिपोर्ट और डेटा एक्सपोर्ट'));
     await tester.pumpAndSettle();
-    expect(find.text('₹80'), findsOneWidget);
+    expect(find.text('सप्लायर बकाया'), findsOneWidget);
+    expect(find.text('₹80'), findsNWidgets(2));
   });
 
   testWidgets('Sales return restores stock and records refund', (tester) async {
