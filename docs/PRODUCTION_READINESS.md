@@ -9,6 +9,7 @@ This file is the source of truth for what is implemented, what is local-only, an
 - Retailer ledger: products, stock count, sales, expenses and customer receivables.
 - Sales select an existing product and quantity, validate available stock, and deduct inventory.
 - Sales distinguish cash/bank payment from customer credit. Credit sales create a khata receivable; recorded customer payments reduce receivables and add to recorded cash flow.
+- Retailer purchase entry records supplier name, product, quantity and unit purchase cost; it increases stock, reduces recorded cash flow by the purchase total, and appears in supplier history and CSV reports. Supplier credit/payables are not yet implemented.
 - Records persist on the current device through SharedPreferences.
 - First launch contains no fabricated customer, invoice, stock or balance data.
 - Provider-dependent service tiles display Coming Soon.
@@ -50,7 +51,7 @@ Never simulate a successful external transaction or fabricate balances, commissi
 1. Replace local key-value storage with a transactional offline database and migrations.
 2. Extend the current Supabase email auth/account provisioning with account switching, session lifecycle handling, password recovery and verified email delivery.
 3. Sync personal finance, budgets, parties, khata, products, purchases, sales and stock movements through RLS-protected tables/RPCs.
-4. Add full customer and supplier management, purchase entry, invoice details, sales returns, stock adjustment history and tax fields.
+4. Add full customer and supplier profiles/contact details, supplier payables, invoice details, sales returns, stock adjustment history and tax fields.
 5. Add live sync from local records to normalized tables with conflict handling; add categories, recurring bills/reminders, family accounts, date filters, reports and CSV/PDF export.
 6. Add backup/restore, account deletion/export flows, privacy policy, terms, support and accessibility review.
 7. Complete security advisor review, API exposure verification, end-to-end tests and Android release signing.
