@@ -30,11 +30,11 @@ class _RetailerHomeState extends State<RetailerHome>{
  }
  void sale()=>form('नई बिक्री','ग्राहक / विवरण','बिक्री राशि (₹)',(n,a){setState((){sales.insert(0,Record(n,'बिक्री • अभी',a,Icons.receipt_long));cash+=a;});_persist();msg('बिक्री इस डिवाइस पर सेव हुई');});
  void expense()=>form('खर्च दर्ज करें','खर्च का विवरण','खर्च राशि (₹)',(n,a){setState((){expenses+=a;cash-=a;expensesList.insert(0,Record(n,'खर्च • अभी',a,Icons.payments_outlined));});_persist();msg('खर्च इस डिवाइस पर सेव हुआ');});
- void entry()=>form('खाता एंट्री','ग्राहक का नाम','उधार राशि (₹)',(n,a){setState(()=>khata.insert(0,Record(n,'उधार • अभी',a,Icons.person)));_persist();msg('खाता एंट्री इस डिवाइस पर सेव हुई');});
+ void entry([bool payment=false])=>form(payment?'भुगतान दर्ज करें':'खाता एंट्री','ग्राहक का नाम',payment?'भुगतान राशि (₹)':'उधार राशि (₹)',(n,a){setState(()=>khata.insert(0,Record(n,payment?'भुगतान • अभी':'उधार • अभी',payment?-a:a,payment?Icons.payments_outlined:Icons.person)));_persist();msg('खाता रिकॉर्ड इस डिवाइस पर सेव हुआ');});
  void personalEntry(bool income)=>form(income?'व्यक्तिगत आय दर्ज करें':'व्यक्तिगत खर्च दर्ज करें',income?'आय का स्रोत':'खर्च का विवरण',income?'आय राशि (₹)':'खर्च राशि (₹)',(n,a){setState(()=>personalTransactions.insert(0,Record(n,income?'आय • अभी':'खर्च • अभी',income?a:-a,income?Icons.trending_up:Icons.payments_outlined)));_persist();msg('व्यक्तिगत रिकॉर्ड इस डिवाइस पर सेव हुआ');});
  void product()=>form('नया प्रोडक्ट','प्रोडक्ट का नाम','शुरुआती स्टॉक', (n,a){setState(()=>products.add(Item(n,'नया प्रोडक्ट',a.round(),0)));_persist();msg('प्रोडक्ट इस डिवाइस पर सेव हुआ');});
  @override Widget build(BuildContext context){
- final pages=<Widget>[Dashboard(cash:cash,expenses:expenses,sales:sales,khata:khata,products:products,onSale:sale,onExpense:expense,onKhata:entry),PersonalFinancePage(items:personalTransactions,onIncome:()=>personalEntry(true),onExpense:()=>personalEntry(false)),ProductPage(items:products),SalesPage(items:sales),KhataPage(items:khata),const ProfilePage()];
+ final pages=<Widget>[Dashboard(cash:cash,expenses:expenses,sales:sales,khata:khata,products:products,onSale:sale,onExpense:expense,onKhata:entry),PersonalFinancePage(items:personalTransactions,onIncome:()=>personalEntry(true),onExpense:()=>personalEntry(false)),ProductPage(items:products),SalesPage(items:sales,expenses:expensesList),KhataPage(items:khata,onPayment:()=>entry(true)),const ProfilePage()];
  return Scaffold(appBar:AppBar(titleSpacing:17,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:gold)),const SizedBox(width:10),const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('भारत साथी',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text('आपका कारोबार, आपका हिसाब',style:TextStyle(fontSize:10,color:muted))])]),actions:[IconButton(onPressed:()=>msg('नोटिफिकेशन अगला चरण है'),icon:const Icon(Icons.notifications_none))]),body:SafeArea(child:loaded?IndexedStack(index:tab,children:pages):const Center(child:CircularProgressIndicator())),floatingActionButton:tab==2?fab('प्रोडक्ट',product):tab==3?fab('बिक्री',sale):tab==4?fab('खाता एंट्री',entry):null,bottomNavigationBar:NavigationBar(height:68,backgroundColor:const Color(0xFFEEF1F5),indicatorColor:const Color(0xFFDCE3EC),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:const[NavigationDestination(icon:Icon(Icons.space_dashboard_outlined),selectedIcon:Icon(Icons.space_dashboard),label:'होम'),NavigationDestination(icon:Icon(Icons.account_balance_wallet_outlined),label:'पर्सनल'),NavigationDestination(icon:Icon(Icons.inventory_2_outlined),label:'स्टॉक'),NavigationDestination(icon:Icon(Icons.receipt_long_outlined),label:'बिक्री'),NavigationDestination(icon:Icon(Icons.menu_book_outlined),label:'खाता'),NavigationDestination(icon:Icon(Icons.person_outline),label:'प्रोफाइल')]));
  }
  Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:const Icon(Icons.add),label:Text(s));
@@ -151,10 +151,10 @@ class PersonalFinancePage extends StatelessWidget{
  }
 }
 class ProductPage extends StatelessWidget{final List<Item> items;const ProductPage({super.key,required this.items});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('प्रोडक्ट और स्टॉक','इन्वेंट्री का पूरा कंट्रोल'),const SizedBox(height:14),Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Text('कुल प्रोडक्ट: ${items.length}     •     कम स्टॉक: ${items.where((e)=>e.qty<15).length}',style:const TextStyle(color:navy,fontWeight:FontWeight.w800))),...items.map((p)=>Container(margin:const EdgeInsets.only(top:9),padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[const Icon(Icons.inventory_2_outlined,color:blue,size:25),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(p.name,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(p.detail,style:const TextStyle(color:muted,fontSize:10)),Text('₹${money(p.price)} बिक्री मूल्य',style:const TextStyle(color:muted,fontSize:10))])),Column(children:[Text('${p.qty}',style:TextStyle(color:p.qty<15?red:green,fontWeight:FontWeight.w900,fontSize:17)),const Text('यूनिट',style:TextStyle(color:muted,fontSize:9))])])))]);}
-class SalesPage extends StatelessWidget{final List<Record> items;const SalesPage({super.key,required this.items});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('बिक्री और बिल','आपकी बिक्री का रिकॉर्ड'),const SizedBox(height:15),...items.map(activity)]);}
+class SalesPage extends StatelessWidget{final List<Record> items,expenses;const SalesPage({super.key,required this.items,required this.expenses});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('बिक्री और खर्च','कारोबार के सभी रिकॉर्ड'),const SizedBox(height:15),section('बिक्री','दर्ज की गई बिक्री'),if(items.isEmpty)const Text('अभी कोई बिक्री नहीं।',style:TextStyle(color:muted)) else ...items.map(activity),const SizedBox(height:20),section('खर्च','दर्ज किए गए खर्च'),if(expenses.isEmpty)const Text('अभी कोई खर्च नहीं।',style:TextStyle(color:muted)) else ...expenses.map(activity)]);}
 class KhataPage extends StatelessWidget {
-  final List<Record> items;
-  const KhataPage({super.key, required this.items});
+  final List<Record> items;final VoidCallback onPayment;
+  const KhataPage({super.key, required this.items,required this.onPayment});
 
   @override
   Widget build(BuildContext context) {
@@ -175,6 +175,8 @@ class KhataPage extends StatelessWidget {
             ],
           ),
         ),
+        SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:onPayment,icon:const Icon(Icons.payments_outlined),label:const Text('ग्राहक से भुगतान दर्ज करें'),style:FilledButton.styleFrom(backgroundColor:green))),
+        const SizedBox(height:8),
         ...items.map((entry) {
           return Container(
             margin: const EdgeInsets.only(top: 8),
