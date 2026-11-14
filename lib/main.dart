@@ -484,7 +484,7 @@ class _AuthPageState extends State<AuthPage>{
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
  return Scaffold(appBar:AppBar(title:const Text('अकाउंट और सुरक्षा')),body:ListView(padding:const EdgeInsets.all(20),children:[
- Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Bharat Saathi अकाउंट',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),SizedBox(height:6),Text('ईमेल से सुरक्षित लॉगिन। SMS OTP अभी Coming Soon है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
+ Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Bharat Saathi अकाउंट',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),SizedBox(height:6),Text('ईमेल से सुरक्षित लॉगिन। SMS OTP अभी Coming Soon है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
  const SizedBox(height:18),
  if(!widget.supabaseAvailable)Text('अकाउंट सेवा से कनेक्शन उपलब्ध नहीं है। इंटरनेट कनेक्शन जाँचें।',style:TextStyle(color:red)),
  if(user!=null)...[
@@ -536,7 +536,7 @@ class _CloudBackupPageState extends State<CloudBackupPage>{
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
  return Scaffold(appBar:AppBar(title:const Text('डेटा बैकअप')),body:ListView(padding:const EdgeInsets.all(20),children:[
- Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपके रिकॉर्ड का सुरक्षित बैकअप',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:7),Text('यह मैनुअल स्नैपशॉट है। अपने अकाउंट से किसी दूसरे डिवाइस पर रिकॉर्ड वापस ला सकते हैं। यह लाइव सिंक नहीं है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
+ Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपके रिकॉर्ड का सुरक्षित बैकअप',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:7),Text('यह मैनुअल स्नैपशॉट है। अपने अकाउंट से किसी दूसरे डिवाइस पर रिकॉर्ड वापस ला सकते हैं। यह लाइव सिंक नहीं है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
  const SizedBox(height:18),
  if(!widget.supabaseAvailable)Text('Supabase कनेक्शन उपलब्ध नहीं है।',style:TextStyle(color:red))
  else if(user==null)...[Text('क्लाउड बैकअप के लिए पहले लॉगिन करें।',style:TextStyle(color:navy,fontWeight:FontWeight.w700)),SizedBox(height:10),FilledButton(onPressed:busy?null:_login,child:Text('लॉगिन करें'))]
@@ -801,7 +801,7 @@ void openComingSoon(BuildContext context,String feature)=>Navigator.push(context
 
 class _LinkedDetails extends StatefulWidget{
  final Map<String,dynamic> link;final bool retailer;final VoidCallback onCredit,onPayment;
- _LinkedDetails({required this.link,required this.retailer,required this.onCredit,required this.onPayment});
+ const _LinkedDetails({required this.link,required this.retailer,required this.onCredit,required this.onPayment});
  @override State<_LinkedDetails> createState()=>_LinkedDetailsState();
 }
 class _LinkedDetailsState extends State<_LinkedDetails>{
