@@ -157,7 +157,7 @@ class _RetailerHomeState extends State<RetailerHome>{
   ExpenseOnlyPage(items:expensesList,onAdd:expense),
   ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,onLanguage:(v){setState(()=>english=v);_persist();},sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products,purchases:purchases,supplierLedger:supplierLedger,salesReturns:salesReturns,stockAdjustments:stockAdjustments)
  ];
- return Scaffold(appBar:AppBar(titleSpacing:17,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:gold)),const SizedBox(width:10),const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('भारत साथी',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text('सरल खाता और खर्च',style:TextStyle(fontSize:10,color:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=3),icon:const Icon(Icons.person_outline))]),body:SafeArea(child:loaded?IndexedStack(index:tab,children:pages):const Center(child:CircularProgressIndicator())),bottomNavigationBar:NavigationBar(height:68,selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:const Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:const Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:const Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:const Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]));
+ return Scaffold(appBar:AppBar(titleSpacing:17,backgroundColor:tab==0?const Color(0xFF0B1422):bg,foregroundColor:tab==0?Colors.white:navy,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:tab==0?const Color(0xFF243A55):navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:gold)),const SizedBox(width:10),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Bharat Saathi':'भारत साथी',style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(english?'Smart Khata & Expenses':'स्मार्ट खाता और खर्च',style:TextStyle(fontSize:10,color:tab==0?Colors.white70:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=3),icon:const Icon(Icons.person_outline))]),body:SafeArea(child:loaded?IndexedStack(index:tab,children:pages):const Center(child:CircularProgressIndicator())),bottomNavigationBar:NavigationBar(height:68,backgroundColor:tab==0?const Color(0xFF101C2D):null,indicatorColor:tab==0?const Color(0xFF304967):null,selectedIconTheme:IconThemeData(color:tab==0?gold:navy),unselectedIconTheme:IconThemeData(color:tab==0?Colors.white70:muted),selectedLabelTextStyle:TextStyle(color:tab==0?Colors.white:navy,fontWeight:FontWeight.w700),unselectedLabelTextStyle:TextStyle(color:tab==0?Colors.white70:muted),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:const Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:const Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:const Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:const Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]));
  }
  Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:const Icon(Icons.add),label:Text(s));
 }
@@ -165,16 +165,49 @@ class _RetailerHomeState extends State<RetailerHome>{
 class Dashboard extends StatelessWidget{
  final bool english;final double shopDue,personalDue,monthExpense;final VoidCallback onKhata,onExpense,onRecharge,onBills,onChallan;
  const Dashboard({super.key,required this.english,required this.shopDue,required this.personalDue,required this.monthExpense,required this.onKhata,required this.onExpense,required this.onRecharge,required this.onBills,required this.onChallan});
- @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[
- Text(english?'Your accounts, in one place':'आपका हिसाब, एक ही जगह',style:const TextStyle(color:navy,fontSize:21,fontWeight:FontWeight.w900)),
- Container(margin:const EdgeInsets.only(top:12,bottom:14),padding:const EdgeInsets.all(17),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'This month’s expenses':'इस महीने का खर्च',style:const TextStyle(color:Colors.white70)),Text('₹'+money(monthExpense),style:const TextStyle(color:Colors.white,fontSize:27,fontWeight:FontWeight.w900)),Text('दुकान लेना: ₹'+money(shopDue)+'  •  पर्सनल लेना: ₹'+money(personalDue),style:const TextStyle(color:Colors.white70,fontSize:11))])),
- Text(english?'Main services':'मुख्य सुविधाएँ',style:const TextStyle(color:navy,fontSize:17,fontWeight:FontWeight.w900)),
- GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:10,mainAxisSpacing:10,childAspectRatio:3.0,children:[
- _tile(english?'Khata Book':'खाता बुक',Icons.menu_book,onKhata),_tile(english?'Mobile Recharge':'मोबाइल रिचार्ज',Icons.phone_android,onRecharge),_tile(english?'Bill Payment':'बिल पेमेंट',Icons.receipt_long,onBills),_tile(english?'Challan Payment':'चालान पेमेंट',Icons.local_police,onChallan)]),
- ListTile(tileColor:Colors.white,leading:const Icon(Icons.payments,color:red),title:Text(english?'Monthly expenses':'महीने का खर्च'),trailing:Text('₹'+money(monthExpense)),onTap:onExpense),
- Text(english?'Recharge, bill and challan services are Coming Soon.':'रिचार्ज, बिल और चालान के विकल्प Coming Soon हैं।',style:TextStyle(color:muted,fontSize:11))
- ]);
- Widget _tile(String title,IconData icon,VoidCallback tap)=>InkWell(onTap:tap,borderRadius:BorderRadius.circular(14),child:Container(decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Icon(icon,color:blue,size:30),const SizedBox(height:8),Text(title,style:const TextStyle(color:navy,fontWeight:FontWeight.w900))])));
+ @override Widget build(BuildContext context)=>Container(
+  decoration:const BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xFF0B1422),Color(0xFF111F32),Color(0xFF15263B)])),
+  child:ListView(padding:const EdgeInsets.fromLTRB(17,20,17,24),children:[
+   Text(english?'Your accounts, in one place':'आपका हिसाब, एक ही जगह',style:const TextStyle(color:Colors.white,fontSize:21,fontWeight:FontWeight.w900)),
+   const SizedBox(height:5),
+   Text(english?'A clear view of your daily business':'आपके रोज़ के कारोबार का साफ़ हिसाब',style:const TextStyle(color:Color(0xFF9EADC0),fontSize:12)),
+   Container(margin:const EdgeInsets.only(top:17,bottom:22),padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF203B5B),Color(0xFF172B43)]),borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFF385574)),boxShadow:const [BoxShadow(color:Color(0x33000000),blurRadius:18,offset:Offset(0,8))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text(english?'This month’s expenses':'इस महीने का खर्च',style:const TextStyle(color:Color(0xFFB8C7D8),fontSize:12,fontWeight:FontWeight.w600)),
+    const SizedBox(height:5),
+    Text('₹'+money(monthExpense),style:const TextStyle(color:Colors.white,fontSize:29,fontWeight:FontWeight.w900)),
+    const SizedBox(height:13),
+    Container(height:1,color:const Color(0xFF405873)),
+    const SizedBox(height:11),
+    Row(children:[Expanded(child:_summary(english?'Shop receivable':'दुकान का बकाया',shopDue)),const SizedBox(width:12),Expanded(child:_summary(english?'Personal receivable':'पर्सनल बकाया',personalDue))])
+   ])),
+   Text(english?'Mini Services':'मिनी सर्विसेज़',style:const TextStyle(color:Colors.white,fontSize:17,fontWeight:FontWeight.w900)),
+   const SizedBox(height:4),
+   Text(english?'Choose a service to continue':'किसी सुविधा को चुनने के लिए टैप करें',style:const TextStyle(color:Color(0xFF9EADC0),fontSize:11)),
+   const SizedBox(height:13),
+   GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:11,mainAxisSpacing:11,childAspectRatio:1.55,children:[
+    _tile(english?'Khata Book':'खाता बुक',Icons.menu_book_rounded,onKhata),
+    _tile(english?'Mobile Recharge':'मोबाइल रिचार्ज',Icons.phone_android_rounded,onRecharge),
+    _tile(english?'Bill Payment':'बिल पेमेंट',Icons.receipt_long_rounded,onBills),
+    _tile(english?'Challan Payment':'चालान पेमेंट',Icons.local_police_rounded,onChallan)
+   ]),
+   const SizedBox(height:17),
+   InkWell(onTap:onExpense,borderRadius:BorderRadius.circular(16),child:Container(padding:const EdgeInsets.symmetric(horizontal:15,vertical:16),decoration:BoxDecoration(color:const Color(0xFF1A2B41),borderRadius:BorderRadius.circular(16),border:Border.all(color:const Color(0xFF344B66))),child:Row(children:[
+    Container(width:42,height:42,decoration:BoxDecoration(color:const Color(0xFF3A2E35),borderRadius:BorderRadius.circular(13)),child:const Icon(Icons.payments_outlined,color:Color(0xFFFF9B91))),
+    const SizedBox(width:12),
+    Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Monthly expenses':'महीने का खर्च',style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:13)),Text(english?'View and add expense entries':'खर्च देखें और नई एंट्री जोड़ें',style:const TextStyle(color:Color(0xFF9EADC0),fontSize:10))])),
+    Text('₹'+money(monthExpense),style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:14)),
+    const SizedBox(width:5),const Icon(Icons.chevron_right,color:Color(0xFF9EADC0))
+   ]))),
+   const SizedBox(height:13),
+   Text(english?'Recharge, bill and challan services are coming soon.':'रिचार्ज, बिल और चालान सेवाएँ जल्द उपलब्ध होंगी।',style:const TextStyle(color:Color(0xFF91A2B7),fontSize:11))
+  ])
+ );
+ Widget _summary(String label,double amount)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:const TextStyle(color:Color(0xFFB8C7D8),fontSize:10)),const SizedBox(height:4),Text('₹'+money(amount),style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:14))]);
+ Widget _tile(String title,IconData icon,VoidCallback tap)=>Material(color:const Color(0xFF1A2B41),borderRadius:BorderRadius.circular(17),child:InkWell(onTap:tap,borderRadius:BorderRadius.circular(17),child:Container(padding:const EdgeInsets.all(12),decoration:BoxDecoration(borderRadius:BorderRadius.circular(17),border:Border.all(color:const Color(0xFF344B66))),child:Row(children:[
+  Container(width:39,height:39,decoration:BoxDecoration(color:const Color(0xFF2A405B),borderRadius:BorderRadius.circular(12)),child:Icon(icon,color:const Color(0xFFF2B85B),size:22)),
+  const SizedBox(width:9),
+  Expanded(child:Text(title,maxLines:2,softWrap:true,overflow:TextOverflow.visible,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:12.5,height:1.2)))
+ ]))));
 }
 class KhataHubPage extends StatelessWidget{
  final List<Record> shop,personal;final VoidCallback onShop,onPersonal,onLinked;
