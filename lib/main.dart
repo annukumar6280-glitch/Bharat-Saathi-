@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
+import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart';
@@ -462,8 +465,13 @@ class ReportsPage extends StatelessWidget{
  return rows.map((r)=>r.map(_cell).join(',')).join('\r\n');
  }
  Future<void> _export(BuildContext context)async{
+ final bytes=Uint8List.fromList(utf8.encode(_csv()));
+ try{
+ await Share.shareXFiles([XFile.fromData(bytes,mimeType:'text/csv',name:'bharat-saathi-report.csv')],text:'भारत साथी रिपोर्ट');
+ }catch(_){
  await Clipboard.setData(ClipboardData(text:_csv()));
- if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('CSV रिपोर्ट कॉपी हुई। इसे Sheets या Excel में पेस्ट कर सकते हैं।')));
+ if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('शेयर विंडो उपलब्ध नहीं हुई। CSV क्लिपबोर्ड में कॉपी कर दी गई।')));
+ }
  }
  Widget _metric(String title,String value,IconData icon)=>Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[Icon(icon,color:blue),const SizedBox(width:12),Expanded(child:Text(title,style:const TextStyle(color:muted,fontSize:12))),Text(value,style:const TextStyle(color:navy,fontWeight:FontWeight.w900))]));
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('रिपोर्ट और एक्सपोर्ट')),body:ListView(padding:const EdgeInsets.all(17),children:[
@@ -477,7 +485,7 @@ class ReportsPage extends StatelessWidget{
  _metric('व्यक्तिगत खर्च','₹${money(personalExpense)}',Icons.shopping_bag_outlined),const SizedBox(height:9),
  _metric('स्टॉक का अनुमानित मूल्य','₹${money(products.fold<double>(0,(s,p)=>s+p.qty*p.price))}',Icons.inventory_2_outlined),
  const SizedBox(height:18),
- FilledButton.icon(onPressed:()=>_export(context),icon:const Icon(Icons.content_copy),label:const Text('CSV रिपोर्ट कॉपी करें')),
+ FilledButton.icon(onPressed:()=>_export(context),icon:const Icon(Icons.content_copy),label:const Text('CSV रिपोर्ट डाउनलोड / शेयर करें')),
  const SizedBox(height:10),
  const Text('नोट: एक्सपोर्ट में अभी उपलब्ध स्थानीय रिकॉर्ड शामिल हैं। पुराने रिकॉर्ड की तारीखें संग्रहीत नहीं हैं, इसलिए तारीख-वार रिपोर्ट और PDF अभी उपलब्ध नहीं हैं। यह रिपोर्ट क्लाउड सिंक का विकल्प नहीं है।',style:TextStyle(color:muted,fontSize:11))
  ]));
