@@ -356,6 +356,14 @@ class _AuthPageState extends State<AuthPage>{
  }on AuthException catch(e){message(e.message,error:true);}on PostgrestException catch(e){message('डेटाबेस सेटअप त्रुटि: ${e.message}',error:true);}catch(e){message('कनेक्शन या अकाउंट सेटअप पूरा नहीं हुआ। दोबारा प्रयास करें।',error:true);}
  if(mounted)setState(()=>busy=false);
  }
+ Future<void> resetPassword()async{
+ if(!widget.supabaseAvailable){message('Supabase कनेक्शन उपलब्ध नहीं है।',error:true);return;}
+ final mail=email.text.trim();if(!mail.contains('@')){message('पहले सही ईमेल पता भरें।',error:true);return;}
+ setState(()=>busy=true);
+ try{await client.auth.resetPasswordForEmail(mail);message('पासवर्ड रीसेट ईमेल भेजने का अनुरोध सफल हुआ। ईमेल में दिए लिंक का उपयोग करें।');}
+ on AuthException catch(e){message(e.message,error:true);}catch(_){message('रीसेट ईमेल नहीं भेजा जा सका। ईमेल और Supabase SMTP सेटिंग जाँचें।',error:true);}
+ if(mounted)setState(()=>busy=false);
+ }
  Future<void> signOut()async{setState(()=>busy=true);try{await client.auth.signOut();message('लॉगआउट हो गया।');}catch(_){message('लॉगआउट पूरा नहीं हुआ।',error:true);}if(mounted)setState(()=>busy=false);}
  @override void dispose(){email.dispose();password.dispose();fullName.dispose();super.dispose();}
  @override Widget build(BuildContext context){
@@ -372,6 +380,7 @@ class _AuthPageState extends State<AuthPage>{
  TextField(controller:email,keyboardType:TextInputType.emailAddress,autocorrect:false,decoration:const InputDecoration(labelText:'ईमेल',prefixIcon:Icon(Icons.email_outlined))),
  const SizedBox(height:10),TextField(controller:password,obscureText:!showPassword,decoration:InputDecoration(labelText:'पासवर्ड (कम-से-कम 8 अक्षर)',prefixIcon:const Icon(Icons.lock_outline),suffixIcon:IconButton(onPressed:()=>setState(()=>showPassword=!showPassword),icon:Icon(showPassword?Icons.visibility_off:Icons.visibility)))),
  const SizedBox(height:16),FilledButton(onPressed:busy?null:submit,style:FilledButton.styleFrom(backgroundColor:navy,padding:const EdgeInsets.all(15)),child:Text(busy?'कृपया प्रतीक्षा करें':signUp?'अकाउंट बनाएं':'लॉगिन करें')),
+ if(!signUp)TextButton(onPressed:busy?null:resetPassword,child:const Text('पासवर्ड भूल गए? रीसेट ईमेल भेजें')),
  TextButton(onPressed:busy?null:()=>setState(()=>signUp=!signUp),child:Text(signUp?'पहले से अकाउंट है? लॉगिन करें':'नया अकाउंट बनाना है? रजिस्टर करें'))
  ],
  if(notice!=null)Padding(padding:const EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:errorNotice?red:green,fontSize:12,fontWeight:FontWeight.w700)))
