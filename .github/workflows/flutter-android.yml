@@ -25,6 +25,8 @@ jobs:
         run: flutter pub get
       - name: Analyze Dart code
         run: flutter analyze
+      - name: Run widget tests
+        run: flutter test
       - name: Build debug APK
         run: flutter build apk --debug
       - name: Upload debug APK
