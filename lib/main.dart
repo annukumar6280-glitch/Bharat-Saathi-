@@ -634,7 +634,7 @@ class _ReferralPageState extends State<ReferralPage>{
  Future<void> _load()async{
   final u=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
   if(u==null){setState(()=>loading=false);return;}
-  try{final r=await Supabase.instance.client.from('commerce_profiles').select('referral_code').eq('user_id',u.id).maybeSingle();if(mounted)setState((){code=(r?['referral_code'] as String?)??'';loading=false;});}catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
+  try{final r=await Supabase.instance.client.from('commerce_profiles').select('referral_code').eq('user_id',u.id).maybeSingle();if(mounted)setState((){code=(r?['referral_code'] as String?)??'';loading=false;});}catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
  }
  Future<void> _apply()async{
   if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('पहले लॉगिन करें।')));return;}
