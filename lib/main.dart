@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart';
@@ -85,7 +83,7 @@ class _RetailerHomeState extends State<RetailerHome>{
  void entry([bool payment=false])=>form(payment?'भुगतान दर्ज करें':'खाता एंट्री','ग्राहक का नाम',payment?'भुगतान राशि (₹)':'उधार राशि (₹)',(n,a){final outstanding=khata.where((e)=>e.name.toLowerCase()==n.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);if(payment&&(outstanding<=0||a>outstanding)){msg(outstanding<=0?'इस ग्राहक का बकाया उपलब्ध नहीं है':'भुगतान बकाया राशि से अधिक नहीं हो सकता');return;}setState((){khata.insert(0,Record(n,payment?'भुगतान • अभी':'उधार • अभी',payment?-a:a,payment?Icons.payments_outlined:Icons.person));if(payment)cash+=a;});_persist();msg('खाता रिकॉर्ड इस डिवाइस पर सेव हुआ');});
  void setPersonalBudget()=>form('खर्च सीमा सेट करें','सीमा का नाम','अधिकतम राशि (₹)',(n,a){setState((){personalBudget=a;personalBudgetName=n;});_persist();msg('खर्च सीमा सेव हुई');});
  void personalEntry(bool income)=>form(income?'व्यक्तिगत आय दर्ज करें':'व्यक्तिगत खर्च दर्ज करें',income?'आय का स्रोत':'खर्च का विवरण',income?'आय राशि (₹)':'खर्च राशि (₹)',(n,a){setState(()=>personalTransactions.insert(0,Record(n,income?'आय • अभी':'खर्च • अभी',income?a:-a,income?Icons.trending_up:Icons.payments_outlined)));_persist();msg('व्यक्तिगत रिकॉर्ड इस डिवाइस पर सेव हुआ');});
- void restock(Item item)=>form('स्टॉक जोड़ें','प्रोडक्ट का नाम','जोड़ने की मात्रा',(n,a){setState((){final q=a.round();item.qty+=q;stockAdjustments.insert(0,Record(item.name,'मैनुअल स्टॉक वृद्धि • '+q.toString()+' यूनिट',q.toDouble(),Icons.add_box_outlined));});_persist();msg('स्टॉक अपडेट हुआ');});
+ void restock(Item item)=>form('स्टॉक जोड़ें','प्रोडक्ट का नाम','जोड़ने की मात्रा',(n,a){setState((){final q=a.round();item.qty+=q;stockAdjustments.insert(0,Record(item.name,'मैनुअल स्टॉक वृद्धि • $q यूनिट',q.toDouble(),Icons.add_box_outlined));});_persist();msg('स्टॉक अपडेट हुआ');});
 
  Future<void> purchase()async{
  if(products.isEmpty){msg('खरीद दर्ज करने से पहले स्टॉक में प्रोडक्ट जोड़ें');return;}
@@ -98,7 +96,7 @@ class _RetailerHomeState extends State<RetailerHome>{
  const SizedBox(height:10),TextField(controller:quantity,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'प्राप्त मात्रा (यूनिट)')),
  const SizedBox(height:10),TextField(controller:cost,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'प्रति यूनिट खरीद लागत (₹)')),
  const SizedBox(height:10),DropdownButtonFormField<String>(initialValue:paymentMode,decoration:const InputDecoration(labelText:'भुगतान प्रकार'),items:const[DropdownMenuItem(value:'नकद',child:Text('भुगतान कर दिया')),DropdownMenuItem(value:'उधार',child:Text('सप्लायर से उधार'))],onChanged:(v){if(v!=null)refresh(()=>paymentMode=v);}),
- const SizedBox(height:16),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){final q=int.tryParse(quantity.text);final unitCost=double.tryParse(cost.text);if(supplier.text.trim().isEmpty||q==null||q<1||unitCost==null||unitCost<=0){msg('सप्लायर, मात्रा और सही खरीद लागत भरें');return;}final total=q*unitCost;setState((){selected.qty+=q;purchases.insert(0,Record(supplier.text.trim(),selected.name+' × '+q.toString()+' • खरीद लागत ₹'+money(unitCost)+' प्रति यूनिट • '+paymentMode,total,Icons.shopping_cart_outlined));if(paymentMode=='नकद'){cash-=total;}else{supplierLedger.insert(0,Record(supplier.text.trim(),'खरीद बकाया',total,Icons.storefront));}});_persist();Navigator.pop(sheetContext);msg('खरीद दर्ज हुई और स्टॉक बढ़ गया');},child:const Text('खरीद सेव करें')))
+ const SizedBox(height:16),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){final q=int.tryParse(quantity.text);final unitCost=double.tryParse(cost.text);if(supplier.text.trim().isEmpty||q==null||q<1||unitCost==null||unitCost<=0){msg('सप्लायर, मात्रा और सही खरीद लागत भरें');return;}final total=q*unitCost;setState((){selected.qty+=q;purchases.insert(0,Record(supplier.text.trim(),'${selected.name} × $q • खरीद लागत ₹${money(unitCost)} प्रति यूनिट • $paymentMode',total,Icons.shopping_cart_outlined));if(paymentMode=='नकद'){cash-=total;}else{supplierLedger.insert(0,Record(supplier.text.trim(),'खरीद बकाया',total,Icons.storefront));}});_persist();Navigator.pop(sheetContext);msg('खरीद दर्ज हुई और स्टॉक बढ़ गया');},child:const Text('खरीद सेव करें')))
  ]))));
 }
  Future<void> salesReturn()async{
@@ -112,13 +110,13 @@ class _RetailerHomeState extends State<RetailerHome>{
  const SizedBox(height:10),DropdownButtonFormField<String>(initialValue:refundMode,decoration:const InputDecoration(labelText:'रिफंड का तरीका'),items:const[DropdownMenuItem(value:'नकद वापसी',child:Text('नकद / बैंक रिफंड')),DropdownMenuItem(value:'उधार समायोजन',child:Text('ग्राहक बकाया में समायोजन'))],onChanged:(v){if(v!=null)refresh(()=>refundMode=v);}),
  const SizedBox(height:15),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){
  final q=int.tryParse(quantity.text);final client=customer.text.trim();if(client.isEmpty||q==null||q<1){msg('ग्राहक और सही मात्रा भरें');return;}
- final matching=sales.where((e)=>e.name.toLowerCase()==client.toLowerCase()&&e.detail.startsWith(selected.name+' × ')).toList();int soldQty=0;double soldValue=0;
+ final matching=sales.where((e)=>e.name.toLowerCase()==client.toLowerCase()&&e.detail.startsWith('${selected.name} × ')).toList();int soldQty=0;double soldValue=0;
  for(final e in matching){final match=RegExp(r'×\s*(\d+)').firstMatch(e.detail);if(match!=null){soldQty+=int.parse(match.group(1)!);soldValue+=e.amount;}}
  int returnedQty=0;for(final e in salesReturns.where((e)=>e.name.toLowerCase()==client.toLowerCase()&&e.detail.startsWith(selected.name+' × '))){final match=RegExp(r'×\s*(\d+)').firstMatch(e.detail);if(match!=null)returnedQty+=int.parse(match.group(1)!);}
  if(soldQty==0||q>soldQty-returnedQty){msg('इस ग्राहक की उपलब्ध बिक्री मात्रा से अधिक वापसी दर्ज नहीं हो सकती');return;}
  final refund=(soldValue/soldQty)*q;
  if(refundMode=='उधार समायोजन'){final due=khata.where((e)=>e.name.toLowerCase()==client.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);if(due<refund){msg('ग्राहक का बकाया रिफंड समायोजन के लिए पर्याप्त नहीं है');return;}}
- setState((){selected.qty+=q;salesReturns.insert(0,Record(client,selected.name+' × '+q.toString()+' • '+refundMode,refund,Icons.assignment_return));if(refundMode=='नकद वापसी'){cash-=refund;}else{khata.insert(0,Record(client,'बिक्री वापसी समायोजन',-refund,Icons.assignment_return));}});
+ setState((){selected.qty+=q;salesReturns.insert(0,Record(client,'${selected.name} × $q • $refundMode',refund,Icons.assignment_return));if(refundMode=='नकद वापसी'){cash-=refund;}else{khata.insert(0,Record(client,'बिक्री वापसी समायोजन',-refund,Icons.assignment_return));}});
  _persist();Navigator.pop(c);msg('बिक्री वापसी दर्ज हुई और स्टॉक वापस जुड़ गया');
  },child:const Text('वापसी सेव करें')))
  ]))));
@@ -506,7 +504,7 @@ class _ReportsPageState extends State<ReportsPage>{
  Widget _metric(String title,String value,IconData icon)=>Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[Icon(icon,color:blue),const SizedBox(width:12),Expanded(child:Text(title,style:const TextStyle(color:muted,fontSize:12))),Text(value,style:const TextStyle(color:navy,fontWeight:FontWeight.w900))]));
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('रिपोर्ट और एक्सपोर्ट')),body:ListView(padding:const EdgeInsets.all(17),children:[
  heading('कारोबार का सारांश','इस डिवाइस पर उपलब्ध रिकॉर्ड का कुल योग'),const SizedBox(height:12),
- OutlinedButton.icon(onPressed:_chooseRange,icon:const Icon(Icons.date_range),label:Text(range==null?'तारीख़ के अनुसार फ़िल्टर करें':range!.start.day.toString()+'/'+range!.start.month.toString()+'/'+range!.start.year.toString()+' – '+range!.end.day.toString()+'/'+range!.end.month.toString()+'/'+range!.end.year.toString())),
+ OutlinedButton.icon(onPressed:_chooseRange,icon:const Icon(Icons.date_range),label:Text(range==null?'तारीख़ के अनुसार फ़िल्टर करें':'${range!.start.day}/${range!.start.month}/${range!.start.year} – ${range!.end.day}/${range!.end.month}/${range!.end.year}')),
  if(range!=null)Align(alignment:Alignment.centerRight,child:TextButton(onPressed:()=>setState(()=>range=null),child:const Text('फ़िल्टर हटाएँ'))),
  _metric('कुल दर्ज बिक्री','₹${money(salesTotal)}',Icons.trending_up),const SizedBox(height:9),
  _metric('कुल खरीद','₹${money(purchaseTotal)}',Icons.shopping_cart_outlined),const SizedBox(height:9),
