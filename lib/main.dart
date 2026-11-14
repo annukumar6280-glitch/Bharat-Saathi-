@@ -610,7 +610,7 @@ class _CommerceWalletPageState extends State<CommerceWalletPage>{
   if(user==null){setState(()=>loading=false);return;}
   try{
    final w=await Supabase.instance.client.from('commerce_wallets').select().eq('user_id',user.id).maybeSingle();
-   final h=await Supabase.instance.client.from('commerce_wallet_transactions').select().order('created_at',ascending:false).limit(30);
+   final h=await Supabase.instance.client.from('commerce_wallet_transactions').select().eq('user_id',user.id).order('created_at',ascending:false).limit(30);
    if(mounted)setState((){wallet=w;history=h.map((e)=>Map<String,dynamic>.from(e)).toList();loading=false;});
   }catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
  }
@@ -621,7 +621,7 @@ class _CommerceWalletPageState extends State<CommerceWalletPage>{
   try{await Supabase.instance.client.rpc('transfer_commission_to_service_wallet',params:{'p_amount':amount});await _load();if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('राशि सर्विस वॉलेट में ट्रांसफर हो गई।')));}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('ट्रांसफर नहीं हुआ: $e')));}
  }
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Service Wallet & Earnings')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
-  if(Supabase.instance.client.auth.currentUser==null)const Text('वॉलेट देखने के लिए पहले लॉगिन करें।'),
+  if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Text('वॉलेट देखने के लिए पहले लॉगिन करें।'),
   if(error!=null)Text(error!,style:const TextStyle(color:red)),
   _walletCard('Service Wallet','सर्विस इस्तेमाल करने और रिचार्ज के लिए','₹${(wallet?['service_balance'] as num?)?.toStringAsFixed(2)??'0.00'}',Icons.account_balance_wallet),
   const SizedBox(height:10),_walletCard('Commission Wallet','Self और Referral Commission की कमाई','₹${(wallet?['commission_balance'] as num?)?.toStringAsFixed(2)??'0.00'}',Icons.savings_outlined),
@@ -647,12 +647,13 @@ class _ReferralPageState extends State<ReferralPage>{
   try{final r=await Supabase.instance.client.from('commerce_profiles').select('referral_code,plan_tier').eq('user_id',u.id).maybeSingle();if(mounted)setState((){code=(r?['referral_code'] as String?)??'';loading=false;});}catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
  }
  Future<void> _apply()async{
+  if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('पहले लॉगिन करें।')));return;}
   final c=TextEditingController();final value=await showDialog<String>(context:context,builder:(ctx)=>AlertDialog(title:const Text('Referral Code लगाएँ'),content:TextField(controller:c,decoration:const InputDecoration(labelText:'Referral Code')),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,c.text.trim()),child:const Text('Apply'))]));
   if(value==null||value.isEmpty)return;
   try{await Supabase.instance.client.rpc('apply_bharat_saathi_referral_code',params:{'p_referral_code':value});if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Referral Code जुड़ गया।')));}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Referral Code लागू नहीं हुआ: $e')));}
  }
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Refer & Earn')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(18),children:[
-  if(Supabase.instance.client.auth.currentUser==null)const Text('रेफरल कोड देखने के लिए लॉगिन करें।'),
+  if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Text('रेफरल कोड देखने के लिए लॉगिन करें।'),
   if(error!=null)Text(error!,style:const TextStyle(color:red)),
   Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('आपका Referral Code',style:TextStyle(color:Colors.white70)),const SizedBox(height:8),Text(code.isEmpty?'—':code,style:const TextStyle(color:gold,fontSize:27,fontWeight:FontWeight.w900)),const SizedBox(height:12),Row(children:[Expanded(child:OutlinedButton(onPressed:code.isEmpty?null:()=>Clipboard.setData(ClipboardData(text:code)),child:const Text('Copy Code'))),const SizedBox(width:8),Expanded(child:FilledButton(onPressed:code.isEmpty?null:()=>Share.share('Bharat Saathi से जुड़ें। मेरा Referral Code: $code'),child:const Text('Share')))])])),
   const SizedBox(height:12),OutlinedButton(onPressed:_apply,child:const Text('किसी का Referral Code लगाएँ')),
