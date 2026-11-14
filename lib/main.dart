@@ -577,8 +577,8 @@ class _CommissionListPageState extends State<CommissionListPage>{
   try{
    final p=await Supabase.instance.client.from('commerce_profiles').select('referral_code').eq('user_id',user.id).maybeSingle();
    final r=await Supabase.instance.client.from('service_commission_rules').select().eq('is_active',true).order('service_name');
-   if(mounted)setState(()=>{referralCode=(p?['referral_code'] as String?)??'',rules=r.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});
-  }catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
+   if(mounted)setState((){referralCode=(p?['referral_code'] as String?)??'';rules=r.map((e)=>Map<String,dynamic>.from(e)).toList();loading=false;});
+  }catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
  }
  @override void initState(){super.initState();_load();}
  String pct(dynamic v)=>'${((v as num?)??0).toStringAsFixed(2)}%';
@@ -655,7 +655,7 @@ class _ReferralPageState extends State<ReferralPage>{
  Future<void> _load()async{
   final u=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
   if(u==null){setState(()=>loading=false);return;}
-  try{final r=await Supabase.instance.client.from('commerce_profiles').select('referral_code').eq('user_id',u.id).maybeSingle();if(mounted)setState(()=>{code=(r?['referral_code'] as String?)??'',loading=false});}catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
+  try{final r=await Supabase.instance.client.from('commerce_profiles').select('referral_code').eq('user_id',u.id).maybeSingle();if(mounted)setState((){code=(r?['referral_code'] as String?)??'';loading=false;});}catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
  }
  Future<void> _apply()async{
   if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('पहले लॉगिन करें।')));return;}
@@ -678,7 +678,7 @@ class _ReferralPageState extends State<ReferralPage>{
 class AdminCommissionPage extends StatefulWidget{const AdminCommissionPage({super.key});@override State<AdminCommissionPage> createState()=>_AdminCommissionPageState();}
 class _AdminCommissionPageState extends State<AdminCommissionPage>{
  List<Map<String,dynamic>> rules=[];bool loading=true;String? error;
- Future<void> _load()async{try{final c=Supabase.instance.client;final a=await c.from('service_commission_rules').select().order('service_name');if(mounted)setState(()=>{rules=a.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});}catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}}
+ Future<void> _load()async{try{final c=Supabase.instance.client;final a=await c.from('service_commission_rules').select().order('service_name');if(mounted)setState((){rules=a.map((e)=>Map<String,dynamic>.from(e)).toList();loading=false;});}catch(e){if(mounted)setState((){error=e.toString();loading=false;});}}
  @override void initState(){super.initState();_load();}
  Future<void> _editRule([Map<String,dynamic>? old])async{
   final code=TextEditingController(text:old?['service_code']?.toString()??''),name=TextEditingController(text:old?['service_name']?.toString()??'');
