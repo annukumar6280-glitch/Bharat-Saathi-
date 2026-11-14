@@ -49,4 +49,31 @@ void main() {
     await tester.scrollUntilVisible(find.text('मोबाइल / DTH / FASTag रिचार्ज'), 200);
     expect(find.text('Coming Soon • स्वीकृत प्रदाता API आवश्यक'), findsOneWidget);
   });
+
+  testWidgets('Retailer purchase records supplier and increases stock', (tester) async {
+    await tester.pumpWidget(const BharatSaathiApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('स्टॉक'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('प्रोडक्ट'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).at(0), 'चावल');
+    await tester.enterText(find.byType(TextField).at(1), '5');
+    await tester.enterText(find.byType(TextField).at(2), '100');
+    await tester.tap(find.text('प्रोडक्ट सेव करें'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('खरीद दर्ज करें'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(0), 'ABC सप्लायर');
+    await tester.enterText(find.byType(TextField).at(1), '3');
+    await tester.enterText(find.byType(TextField).at(2), '70');
+    await tester.tap(find.text('खरीद सेव करें'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ABC सप्लायर'), findsOneWidget);
+    expect(find.text('8'), findsOneWidget);
+  });
 }
