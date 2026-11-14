@@ -122,6 +122,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('UPI / मनी ट्रांसफर'), findsNothing);
     expect(find.text('मोबाइल OTP / SMS अलर्ट'), findsNothing);
+    await tester.ensureVisible(find.text('WhatsApp: 6283398317'));
+    await tester.pumpAndSettle();
     expect(find.text('WhatsApp: 6283398317'), findsOneWidget);
     expect(find.textContaining('मोबाइल नंबर रजिस्ट्रेशन में सेव होगा'), findsNothing);
     expect(find.textContaining('खाता बुक व्यक्तिगत/दुकान के हिसाब'), findsNothing);
