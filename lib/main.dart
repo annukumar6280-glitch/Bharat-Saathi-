@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 void main()=>runApp(const BharatSaathiApp());
 const navy=Color(0xFF14233B),blue=Color(0xFF29496D),gold=Color(0xFFF2A93B),bg=Color(0xFFF4F6F9),muted=Color(0xFF788596),green=Color(0xFF16845B),red=Color(0xFFD95454);
 class BharatSaathiApp extends StatelessWidget{const BharatSaathiApp({super.key});@override Widget build(BuildContext context)=>MaterialApp(title:'Bharat Saathi',debugShowCheckedModeBanner:false,theme:ThemeData(useMaterial3:true,scaffoldBackgroundColor:bg,colorScheme:ColorScheme.fromSeed(seedColor:navy),appBarTheme:const AppBarTheme(backgroundColor:bg,foregroundColor:navy,elevation:0)),home:const RetailerHome());}
@@ -38,7 +38,7 @@ class Dashboard extends StatelessWidget{
  return ListView(padding:const EdgeInsets.fromLTRB(17,8,17,28),children:[
  Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('नमस्ते 👋',style:TextStyle(color:muted,fontSize:12)),SizedBox(height:3),Text('आपका बिजनेस डैशबोर्ड',style:TextStyle(color:navy,fontSize:20,fontWeight:FontWeight.w900))]),Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:7),decoration:BoxDecoration(color:const Color(0xFFFFF2D9),borderRadius:BorderRadius.circular(20)),child:const Text('● DEMO',style:TextStyle(color:Color(0xFF9A6515),fontSize:9,fontWeight:FontWeight.w900)))]),
  const SizedBox(height:17),
- Container(padding:const EdgeInsets.all(19),decoration:BoxDecoration(gradient:const LinearGradient(colors:[navy,blue],begin:Alignment.topLeft,end:Alignment.bottomRight),borderRadius:BorderRadius.circular(23),boxShadow:[BoxShadow(color:navy.withOpacity(.15),blurRadius:16,offset:const Offset(0,8))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+ Container(padding:const EdgeInsets.all(19),decoration:BoxDecoration(gradient:const LinearGradient(colors:[navy,blue],begin:Alignment.topLeft,end:Alignment.bottomRight),borderRadius:BorderRadius.circular(23),boxShadow:[BoxShadow(color:navy.withValues(alpha: .15),blurRadius:16,offset:const Offset(0,8))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
  Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('कुल कैश / बैंक बैलेंस',style:TextStyle(color:Colors.white70,fontSize:12)),Container(padding:const EdgeInsets.all(8),decoration:BoxDecoration(color:Colors.white12,borderRadius:BorderRadius.circular(11)),child:const Icon(Icons.account_balance_wallet_outlined,color:gold))]),
  const SizedBox(height:7),Text('₹${money(cash)}',style:const TextStyle(color:Colors.white,fontSize:30,fontWeight:FontWeight.w900)),
  const SizedBox(height:16),Container(height:1,color:Colors.white24),const SizedBox(height:13),
