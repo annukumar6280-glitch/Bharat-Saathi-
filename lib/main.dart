@@ -216,7 +216,7 @@ class KhataPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('कुल बकाया • डेमो डेटा', style: TextStyle(color: Colors.white70, fontSize: 11)),
+              const Text('कुल ग्राहक बकाया', style: TextStyle(color: Colors.white70, fontSize: 11)),
               Text('₹${money(due)}', style: const TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w900)),
             ],
           ),
