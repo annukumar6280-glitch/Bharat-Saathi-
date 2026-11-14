@@ -17,7 +17,7 @@ Bharat Saathi is a Flutter Android app for personal finance and small-retailer o
 
 The current retailer records are stored locally on the device. They are **not yet synced to Supabase**, are not shared across devices, and are not a production-grade financial ledger. SharedPreferences is used for the current prototype only; before production financial use it must be migrated to a transactional local database with backup/export and conflict-safe sync.
 
-Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, products, purchases, sales, stock movements and a stock summary view. The Flutter client is not yet connected to Supabase Auth or the live database. Never place a Supabase secret/service-role key in the mobile app. A publishable key and auth/provider configuration must be supplied through secure build configuration before live account sign-in can be enabled.
+Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, products, purchases, sales, stock movements and a stock summary view. The Flutter client now initializes Supabase and supports email/password authentication and account provisioning. Existing local finance and retailer records are still not synchronized to Supabase. Email confirmation depends on the project's Auth email settings and production SMTP configuration. Never place a Supabase secret/service-role key in the mobile app; only the publishable key is included.
 
 ## Provider-dependent services
 
