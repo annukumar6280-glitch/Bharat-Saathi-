@@ -6,9 +6,12 @@ Bharat Saathi is a Flutter Android app for personal finance and small-retailer o
 
 - Hindi-first retailer dashboard with a muted slate background.
 - Product list, sale entry, expense entry, customer khata and customer payment entries.
-- Retailer purchase entry records supplier, product, quantity and purchase cost, increases stock and reduces recorded cash flow; purchases are included in supplier history and CSV reports. Supplier credit balances are not yet supported.
+- Retailer purchase entry supports cash and supplier-credit purchases, supplier balances and supplier payments; purchases are included in supplier history and CSV exports.
+- Sales returns validate sold quantity, restore inventory and record cash refunds or customer-credit adjustments.
+- Manual stock additions are recorded in stock-adjustment history.
+- Reports can be filtered by date range and shared as a CSV file.
 - Separate Personal Finance tab for income, expenses, net balance and a user-defined spending limit.
-- On-device persistence for current prototype records using SharedPreferences.
+- Transactional on-device SQLite persistence, with one-time import of existing SharedPreferences records.
 - Expense history alongside sales.
 - Local business summary with copyable CSV export for sales, expenses, customer khata, personal finance and stock.
 - Provider-dependent recharge, BBPS, challan, UPI and transfer screens explicitly marked Coming Soon.
@@ -17,7 +20,7 @@ Bharat Saathi is a Flutter Android app for personal finance and small-retailer o
 
 ## Data and production status
 
-The current retailer records are stored locally on the device. The reports screen summarizes those local records and copies a CSV to the clipboard; new records include their timestamp in the CSV, while legacy records have a blank date; date-wise filters and PDF generation are not yet implemented. They are **not yet synced to Supabase**, are not shared across devices, and are not a production-grade financial ledger. SharedPreferences is used for the current prototype only; before production financial use it must be migrated to a transactional local database with backup/export and conflict-safe sync.
+The current retailer records are stored locally on the device. The reports screen summarizes local records, supports date-range filtering and shares a CSV file; new records include timestamps, while legacy records have blank dates. PDF statements are not yet implemented. They are **not yet synced to Supabase**, are not shared across devices, and are not a production-grade financial ledger. SQLite now stores the local app snapshot transactionally and imports the previous SharedPreferences snapshot on first launch. This is still a local snapshot database, not a normalized accounting ledger or a conflict-safe multi-device sync engine.
 
 Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, products, purchases, sales, stock movements and a stock summary view. The Flutter client now initializes Supabase and supports email/password authentication and account provisioning. Existing local finance and retailer records are still not live-synchronized to normalized Supabase ledger tables. Cloud backup is a manual snapshot/restore, not real-time sync; restore replaces the current local snapshot after confirmation. Email confirmation depends on the project's Auth email settings and production SMTP configuration. Never place a Supabase secret/service-role key in the mobile app; only the publishable key is included.
 
@@ -45,9 +48,9 @@ GitHub Actions workflow: `.github/workflows/flutter-android.yml`
 
 ## Next implementation priorities
 
-1. Move local records to SQLite/Drift with migrations and CSV/PDF export.
+1. Normalize SQLite into transaction, inventory and audit tables; add PDF export with embedded Hindi fonts.
 2. Implement Supabase Auth onboarding and connect account-scoped tables/RPCs using a publishable key.
 3. Extend personal finance with categories, recurring bills, family accounts, monthly budgets and reports.
-4. Finish retailer workflows: full customer/supplier profiles, supplier payables, stock adjustment history, invoice details and sales returns.
+4. Finish retailer workflows: full customer/supplier profiles, invoice numbering and printable tax invoices, purchase/sales returns and stock adjustment reversal.
 5. Add tested backup/restore, offline-first sync, audit trail and release signing.
 6. Integrate external services only after credentials and provider certification are available.
