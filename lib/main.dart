@@ -54,7 +54,68 @@ class Dashboard extends StatelessWidget{
  ]);
  }
 }
-class Chart extends StatelessWidget{const Chart({super.key});@override Widget build(BuildContext context){const values=[0.42,0.68,0.50,0.88,0.62,1.0,0.76],days=['सोम','मंगल','बुध','गुरु','शुक्र','शनि','रवि'];return Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18)),child:Column(children:[Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('₹24,860',style:TextStyle(color:navy,fontSize:20,fontWeight:FontWeight.w900)),Container(padding:const EdgeInsets.symmetric(horizontal:9,vertical:5),decoration:BoxDecoration(color:const Color(0xFFE8F5EE),borderRadius:BorderRadius.circular(20)),child:const Text('+12.8%',style:TextStyle(color:green,fontSize:10,fontWeight:FontWeight.w800)))]),const SizedBox(height:16),SizedBox(height:90,child:Row(crossAxisAlignment:CrossAxisAlignment.end,children:List.generate(7,(i)=>Expanded(child:Padding(padding:const EdgeInsets.symmetric(horizontal:5),child:Column(mainAxisAlignment:MainAxisAlignment.end,children:[Expanded(child:Align(alignment:Alignment.bottomCenter,child:Container(width:19,height:70*values[i],decoration:BoxDecoration(color:i==5?gold:const Color(0xFFDCE5EF),borderRadius:BorderRadius.circular(7))))),const SizedBox(height:7),Text(days[i],style:const TextStyle(fontSize:9,color:muted))])))))]));}}
+class Chart extends StatelessWidget {
+  const Chart({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    const values = [0.42, 0.68, 0.50, 0.88, 0.62, 1.0, 0.76];
+    const days = ['सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि', 'रवि'];
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('₹24,860', style: TextStyle(color: navy, fontSize: 20, fontWeight: FontWeight.w900)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(color: const Color(0xFFE8F5EE), borderRadius: BorderRadius.circular(20)),
+                child: const Text('+12.8%', style: TextStyle(color: green, fontSize: 10, fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 90,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(7, (i) {
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Container(
+                              width: 19,
+                              height: 70 * values[i],
+                              decoration: BoxDecoration(
+                                color: i == 5 ? gold : const Color(0xFFDCE5EF),
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 7),
+                        Text(days[i], style: const TextStyle(fontSize: 9, color: muted)),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 Widget mini(String a,String b,IconData i)=>Row(children:[Icon(i,color:gold,size:14),const SizedBox(width:4),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:Colors.white60,fontSize:9)),Text(b,style:const TextStyle(color:Colors.white,fontSize:10,fontWeight:FontWeight.w800))])]);
 Widget metric(String a,String b,IconData i,Color c)=>Container(padding:const EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Expanded(child:Text(a,style:const TextStyle(color:muted,fontSize:10))),Icon(i,color:c,size:18)]),const SizedBox(height:7),FittedBox(alignment:Alignment.centerLeft,child:Text(b,style:const TextStyle(color:navy,fontSize:18,fontWeight:FontWeight.w900)))]));
 Widget section(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontSize:16,fontWeight:FontWeight.w900)),Text(b,style:const TextStyle(color:muted,fontSize:10))]);
@@ -62,7 +123,62 @@ Widget quick(String a,IconData i,Color bgc,Color fg,VoidCallback f)=>InkWell(onT
 Widget activity(Record r)=>Container(margin:const EdgeInsets.only(top:7),padding:const EdgeInsets.all(12),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[CircleAvatar(backgroundColor:const Color(0xFFEAF0F6),child:Icon(r.icon,color:blue,size:18)),const SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(r.name,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(r.detail,style:const TextStyle(color:muted,fontSize:10))])),Text('₹${money(r.amount)}',style:const TextStyle(color:green,fontWeight:FontWeight.w900,fontSize:12))]));
 class ProductPage extends StatelessWidget{final List<Item> items;const ProductPage({super.key,required this.items});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('प्रोडक्ट और स्टॉक','इन्वेंट्री का पूरा कंट्रोल'),const SizedBox(height:14),Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Text('कुल प्रोडक्ट: ${items.length}     •     कम स्टॉक: ${items.where((e)=>e.qty<15).length}',style:const TextStyle(color:navy,fontWeight:FontWeight.w800))),...items.map((p)=>Container(margin:const EdgeInsets.only(top:9),padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[const Icon(Icons.inventory_2_outlined,color:blue,size:25),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(p.name,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(p.detail,style:const TextStyle(color:muted,fontSize:10)),Text('₹${money(p.price)} बिक्री मूल्य',style:const TextStyle(color:muted,fontSize:10))])),Column(children:[Text('${p.qty}',style:TextStyle(color:p.qty<15?red:green,fontWeight:FontWeight.w900,fontSize:17)),const Text('यूनिट',style:TextStyle(color:muted,fontSize:9))])])))]);}
 class SalesPage extends StatelessWidget{final List<Record> items;const SalesPage({super.key,required this.items});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('बिक्री और बिल','आपकी बिक्री का रिकॉर्ड'),const SizedBox(height:15),...items.map(activity)]);}
-class KhataPage extends StatelessWidget{final List<Record> items;const KhataPage({super.key,required this.items});@override Widget build(BuildContext context){final due=items.fold<double>(0,(s,e)=>s+e.amount);return ListView(padding:const EdgeInsets.all(17),children:[heading('ग्राहक खाता','उधार और भुगतान का हिसाब'),const SizedBox(height:15),Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('कुल बकाया • डेमो डेटा',style:TextStyle(color:Colors.white70,fontSize:11)),Text('₹${money(due)}',style:const TextStyle(color:Colors.white,fontSize:27,fontWeight:FontWeight.w900))])),...items.map((e)=>Container(margin:const EdgeInsets.only(top:8),padding:const EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[CircleAvatar(backgroundColor:const Color(0xFFEAF0F6),child:Text(e.name[0],style:const TextStyle(color:navy,fontWeight:FontWeight.w800))),const SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(e.name,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(e.detail,style:const TextStyle(color:muted,fontSize:10))])),Text('${e.amount<0?'−':'+'} ₹${money(e.amount.abs())}',style:TextStyle(color:e.amount<0?green:red,fontWeight:FontWeight.w900,fontSize:12))]))]);}}
+class KhataPage extends StatelessWidget {
+  final List<Record> items;
+  const KhataPage({super.key, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    final due = items.fold<double>(0, (sum, entry) => sum + entry.amount);
+    return ListView(
+      padding: const EdgeInsets.all(17),
+      children: [
+        heading('ग्राहक खाता', 'उधार और भुगतान का हिसाब'),
+        const SizedBox(height: 15),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(color: navy, borderRadius: BorderRadius.circular(18)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('कुल बकाया • डेमो डेटा', style: TextStyle(color: Colors.white70, fontSize: 11)),
+              Text('₹${money(due)}', style: const TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.w900)),
+            ],
+          ),
+        ),
+        ...items.map((entry) {
+          return Container(
+            margin: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: const Color(0xFFEAF0F6),
+                  child: Text(entry.name[0], style: const TextStyle(color: navy, fontWeight: FontWeight.w800)),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(entry.name, style: const TextStyle(color: navy, fontWeight: FontWeight.w800, fontSize: 12)),
+                      Text(entry.detail, style: const TextStyle(color: muted, fontSize: 10)),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${entry.amount < 0 ? '−' : '+'} ₹${money(entry.amount.abs())}',
+                  style: TextStyle(color: entry.amount < 0 ? green : red, fontWeight: FontWeight.w900, fontSize: 12),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
 class ProfilePage extends StatelessWidget{const ProfilePage({super.key});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('प्रोफाइल और सेटिंग','अपने अकाउंट को मैनेज करें'),const SizedBox(height:18),Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18)),child:const Column(children:[CircleAvatar(radius:34,backgroundColor:navy,child:Icon(Icons.storefront,color:gold,size:31)),SizedBox(height:10),Text('मेरा रिटेल स्टोर',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),Text('डेमो अकाउंट • लॉगिन सेटअप बाकी',style:TextStyle(color:muted,fontSize:10))])),setting(Icons.lock_outline,'अकाउंट और सुरक्षा','लॉगिन और प्रोफाइल सेटिंग'),setting(Icons.cloud_upload_outlined,'डेटा बैकअप','क्लाउड सिंक अगला चरण'),setting(Icons.language,'भाषा','हिन्दी'),setting(Icons.help_outline,'सहायता केंद्र','सपोर्ट और संपर्क')]);}
 Widget heading(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),Text(b,style:const TextStyle(color:muted,fontSize:11))]);
 Widget setting(IconData i,String a,String b)=>Container(margin:const EdgeInsets.only(top:9),padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[Icon(i,color:blue),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(b,style:const TextStyle(color:muted,fontSize:10))])),const Icon(Icons.chevron_right,color:muted)]));
