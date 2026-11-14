@@ -176,7 +176,7 @@ class _HomeServiceWalletCardState extends State<HomeServiceWalletCard>{
   try{final row=await Supabase.instance.client.from('commerce_wallets').select('service_balance,commission_balance').eq('user_id',user.id).maybeSingle();if(mounted)setState((){service=(row?['service_balance'] as num?)?.toDouble()??0;commission=(row?['commission_balance'] as num?)?.toDouble()??0;loading=false;});}
   catch(_){if(mounted)setState(()=>loading=false);}
  }
- @override Widget build(BuildContext context)=>Material(color:Colors.transparent,child:InkWell(onTap:widget.onTap,borderRadius:BorderRadius.circular(19),child:Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF176B72),Color(0xFF203F69)]),borderRadius:BorderRadius.circular(19),boxShadow:[BoxShadow(color:const Color(0xFF173B5B).withOpacity(.13),blurRadius:16,offset:const Offset(0,7))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+ @override Widget build(BuildContext context)=>Material(color:Colors.transparent,child:InkWell(onTap:widget.onTap,borderRadius:BorderRadius.circular(19),child:Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF176B72),Color(0xFF203F69)]),borderRadius:BorderRadius.circular(19),boxShadow:[BoxShadow(color:const Color(0xFF173B5B).withValues(alpha:.13),blurRadius:16,offset:const Offset(0,7))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
   Row(children:[const Icon(Icons.account_balance_wallet_rounded,color:Color(0xFFFFD58A),size:23),const SizedBox(width:9),Expanded(child:Text(widget.english?'Service Wallet':'सर्विस वॉलेट',style:const TextStyle(color:Colors.white,fontSize:16,fontWeight:FontWeight.w900))),const Icon(Icons.open_in_new,color:Colors.white70,size:17)]),
   const SizedBox(height:5),Text(widget.english?'Ready for recharges and bill payments':'रिचार्ज और बिल पेमेंट के लिए बैलेंस',style:const TextStyle(color:Colors.white70,fontSize:11)),
   const SizedBox(height:13),Row(children:[
@@ -569,56 +569,43 @@ class CommissionListPage extends StatefulWidget{
  @override State<CommissionListPage> createState()=>_CommissionListPageState();
 }
 class _CommissionListPageState extends State<CommissionListPage>{
- bool loading=true;String? error;String plan='free';String referralCode='';List<Map<String,dynamic>> rules=[];List<Map<String,dynamic>> referralRules=[];
+ bool loading=true;String? error;String referralCode='';List<Map<String,dynamic>> rules=[];
  Future<void> _load()async{
   if(!widget.supabaseAvailable){setState(()=>loading=false);return;}
   final user=Supabase.instance.client.auth.currentUser;
   if(user==null){setState(()=>loading=false);return;}
   try{
-   final p=await Supabase.instance.client.from('commerce_profiles').select('plan_tier,referral_code').eq('user_id',user.id).maybeSingle();
+   final p=await Supabase.instance.client.from('commerce_profiles').select('referral_code').eq('user_id',user.id).maybeSingle();
    final r=await Supabase.instance.client.from('service_commission_rules').select().eq('is_active',true).order('service_name');
-   final rr=await Supabase.instance.client.from('referral_subscription_rules').select('level,amount').eq('is_active',true).order('level');
-   if(mounted)setState((){plan=(p?['plan_tier'] as String?)??'free';referralCode=(p?['referral_code'] as String?)??'';rules=r.map((e)=>Map<String,dynamic>.from(e)).toList();referralRules=rr.map((e)=>Map<String,dynamic>.from(e)).toList();loading=false;});
-  }catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
+   if(mounted)setState(()=>{referralCode=(p?['referral_code'] as String?)??'',rules=r.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});
+  }catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
  }
  @override void initState(){super.initState();_load();}
  String pct(dynamic v)=>'${((v as num?)??0).toStringAsFixed(2)}%';
  @override Widget build(BuildContext context){
   final signed=widget.supabaseAvailable&&Supabase.instance.client.auth.currentUser!=null;
   return Scaffold(appBar:AppBar(title:const Text('कमीशन लिस्ट')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
-   if(!signed)Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.lock_outline),title:const Text('कमीशन देखने के लिए लॉगिन करें'),subtitle:const Text('आपका प्लान और कमीशन आपके अकाउंट से जुड़े हैं'),onTap:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:widget.supabaseAvailable))))),
+   if(!signed)Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.lock_outline),title:const Text('कमीशन देखने के लिए लॉगिन करें'),subtitle:const Text('Self और Direct Referral Commission सभी यूज़र के लिए उपलब्ध हैं'),onTap:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:widget.supabaseAvailable))))),
    if(error!=null)Text(error!,style:const TextStyle(color:red)),
    if(signed)Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Text(plan=='lifetime'?'LIFETIME PLAN':'FREE PLAN',style:const TextStyle(color:gold,fontWeight:FontWeight.w900,letterSpacing:1)),
-    const SizedBox(height:5),Text(plan=='lifetime'?'आप सर्विस और रेफरल कमीशन के पात्र हैं':'Free Plan में केवल Self Commission लागू है',style:const TextStyle(color:Colors.white,fontSize:14,fontWeight:FontWeight.w700)),
+    const Text('BHARAT SAATHI • FREE',style:TextStyle(color:gold,fontWeight:FontWeight.w900,letterSpacing:1)),
+    const SizedBox(height:5),const Text('कोई Paid Membership नहीं। सभी योग्य यूज़र Self और Direct Referral Service Commission के पात्र हैं।',style:TextStyle(color:Colors.white,fontSize:13,fontWeight:FontWeight.w700)),
     if(referralCode.isNotEmpty)Text('Referral ID: $referralCode',style:const TextStyle(color:Colors.white70,fontSize:11))
    ])),
    if(signed&&rules.isEmpty)const Padding(padding:EdgeInsets.all(12),child:Text('अभी एडमिन ने किसी सर्विस की कमीशन दर सेट नहीं की है।')),
    ...rules.map((r)=>Card(color:Colors.white,child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Text(r['service_name']?.toString()??r['service_code']?.toString()??'Service',style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:15)),
     const SizedBox(height:9),
-    _commissionLine('Self Commission',pct(plan=='lifetime'?r['lifetime_self_pct']:r['free_self_pct'])),
-    if(plan=='lifetime')...[
-     _commissionLine('First Level',pct(r['level1_pct'])),
-     _commissionLine('Second Level',pct(r['level2_pct'])),
-     _commissionLine('Third Level',pct(r['level3_pct']))
-    ],
+    _commissionLine('Self Commission',pct(r['self_commission_pct'])),
+    _commissionLine('Direct Referral Service Commission',pct(r['referral_commission_pct'])),
     Text('कुल उपलब्ध प्रदाता कमीशन: ${pct(r['total_provider_commission_pct'])}',style:const TextStyle(color:muted,fontSize:10))
    ])))),
-   if(plan=='lifetime')...[
-    const Padding(padding:EdgeInsets.only(top:12,bottom:4),child:Text('Lifetime Plan Referral Commission',style:TextStyle(color:navy,fontSize:16,fontWeight:FontWeight.w900))),
-    ...referralRules.map((r)=>_commissionLine('Level ${r['level']}', '₹${(r['amount'] as num).toStringAsFixed(0)}'))
-   ]else if(signed)...[
-    const SizedBox(height:12),
-    Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:const Color(0xFFFFF5E5),borderRadius:BorderRadius.circular(16)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-     Text('Referral Commission पाने के लिए Lifetime Plan लें',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
-     SizedBox(height:5),Text('₹299 एक बार • Lifetime membership',style:TextStyle(color:muted,fontSize:12))
-    ])),
-    const SizedBox(height:10),
-    FilledButton(onPressed:()=>ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Google Play Billing का ₹299 Lifetime product Play Console में configure होने के बाद खरीद चालू होगी।'))),child:const Text('Subscribe Now • ₹299'))
-   ],
+   if(signed)const Card(color:Colors.white,child:Padding(padding:EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text('पहला सफल Referral Reward',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
+    SizedBox(height:5),Text('आपके Referral से जुड़ा यूज़र पहली सफल Recharge या Bill Payment पूरी करेगा, तो आपको एक बार ₹10 मिलेंगे।')
+   ]))),
    const SizedBox(height:12),
-   const Text('कमीशन दरें एडमिन पैनल से नियंत्रित होती हैं। कमीशन की निकासी बैंक/UPI में उपलब्ध नहीं है; इसे सर्विस वॉलेट में ट्रांसफर किया जा सकता है।',style:TextStyle(color:muted,fontSize:11))
+   const Text('कमीशन केवल सफल और सत्यापित सर्विस ट्रांजैक्शन पर मिलेगा। कमीशन बैंक/UPI में निकाला नहीं जा सकता; इसे सर्विस वॉलेट में ट्रांसफर किया जा सकता है।',style:TextStyle(color:muted,fontSize:11))
   ]));
  }
  Widget _commissionLine(String label,String value)=>Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Row(children:[Expanded(child:Text(label,style:const TextStyle(color:muted,fontSize:12))),Text(value,style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13))]));
@@ -668,7 +655,7 @@ class _ReferralPageState extends State<ReferralPage>{
  Future<void> _load()async{
   final u=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
   if(u==null){setState(()=>loading=false);return;}
-  try{final r=await Supabase.instance.client.from('commerce_profiles').select('referral_code,plan_tier').eq('user_id',u.id).maybeSingle();if(mounted)setState((){code=(r?['referral_code'] as String?)??'';loading=false;});}catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
+  try{final r=await Supabase.instance.client.from('commerce_profiles').select('referral_code').eq('user_id',u.id).maybeSingle();if(mounted)setState(()=>{code=(r?['referral_code'] as String?)??'',loading=false});}catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
  }
  Future<void> _apply()async{
   if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('पहले लॉगिन करें।')));return;}
@@ -681,40 +668,35 @@ class _ReferralPageState extends State<ReferralPage>{
   if(error!=null)Text(error!,style:const TextStyle(color:red)),
   Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('आपका Referral Code',style:TextStyle(color:Colors.white70)),const SizedBox(height:8),Text(code.isEmpty?'—':code,style:const TextStyle(color:gold,fontSize:27,fontWeight:FontWeight.w900)),const SizedBox(height:12),Row(children:[Expanded(child:OutlinedButton(onPressed:code.isEmpty?null:()=>Clipboard.setData(ClipboardData(text:code)),child:const Text('Copy Code'))),const SizedBox(width:8),Expanded(child:FilledButton(onPressed:code.isEmpty?null:()=>Share.share('Bharat Saathi से जुड़ें। मेरा Referral Code: $code'),child:const Text('Share')))])])),
   const SizedBox(height:12),OutlinedButton(onPressed:_apply,child:const Text('किसी का Referral Code लगाएँ')),
-  const Text('Referral Commission पाने के लिए आपका Lifetime Plan सक्रिय होना चाहिए। कमीशन के तीन स्तर हैं: ₹50, ₹30 और ₹20।',style:TextStyle(color:muted,fontSize:12))
+  const Card(color:Colors.white,child:Padding(padding:EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+   Text('₹10 First Successful Referral Reward',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
+   SizedBox(height:5),Text('आपके Referral से जुड़ा यूज़र पहली सफल Recharge या Bill Payment पूरी करेगा, तो आपको ₹10 एक बार मिलेंगे।'),
+   SizedBox(height:8),Text('इसके बाद उस यूज़र की योग्य सर्विस ट्रांजैक्शन पर आपको केवल Direct Referral Service Commission मिलेगा। Level 2 और Level 3 कमीशन नहीं हैं।')
+  ])))
  ]));
 }
 class AdminCommissionPage extends StatefulWidget{const AdminCommissionPage({super.key});@override State<AdminCommissionPage> createState()=>_AdminCommissionPageState();}
 class _AdminCommissionPageState extends State<AdminCommissionPage>{
- List<Map<String,dynamic>> rules=[];List<Map<String,dynamic>> referral=[];bool loading=true;String? error;
- Future<void> _load()async{try{final c=Supabase.instance.client;final a=await c.from('service_commission_rules').select().order('service_name');final b=await c.from('referral_subscription_rules').select().order('level');if(mounted)setState((){rules=a.map((e)=>Map<String,dynamic>.from(e)).toList();referral=b.map((e)=>Map<String,dynamic>.from(e)).toList();loading=false;});}catch(e){if(mounted)setState((){error=e.toString();loading=false;});}}
+ List<Map<String,dynamic>> rules=[];bool loading=true;String? error;
+ Future<void> _load()async{try{final c=Supabase.instance.client;final a=await c.from('service_commission_rules').select().order('service_name');if(mounted)setState(()=>{rules=a.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});}catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}}
  @override void initState(){super.initState();_load();}
  Future<void> _editRule([Map<String,dynamic>? old])async{
   final code=TextEditingController(text:old?['service_code']?.toString()??''),name=TextEditingController(text:old?['service_name']?.toString()??'');
-  final total=TextEditingController(text:old?['total_provider_commission_pct']?.toString()??'0'),company=TextEditingController(text:old?['company_share_pct']?.toString()??'0'),free=TextEditingController(text:old?['free_self_pct']?.toString()??'0'),self=TextEditingController(text:old?['lifetime_self_pct']?.toString()??'0'),l1=TextEditingController(text:old?['level1_pct']?.toString()??'0'),l2=TextEditingController(text:old?['level2_pct']?.toString()??'0'),l3=TextEditingController(text:old?['level3_pct']?.toString()??'0');
+  final total=TextEditingController(text:old?['total_provider_commission_pct']?.toString()??'0'),company=TextEditingController(text:old?['company_share_pct']?.toString()??'0'),self=TextEditingController(text:old?['self_commission_pct']?.toString()??'0'),referral=TextEditingController(text:old?['referral_commission_pct']?.toString()??'0');
   final ok=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(title:Text(old==null?'नई सर्विस कमीशन':'कमीशन दर बदलें'),content:SizedBox(width:420,child:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
    TextField(controller:code,decoration:const InputDecoration(labelText:'Service code (unique)')),TextField(controller:name,decoration:const InputDecoration(labelText:'Service name')),
    TextField(controller:total,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Provider total commission %')),TextField(controller:company,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Company share %')),
-   TextField(controller:free,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Free user Self %')),TextField(controller:self,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Lifetime Self %')),
-   TextField(controller:l1,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Level 1 %')),TextField(controller:l2,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Level 2 %')),TextField(controller:l3,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Level 3 %'))
+   TextField(controller:self,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Self commission %')),TextField(controller:referral,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Direct referral commission %'))
   ]))),actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('सेव करें'))]));
   if(ok!=true)return;
-  try{final c=Supabase.instance.client;await c.from('service_commission_rules').upsert({'service_code':code.text.trim().toLowerCase(),'service_name':name.text.trim(),'total_provider_commission_pct':double.parse(total.text),'company_share_pct':double.parse(company.text),'free_self_pct':double.parse(free.text),'lifetime_self_pct':double.parse(self.text),'level1_pct':double.parse(l1.text),'level2_pct':double.parse(l2.text),'level3_pct':double.parse(l3.text),'updated_by':c.auth.currentUser!.id,'updated_at':DateTime.now().toUtc().toIso8601String()});await _load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('सेव नहीं हुआ: $e')));}
- }
- Future<void> _editReferral()async{
-  final c=Supabase.instance.client;final fields=<int,TextEditingController>{for(final r in referral)(r['level'] as num).toInt():TextEditingController(text:(r['amount'] as num).toStringAsFixed(0))};
-  final ok=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(title:const Text('Referral Subscription Commission'),content:Column(mainAxisSize:MainAxisSize.min,children:[for(int i=1;i<=3;i++)TextField(controller:fields[i],keyboardType:TextInputType.number,decoration:InputDecoration(labelText:'Level $i amount ₹'))]),actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('सेव करें'))]));
-  if(ok!=true)return;
-  try{for(int i=1;i<=3;i++){await c.from('referral_subscription_rules').update({'amount':double.parse(fields[i]!.text),'updated_by':c.auth.currentUser!.id,'updated_at':DateTime.now().toUtc().toIso8601String()}).eq('level',i);}await _load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('सेव नहीं हुआ: $e')));}
+  try{final c=Supabase.instance.client;await c.from('service_commission_rules').upsert({'service_code':code.text.trim().toLowerCase(),'service_name':name.text.trim(),'total_provider_commission_pct':double.parse(total.text),'company_share_pct':double.parse(company.text),'self_commission_pct':double.parse(self.text),'referral_commission_pct':double.parse(referral.text),'updated_by':c.auth.currentUser!.id,'updated_at':DateTime.now().toUtc().toIso8601String()});await _load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('सेव नहीं हुआ: $e')));}
  }
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Admin Commission Settings')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
   if(error!=null)Text(error!,style:const TextStyle(color:red)),
   const Text('Service-wise Commission',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),
+  const Padding(padding:EdgeInsets.only(top:5,bottom:12),child:Text('सभी यूज़र के लिए Self Commission और केवल एक Direct Referral Level सेट करें। ₹10 का First Successful Referral Reward सिस्टम में निश्चित है।',style:TextStyle(color:muted,fontSize:12))),
   FilledButton.icon(onPressed:()=>_editRule(),icon:const Icon(Icons.add),label:const Text('नई सर्विस कमीशन जोड़ें')),
-  ...rules.map((r)=>Card(color:Colors.white,child:ListTile(title:Text(r['service_name'].toString()),subtitle:Text('Free Self ${r['free_self_pct']}% • Lifetime Self ${r['lifetime_self_pct']}% • L1 ${r['level1_pct']}% • L2 ${r['level2_pct']}% • L3 ${r['level3_pct']}%'),trailing:IconButton(onPressed:()=>_editRule(r),icon:const Icon(Icons.edit_outlined))))),
-  const SizedBox(height:16),const Text('₹299 Lifetime Referral Commission',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),
-  ...referral.map((r)=>ListTile(title:Text('Level ${r['level']}'),trailing:Text('₹${(r['amount'] as num).toStringAsFixed(0)}'))),
-  OutlinedButton(onPressed:_editReferral,child:const Text('Referral Commission बदलें'))
+  ...rules.map((r)=>Card(color:Colors.white,child:ListTile(title:Text(r['service_name'].toString()),subtitle:Text('Self ${r['self_commission_pct']}% • Direct Referral ${r['referral_commission_pct']}% • Company ${r['company_share_pct']}%'),trailing:IconButton(onPressed:()=>_editRule(r),icon:const Icon(Icons.edit_outlined)))))
  ]));
 }
 class ReportsPage extends StatefulWidget{
