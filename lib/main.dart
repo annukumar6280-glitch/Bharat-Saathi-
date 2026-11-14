@@ -554,8 +554,8 @@ class _CommissionListPageState extends State<CommissionListPage>{
    final p=await Supabase.instance.client.from('commerce_profiles').select('plan_tier,referral_code').eq('user_id',user.id).maybeSingle();
    final r=await Supabase.instance.client.from('service_commission_rules').select().eq('is_active',true).order('service_name');
    final rr=await Supabase.instance.client.from('referral_subscription_rules').select('level,amount').eq('is_active',true).order('level');
-   if(mounted)setState(()=>{plan=(p?['plan_tier'] as String?)??'free',referralCode=(p?['referral_code'] as String?)??'',rules=r.map((e)=>Map<String,dynamic>.from(e)).toList(),referralRules=rr.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});
-  }catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
+   if(mounted)setState((){plan=(p?['plan_tier'] as String?)??'free';referralCode=(p?['referral_code'] as String?)??'';rules=r.map((e)=>Map<String,dynamic>.from(e)).toList();referralRules=rr.map((e)=>Map<String,dynamic>.from(e)).toList();loading=false;});
+  }catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
  }
  @override void initState(){super.initState();_load();}
  String pct(dynamic v)=>'${((v as num?)??0).toStringAsFixed(2)}%';
@@ -612,7 +612,7 @@ class _CommerceWalletPageState extends State<CommerceWalletPage>{
    final w=await Supabase.instance.client.from('commerce_wallets').select().eq('user_id',user.id).maybeSingle();
    final h=await Supabase.instance.client.from('commerce_wallet_transactions').select().order('created_at',ascending:false).limit(30);
    if(mounted)setState(()=>{wallet=w,history:h.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});
-  }catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
+  }catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
  }
  @override void initState(){super.initState();_load();}
  Future<void> _transfer()async{
@@ -644,7 +644,7 @@ class _ReferralPageState extends State<ReferralPage>{
  Future<void> _load()async{
   final u=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
   if(u==null){setState(()=>loading=false);return;}
-  try{final r=await Supabase.instance.client.from('commerce_profiles').select('referral_code,plan_tier').eq('user_id',u.id).maybeSingle();if(mounted)setState(()=>{code=r?['referral_code'] as String???'',loading=false});}catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
+  try{final r=await Supabase.instance.client.from('commerce_profiles').select('referral_code,plan_tier').eq('user_id',u.id).maybeSingle();if(mounted)setState((){code=(r?['referral_code'] as String?)??'';loading=false;});}catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
  }
  Future<void> _apply()async{
   final c=TextEditingController();final value=await showDialog<String>(context:context,builder:(ctx)=>AlertDialog(title:const Text('Referral Code लगाएँ'),content:TextField(controller:c,decoration:const InputDecoration(labelText:'Referral Code')),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,c.text.trim()),child:const Text('Apply'))]));
@@ -662,7 +662,7 @@ class _ReferralPageState extends State<ReferralPage>{
 class AdminCommissionPage extends StatefulWidget{const AdminCommissionPage({super.key});@override State<AdminCommissionPage> createState()=>_AdminCommissionPageState();}
 class _AdminCommissionPageState extends State<AdminCommissionPage>{
  List<Map<String,dynamic>> rules=[];List<Map<String,dynamic>> referral=[];bool loading=true;String? error;
- Future<void> _load()async{try{final c=Supabase.instance.client;final a=await c.from('service_commission_rules').select().order('service_name');final b=await c.from('referral_subscription_rules').select().order('level');if(mounted)setState(()=>{rules:a.map((e)=>Map<String,dynamic>.from(e)).toList(),referral:b.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});}catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}}
+ Future<void> _load()async{try{final c=Supabase.instance.client;final a=await c.from('service_commission_rules').select().order('service_name');final b=await c.from('referral_subscription_rules').select().order('level');if(mounted)setState((){rules=a.map((e)=>Map<String,dynamic>.from(e)).toList();referral=b.map((e)=>Map<String,dynamic>.from(e)).toList();loading=false;});}catch(e){if(mounted)setState((){error=e.toString();loading=false;});}}
  @override void initState(){super.initState();_load();}
  Future<void> _editRule([Map<String,dynamic>? old])async{
   final code=TextEditingController(text:old?['service_code']?.toString()??''),name=TextEditingController(text:old?['service_name']?.toString()??'');
