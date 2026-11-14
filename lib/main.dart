@@ -450,10 +450,29 @@ class ProfilePage extends StatelessWidget{
  setting(Icons.account_balance,'UPI / मनी ट्रांसफर','Coming Soon • बैंकिंग पार्टनर और अनुपालन आवश्यक',()=>openComingSoon(context,'UPI और मनी ट्रांसफर'))
  ]);
 }
-class ReportsPage extends StatelessWidget{
+class ReportsPage extends StatefulWidget{
  final List<Record> sales,expensesList,khata,personalTransactions;
  final List<Item> products;final List<Record> purchases,supplierLedger,salesReturns,stockAdjustments;
  const ReportsPage({super.key,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products,required this.purchases,required this.supplierLedger,required this.salesReturns,required this.stockAdjustments});
+ @override State<ReportsPage> createState()=>_ReportsPageState();
+}
+class _ReportsPageState extends State<ReportsPage>{
+ DateTimeRange? range;
+ List<Record> _filter(List<Record> rows)=>range==null?rows:rows.where((e){final d=e.createdAt;if(d==null)return false;final day=DateTime(d.year,d.month,d.day);final from=DateTime(range!.start.year,range!.start.month,range!.start.day);final to=DateTime(range!.end.year,range!.end.month,range!.end.day);return !day.isBefore(from)&&!day.isAfter(to);}).toList();
+ List<Record> get sales=>_filter(widget.sales);
+ List<Record> get purchases=>_filter(widget.purchases);
+ List<Record> get supplierLedger=>_filter(widget.supplierLedger);
+ List<Record> get salesReturns=>_filter(widget.salesReturns);
+ List<Record> get stockAdjustments=>_filter(widget.stockAdjustments);
+ List<Record> get expensesList=>_filter(widget.expensesList);
+ List<Record> get khata=>_filter(widget.khata);
+ List<Record> get personalTransactions=>_filter(widget.personalTransactions);
+ List<Item> get products=>widget.products;
+ Future<void> _chooseRange()async{
+  final now=DateTime.now();
+  final selected=await showDateRangePicker(context:context,firstDate:DateTime(2000),lastDate:DateTime(now.year+2),initialDateRange:range??DateTimeRange(start:DateTime(now.year,now.month,1),end:now));
+  if(selected!=null)setState(()=>range=selected);
+ }
  double get salesTotal=>sales.fold<double>(0,(s,e)=>s+e.amount);
  double get purchaseTotal=>purchases.fold<double>(0,(s,e)=>s+e.amount);
  double get supplierDue=>supplierLedger.fold<double>(0,(s,e)=>s+e.amount);
@@ -486,7 +505,9 @@ class ReportsPage extends StatelessWidget{
  }
  Widget _metric(String title,String value,IconData icon)=>Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[Icon(icon,color:blue),const SizedBox(width:12),Expanded(child:Text(title,style:const TextStyle(color:muted,fontSize:12))),Text(value,style:const TextStyle(color:navy,fontWeight:FontWeight.w900))]));
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('रिपोर्ट और एक्सपोर्ट')),body:ListView(padding:const EdgeInsets.all(17),children:[
- heading('कारोबार का सारांश','इस डिवाइस पर उपलब्ध रिकॉर्ड का कुल योग'),const SizedBox(height:15),
+ heading('कारोबार का सारांश','इस डिवाइस पर उपलब्ध रिकॉर्ड का कुल योग'),const SizedBox(height:12),
+ OutlinedButton.icon(onPressed:_chooseRange,icon:const Icon(Icons.date_range),label:Text(range==null?'तारीख़ के अनुसार फ़िल्टर करें':range!.start.day.toString()+'/'+range!.start.month.toString()+'/'+range!.start.year.toString()+' – '+range!.end.day.toString()+'/'+range!.end.month.toString()+'/'+range!.end.year.toString())),
+ if(range!=null)Align(alignment:Alignment.centerRight,child:TextButton(onPressed:()=>setState(()=>range=null),child:const Text('फ़िल्टर हटाएँ'))),
  _metric('कुल दर्ज बिक्री','₹${money(salesTotal)}',Icons.trending_up),const SizedBox(height:9),
  _metric('कुल खरीद','₹${money(purchaseTotal)}',Icons.shopping_cart_outlined),const SizedBox(height:9),
  _metric('सप्लायर बकाया','₹${money(supplierDue)}',Icons.storefront),const SizedBox(height:9),
