@@ -128,6 +128,17 @@ void main() {
   });
 
 
+  testWidgets('Banner ads are excluded from Home and placed on History and Profile', (tester) async {
+    await pumpDashboardPhone(tester);
+    expect(find.byType(BannerAdSlot), findsNothing);
+    await tester.tap(find.text('इतिहास'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BannerAdSlot), findsOneWidget);
+    await tester.tap(find.text('प्रोफाइल'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BannerAdSlot), findsOneWidget);
+  });
+
   testWidgets('Transaction History is available in the bottom navigation', (tester) async {
     await pumpDashboardPhone(tester);
     await tester.tap(find.text('इतिहास'));
