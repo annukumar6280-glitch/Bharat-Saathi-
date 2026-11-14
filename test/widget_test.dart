@@ -98,7 +98,11 @@ void main() {
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
     expect(find.text('हिंदी'), findsOneWidget);
+    await tester.tap(find.byType(DropdownButton<bool>));
+    await tester.pumpAndSettle();
     expect(find.text('English'), findsOneWidget);
+    await tester.tap(find.text('English').last);
+    await tester.pumpAndSettle();
     expect(find.text('UPI / मनी ट्रांसफर'), findsNothing);
     expect(find.text('मोबाइल OTP / SMS अलर्ट'), findsNothing);
     expect(find.text('WhatsApp: 6283398317'), findsOneWidget);
