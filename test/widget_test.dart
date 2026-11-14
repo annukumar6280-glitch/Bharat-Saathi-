@@ -40,7 +40,11 @@ void main() {
 
   testWidgets('Bill payment opens the full list of bill categories', (tester) async {
     await pumpApp(tester);
-    await tester.scrollUntilVisible(find.text('बिल पेमेंट'), 180, scrollable: find.byType(ListView).first);
+    final dashboardScroll = find.descendant(
+      of: find.byType(ListView).first,
+      matching: find.byType(Scrollable),
+    ).first;
+    await tester.scrollUntilVisible(find.text('बिल पेमेंट'), 180, scrollable: dashboardScroll);
     await tester.tap(find.text('बिल पेमेंट'));
     await tester.pumpAndSettle();
     for (final item in ['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल']) {
@@ -51,14 +55,22 @@ void main() {
 
   testWidgets('Recharge and challan categories open their sub-options', (tester) async {
     await pumpApp(tester);
-    await tester.scrollUntilVisible(find.text('मोबाइल रिचार्ज'), 180, scrollable: find.byType(ListView).first);
+    final dashboardScroll = find.descendant(
+      of: find.byType(ListView).first,
+      matching: find.byType(Scrollable),
+    ).first;
+    await tester.scrollUntilVisible(find.text('मोबाइल रिचार्ज'), 180, scrollable: dashboardScroll);
     await tester.tap(find.text('मोबाइल रिचार्ज'));
     await tester.pumpAndSettle();
     expect(find.text('प्रीपेड मोबाइल रिचार्ज'), findsOneWidget);
     expect(find.text('पोस्टपेड मोबाइल बिल'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('चालान पेमेंट'), 180, scrollable: find.byType(ListView).first);
+    final dashboardScrollAfterBack = find.descendant(
+      of: find.byType(ListView).first,
+      matching: find.byType(Scrollable),
+    ).first;
+    await tester.scrollUntilVisible(find.text('चालान पेमेंट'), 180, scrollable: dashboardScrollAfterBack);
     await tester.tap(find.text('चालान पेमेंट'));
     await tester.pumpAndSettle();
     expect(find.text('ट्रैफिक चालान'), findsOneWidget);
