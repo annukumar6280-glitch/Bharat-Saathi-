@@ -9,7 +9,8 @@ Bharat Saathi is a Flutter Android app for personal finance and small-retailer o
 - Retailer purchase entry records supplier, product, quantity and purchase cost, increases stock and reduces recorded cash flow; purchases are included in supplier history and CSV reports. Supplier credit balances are not yet supported.
 - Separate Personal Finance tab for income, expenses, net balance and a user-defined spending limit.
 - On-device persistence for current prototype records using SharedPreferences.
-- Expense history alongside sales.\n- Local business summary with copyable CSV export for sales, expenses, customer khata, personal finance and stock.
+- Expense history alongside sales.
+- Local business summary with copyable CSV export for sales, expenses, customer khata, personal finance and stock.
 - Provider-dependent recharge, BBPS, challan, UPI and transfer screens explicitly marked Coming Soon.
 - Empty first-run state: no seeded sample customers, fake invoices, chart totals or fictional cash balance.
 - Android debug APK is built by GitHub Actions; analyzer, widget test and APK build are part of CI.
