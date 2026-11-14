@@ -29,6 +29,18 @@ void main() {
     expect(find.text('खर्च जोड़ें'), findsOneWidget);
   });
 
+  testWidgets('Reports page summarizes local records and explains export limits', (tester) async {
+    await tester.pumpWidget(const BharatSaathiApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('प्रोफाइल'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('रिपोर्ट और डेटा एक्सपोर्ट'));
+    await tester.pumpAndSettle();
+    expect(find.text('रिपोर्ट और एक्सपोर्ट'), findsOneWidget);
+    expect(find.text('CSV रिपोर्ट कॉपी करें'), findsOneWidget);
+    expect(find.textContaining('तारीख-वार रिपोर्ट और PDF अभी उपलब्ध नहीं हैं'), findsOneWidget);
+  });
+
   testWidgets('Provider-dependent services are clearly marked Coming Soon', (tester) async {
     await tester.pumpWidget(const BharatSaathiApp());
     await tester.pumpAndSettle();
