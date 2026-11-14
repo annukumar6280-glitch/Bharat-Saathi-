@@ -126,6 +126,7 @@ begin
 end; $$;
 drop trigger if exists on_auth_user_created_commerce on auth.users;
 create trigger on_auth_user_created_commerce after insert on auth.users for each row execute function public.create_commerce_records_for_new_user();
+revoke all on function public.create_commerce_records_for_new_user() from public,anon,authenticated;
 insert into public.commerce_profiles(user_id,referral_code) select u.id,upper(substr(replace(gen_random_uuid()::text,'-',''),1,10)) from auth.users u on conflict(user_id) do nothing;
 insert into public.commerce_wallets(user_id) select u.id from auth.users u on conflict(user_id) do nothing;
 
