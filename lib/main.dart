@@ -24,6 +24,7 @@ class LocalStore {
   final rows=await db.query('app_state',columns:['payload'],where:'id = ?',whereArgs:[1],limit:1);
   return rows.isEmpty?null:rows.first['payload'] as String;
  }
+ static Future<void> clear()async{final db=await database;await db.delete('app_state');}
  static Future<void> write(String payload)async{
   final db=await database;
   await db.transaction((txn)async{
