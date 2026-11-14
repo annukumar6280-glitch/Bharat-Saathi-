@@ -16,7 +16,7 @@ This file is the source of truth for what is implemented, what is local-only, an
 
 ## Reports and export limitation
 
-The reports page and CSV clipboard export operate only on the current device snapshot. Existing records do not store transaction timestamps, so date-range reports and PDF statements are not available yet. CSV export does not imply cloud synchronization.
+The reports page and CSV clipboard export operate only on the current device snapshot. New financial records store a timestamp and CSV includes it; records created before this update have no historical timestamp and export with a blank date. Date-range filters and PDF statements are not available yet. CSV export does not imply cloud synchronization.
 
 ## Important data limitation
 
