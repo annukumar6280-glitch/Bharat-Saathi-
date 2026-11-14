@@ -36,8 +36,9 @@ void main() {
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     await LocalStore.clear();
     appDarkMode.value = false;
+    bannerAdsEnabled = false;
   });
-  tearDown(() { SharedPreferencesAsyncPlatform.instance = null; });
+  tearDown(() { SharedPreferencesAsyncPlatform.instance = null; bannerAdsEnabled = true; });
 
   testWidgets('Home shows the four requested service icons and no inventory navigation', (tester) async {
     await pumpApp(tester);
