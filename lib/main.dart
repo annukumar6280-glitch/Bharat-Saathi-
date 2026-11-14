@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -64,7 +65,7 @@ class _RetailerHomeState extends State<RetailerHome>{
  ])));
 }
  @override Widget build(BuildContext context){
- final pages=<Widget>[Dashboard(cash:cash,expenses:expenses,sales:sales,khata:khata,products:products,onSale:sale,onExpense:expense,onKhata:entry),PersonalFinancePage(items:personalTransactions,budget:personalBudget,budgetName:personalBudgetName,onSetBudget:setPersonalBudget,onIncome:()=>personalEntry(true),onExpense:()=>personalEntry(false)),ProductPage(items:products,onRestock:restock),SalesPage(items:sales,expenses:expensesList),KhataPage(items:khata,onPayment:()=>entry(true)),ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore)];
+ final pages=<Widget>[Dashboard(cash:cash,expenses:expenses,sales:sales,khata:khata,products:products,onSale:sale,onExpense:expense,onKhata:entry),PersonalFinancePage(items:personalTransactions,budget:personalBudget,budgetName:personalBudgetName,onSetBudget:setPersonalBudget,onIncome:()=>personalEntry(true),onExpense:()=>personalEntry(false)),ProductPage(items:products,onRestock:restock),SalesPage(items:sales,expenses:expensesList),KhataPage(items:khata,onPayment:()=>entry(true)),ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products)];
  return Scaffold(appBar:AppBar(titleSpacing:17,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:gold)),const SizedBox(width:10),const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('भारत साथी',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text('आपका कारोबार, आपका हिसाब',style:TextStyle(fontSize:10,color:muted))])]),actions:[IconButton(onPressed:()=>openComingSoon(context,'नोटिफिकेशन और रिमाइंडर'),icon:const Icon(Icons.notifications_none))]),body:SafeArea(child:loaded?IndexedStack(index:tab,children:pages):const Center(child:CircularProgressIndicator())),floatingActionButton:tab==2?fab('प्रोडक्ट',product):tab==3?fab('बिक्री',sale):tab==4?fab('खाता एंट्री',entry):null,bottomNavigationBar:NavigationBar(height:68,backgroundColor:const Color(0xFFEEF1F5),indicatorColor:const Color(0xFFDCE3EC),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:const[NavigationDestination(icon:Icon(Icons.space_dashboard_outlined),selectedIcon:Icon(Icons.space_dashboard),label:'होम'),NavigationDestination(icon:Icon(Icons.account_balance_wallet_outlined),label:'पर्सनल'),NavigationDestination(icon:Icon(Icons.inventory_2_outlined),label:'स्टॉक'),NavigationDestination(icon:Icon(Icons.receipt_long_outlined),label:'बिक्री'),NavigationDestination(icon:Icon(Icons.menu_book_outlined),label:'खाता'),NavigationDestination(icon:Icon(Icons.person_outline),label:'प्रोफाइल')]));
  }
  Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:const Icon(Icons.add),label:Text(s));
@@ -341,7 +342,66 @@ class _CloudBackupPageState extends State<CloudBackupPage>{
  ]));
  }
 }
-class ProfilePage extends StatelessWidget{final bool supabaseAvailable;final Future<void> Function() onRestore;const ProfilePage({super.key,required this.supabaseAvailable,required this.onRestore});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('प्रोफाइल और सेटिंग','अपने अकाउंट को मैनेज करें'),const SizedBox(height:18),Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18)),child:Column(children:[const CircleAvatar(radius:34,backgroundColor:navy,child:Icon(Icons.storefront,color:gold,size:31)),const SizedBox(height:10),const Text('मेरा रिटेल स्टोर',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),Text(supabaseAvailable?'स्थानीय मोड • Supabase लॉगिन उपलब्ध':'ऑफ़लाइन प्रोफ़ाइल • क्लाउड लॉगिन अगला चरण',style:const TextStyle(color:muted,fontSize:10))])),setting(Icons.lock_outline,'अकाउंट और सुरक्षा',supabaseAvailable?'ईमेल और पासवर्ड से लॉगिन / रजिस्ट्रेशन':'Coming Soon • Supabase कनेक्शन उपलब्ध नहीं',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),setting(Icons.cloud_upload_outlined,'डेटा बैकअप',supabaseAvailable?'मैनुअल क्लाउड बैकअप और रीस्टोर':'Coming Soon • Supabase कनेक्शन उपलब्ध नहीं',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),setting(Icons.language,'भाषा','हिन्दी'),setting(Icons.help_outline,'सहायता केंद्र','सपोर्ट और संपर्क'),setting(Icons.sms_outlined,'मोबाइल OTP / SMS अलर्ट','Coming Soon • SMS प्रदाता API आवश्यक',()=>openComingSoon(context,'मोबाइल OTP और SMS अलर्ट')),setting(Icons.phone_android,'मोबाइल / DTH / FASTag रिचार्ज','Coming Soon • स्वीकृत प्रदाता API आवश्यक',()=>openComingSoon(context,'रिचार्ज सेवाएँ')),setting(Icons.receipt_long,'BBPS बिल भुगतान','Coming Soon • BBPS पार्टनर आवश्यक',()=>openComingSoon(context,'BBPS बिल भुगतान')),setting(Icons.local_police_outlined,'ट्रैफिक चालान भुगतान','Coming Soon • सरकारी / अधिकृत API आवश्यक',()=>openComingSoon(context,'चालान भुगतान')),setting(Icons.account_balance,'UPI / मनी ट्रांसफर','Coming Soon • बैंकिंग पार्टनर और अनुपालन आवश्यक',()=>openComingSoon(context,'UPI और मनी ट्रांसफर'))]);}
+class ProfilePage extends StatelessWidget{
+ final bool supabaseAvailable;
+ final Future<void> Function() onRestore;
+ final List<Record> sales,expensesList,khata,personalTransactions;
+ final List<Item> products;
+ const ProfilePage({super.key,required this.supabaseAvailable,required this.onRestore,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products});
+ @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[
+ heading('प्रोफाइल और सेटिंग','अपने अकाउंट को मैनेज करें'),const SizedBox(height:18),
+ Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18)),child:Column(children:[const CircleAvatar(radius:34,backgroundColor:navy,child:Icon(Icons.storefront,color:gold,size:31)),const SizedBox(height:10),const Text('मेरा रिटेल स्टोर',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),Text(supabaseAvailable?'स्थानीय मोड • Supabase लॉगिन उपलब्ध':'ऑफ़लाइन प्रोफ़ाइल • क्लाउड लॉगिन उपलब्ध नहीं',style:const TextStyle(color:muted,fontSize:10))])),
+ setting(Icons.lock_outline,'अकाउंट और सुरक्षा',supabaseAvailable?'ईमेल और पासवर्ड से लॉगिन / रजिस्ट्रेशन':'Coming Soon • Supabase कनेक्शन उपलब्ध नहीं',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
+ setting(Icons.cloud_upload_outlined,'डेटा बैकअप',supabaseAvailable?'मैनुअल क्लाउड बैकअप और रीस्टोर':'Coming Soon • Supabase कनेक्शन उपलब्ध नहीं',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),
+ setting(Icons.analytics_outlined,'रिपोर्ट और डेटा एक्सपोर्ट','बिक्री, खर्च, खाता और स्टॉक सारांश',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReportsPage(sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products)))),
+ setting(Icons.language,'भाषा','हिन्दी'),
+ setting(Icons.help_outline,'सहायता केंद्र','सपोर्ट विवरण जल्द जोड़ा जाएगा',()=>openComingSoon(context,'सहायता केंद्र')),
+ setting(Icons.sms_outlined,'मोबाइल OTP / SMS अलर्ट','Coming Soon • SMS प्रदाता API आवश्यक',()=>openComingSoon(context,'मोबाइल OTP और SMS अलर्ट')),
+ setting(Icons.phone_android,'मोबाइल / DTH / FASTag रिचार्ज','Coming Soon • स्वीकृत प्रदाता API आवश्यक',()=>openComingSoon(context,'रिचार्ज सेवाएँ')),
+ setting(Icons.receipt_long,'BBPS बिल भुगतान','Coming Soon • BBPS पार्टनर आवश्यक',()=>openComingSoon(context,'BBPS बिल भुगतान')),
+ setting(Icons.local_police_outlined,'ट्रैफिक चालान भुगतान','Coming Soon • सरकारी / अधिकृत API आवश्यक',()=>openComingSoon(context,'चालान भुगतान')),
+ setting(Icons.account_balance,'UPI / मनी ट्रांसफर','Coming Soon • बैंकिंग पार्टनर और अनुपालन आवश्यक',()=>openComingSoon(context,'UPI और मनी ट्रांसफर'))
+ ]);
+}
+class ReportsPage extends StatelessWidget{
+ final List<Record> sales,expensesList,khata,personalTransactions;
+ final List<Item> products;
+ const ReportsPage({super.key,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products});
+ double get salesTotal=>sales.fold<double>(0,(s,e)=>s+e.amount);
+ double get expenseTotal=>expensesList.fold<double>(0,(s,e)=>s+e.amount);
+ double get dueTotal=>khata.fold<double>(0,(s,e)=>s+e.amount);
+ double get personalIncome=>personalTransactions.where((e)=>e.amount>0).fold<double>(0,(s,e)=>s+e.amount);
+ double get personalExpense=>-personalTransactions.where((e)=>e.amount<0).fold<double>(0,(s,e)=>s+e.amount);
+ String _cell(String value)=>'"\${value.replaceAll('"','""')}"';
+ String _csv(){
+ final rows=<List<String>>[['श्रेणी','नाम','विवरण','राशि (INR)','मात्रा','बिक्री मूल्य']];
+ for(final e in sales){rows.add(['बिक्री',e.name,e.detail,e.amount.toStringAsFixed(2),'','']);}
+ for(final e in expensesList){rows.add(['कारोबारी खर्च',e.name,e.detail,e.amount.toStringAsFixed(2),'','']);}
+ for(final e in khata){rows.add(['ग्राहक खाता',e.name,e.detail,e.amount.toStringAsFixed(2),'','']);}
+ for(final e in personalTransactions){rows.add(['व्यक्तिगत',e.name,e.detail,e.amount.toStringAsFixed(2),'','']);}
+ for(final e in products){rows.add(['स्टॉक',e.name,e.detail,'',e.qty.toString(),e.price.toStringAsFixed(2)]);}
+ return rows.map((r)=>r.map(_cell).join(',')).join('\r\n');
+ }
+ Future<void> _export(BuildContext context)async{
+ await Clipboard.setData(ClipboardData(text:_csv()));
+ if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('CSV रिपोर्ट कॉपी हुई। इसे Sheets या Excel में पेस्ट कर सकते हैं।')));
+ }
+ Widget _metric(String title,String value,IconData icon)=>Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[Icon(icon,color:blue),const SizedBox(width:12),Expanded(child:Text(title,style:const TextStyle(color:muted,fontSize:12))),Text(value,style:const TextStyle(color:navy,fontWeight:FontWeight.w900))]));
+ @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('रिपोर्ट और एक्सपोर्ट')),body:ListView(padding:const EdgeInsets.all(17),children:[
+ heading('कारोबार का सारांश','इस डिवाइस पर उपलब्ध रिकॉर्ड का कुल योग'),const SizedBox(height:15),
+ _metric('कुल दर्ज बिक्री','₹${money(salesTotal)}',Icons.trending_up),const SizedBox(height:9),
+ _metric('कारोबारी खर्च','₹${money(expenseTotal)}',Icons.payments_outlined),const SizedBox(height:9),
+ _metric('ग्राहक बकाया','₹${money(dueTotal)}',Icons.people_outline),const SizedBox(height:9),
+ _metric('व्यक्तिगत आय','₹${money(personalIncome)}',Icons.savings_outlined),const SizedBox(height:9),
+ _metric('व्यक्तिगत खर्च','₹${money(personalExpense)}',Icons.shopping_bag_outlined),const SizedBox(height:9),
+ _metric('स्टॉक का अनुमानित मूल्य','₹${money(products.fold<double>(0,(s,p)=>s+p.qty*p.price))}',Icons.inventory_2_outlined),
+ const SizedBox(height:18),
+ FilledButton.icon(onPressed:()=>_export(context),icon:const Icon(Icons.content_copy),label:const Text('CSV रिपोर्ट कॉपी करें')),
+ const SizedBox(height:10),
+ const Text('नोट: एक्सपोर्ट में अभी उपलब्ध स्थानीय रिकॉर्ड शामिल हैं। पुराने रिकॉर्ड की तारीखें संग्रहीत नहीं हैं, इसलिए तारीख-वार रिपोर्ट और PDF अभी उपलब्ध नहीं हैं। यह रिपोर्ट क्लाउड सिंक का विकल्प नहीं है।',style:TextStyle(color:muted,fontSize:11))
+ ]));
+}
+
 Widget heading(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),Text(b,style:const TextStyle(color:muted,fontSize:11))]);
 Widget setting(IconData i,String a,String b,[VoidCallback? onTap])=>InkWell(onTap:onTap,borderRadius:BorderRadius.circular(14),child:Container(margin:const EdgeInsets.only(top:9),padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[Icon(i,color:blue),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(b,style:const TextStyle(color:muted,fontSize:10))])),const Icon(Icons.chevron_right,color:muted)])));
 void openComingSoon(BuildContext context,String feature)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ComingSoonPage(feature:feature)));
