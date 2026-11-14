@@ -591,7 +591,7 @@ class _CommissionListPageState extends State<CommissionListPage>{
     SizedBox(height:5),Text('आपके Referral से जुड़ा यूज़र पहली सफल Recharge या Bill Payment पूरी करेगा, तो आपको एक बार ₹10 मिलेंगे।')
    ]))),
    const SizedBox(height:12),
-   const Text('कमीशन केवल सफल और सत्यापित सर्विस ट्रांजैक्शन पर मिलेगा। कमीशन बैंक/UPI में निकाला नहीं जा सकता; इसे सर्विस वॉलेट में ट्रांसफर किया जा सकता है।',style:TextStyle(color:muted,fontSize:11))
+   const Text('कमीशन केवल सफल और सत्यापित सर्विस ट्रांजैक्शन पर मिलेगा। कमीशन बैलेंस अभी कमाई का रिकॉर्ड है; बैंक/UPI निकासी या सर्विस भुगतान में उपयोग सक्रिय नहीं है।',style:TextStyle(color:muted,fontSize:11))
   ]));
  }
  Widget _commissionLine(String label,String value)=>Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Row(children:[Expanded(child:Text(label,style:const TextStyle(color:muted,fontSize:12))),Text(value,style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13))]));
