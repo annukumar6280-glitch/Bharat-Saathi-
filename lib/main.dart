@@ -157,7 +157,7 @@ class _RetailerHomeState extends State<RetailerHome>{
   ExpenseOnlyPage(items:expensesList,onAdd:expense),
   ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,onLanguage:(v){setState(()=>english=v);_persist();},sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products,purchases:purchases,supplierLedger:supplierLedger,salesReturns:salesReturns,stockAdjustments:stockAdjustments)
  ];
- return Scaffold(appBar:AppBar(titleSpacing:17,backgroundColor:tab==0?const Color(0xFF0B1422):bg,foregroundColor:tab==0?Colors.white:navy,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:tab==0?const Color(0xFF243A55):navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:gold)),const SizedBox(width:10),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Bharat Saathi':'भारत साथी',style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(english?'Smart Khata & Expenses':'स्मार्ट खाता और खर्च',style:TextStyle(fontSize:10,color:tab==0?Colors.white70:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=3),icon:const Icon(Icons.person_outline))]),body:SafeArea(child:loaded?IndexedStack(index:tab,children:pages):const Center(child:CircularProgressIndicator())),bottomNavigationBar:NavigationBar(height:68,backgroundColor:tab==0?const Color(0xFF101C2D):null,indicatorColor:tab==0?const Color(0xFF304967):null,selectedIconTheme:IconThemeData(color:tab==0?gold:navy),unselectedIconTheme:IconThemeData(color:tab==0?Colors.white70:muted),selectedLabelTextStyle:TextStyle(color:tab==0?Colors.white:navy,fontWeight:FontWeight.w700),unselectedLabelTextStyle:TextStyle(color:tab==0?Colors.white70:muted),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:const Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:const Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:const Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:const Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]));
+ return Scaffold(appBar:AppBar(titleSpacing:17,backgroundColor:tab==0?const Color(0xFF0B1422):bg,foregroundColor:tab==0?Colors.white:navy,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:tab==0?const Color(0xFF243A55):navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:gold)),const SizedBox(width:10),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Bharat Saathi':'भारत साथी',style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(english?'Smart Khata & Expenses':'स्मार्ट खाता और खर्च',style:TextStyle(fontSize:10,color:tab==0?Colors.white70:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=3),icon:const Icon(Icons.person_outline))]),body:SafeArea(child:loaded?IndexedStack(index:tab,children:pages):const Center(child:CircularProgressIndicator())),bottomNavigationBar:NavigationBar(height:68,backgroundColor:tab==0?const Color(0xFF101C2D):null,indicatorColor:tab==0?const Color(0xFF304967):null,selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:const Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:const Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:const Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:const Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]));
  }
  Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:const Icon(Icons.add),label:Text(s));
 }
@@ -166,47 +166,46 @@ class Dashboard extends StatelessWidget{
  final bool english;final double shopDue,personalDue,monthExpense;final VoidCallback onKhata,onExpense,onRecharge,onBills,onChallan;
  const Dashboard({super.key,required this.english,required this.shopDue,required this.personalDue,required this.monthExpense,required this.onKhata,required this.onExpense,required this.onRecharge,required this.onBills,required this.onChallan});
  @override Widget build(BuildContext context)=>Container(
-  decoration:const BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Color(0xFF0B1422),Color(0xFF111F32),Color(0xFF15263B)])),
-  child:ListView(padding:const EdgeInsets.fromLTRB(17,20,17,24),children:[
-   Text(english?'Your accounts, in one place':'आपका हिसाब, एक ही जगह',style:const TextStyle(color:Colors.white,fontSize:21,fontWeight:FontWeight.w900)),
-   const SizedBox(height:5),
-   Text(english?'A clear view of your daily business':'आपके रोज़ के कारोबार का साफ़ हिसाब',style:const TextStyle(color:Color(0xFF9EADC0),fontSize:12)),
-   Container(margin:const EdgeInsets.only(top:17,bottom:22),padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF203B5B),Color(0xFF172B43)]),borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFF385574)),boxShadow:const [BoxShadow(color:Color(0x33000000),blurRadius:18,offset:Offset(0,8))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Text(english?'This month’s expenses':'इस महीने का खर्च',style:const TextStyle(color:Color(0xFFB8C7D8),fontSize:12,fontWeight:FontWeight.w600)),
+  color:const Color(0xFFF3F5F8),
+  child:ListView(padding:const EdgeInsets.fromLTRB(16,14,16,24),children:[
+   Container(padding:const EdgeInsets.fromLTRB(18,20,18,20),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF142B49),Color(0xFF294D73)]),borderRadius:BorderRadius.circular(22)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Row(children:[Container(width:42,height:42,decoration:BoxDecoration(color:Colors.white.withOpacity(.12),borderRadius:BorderRadius.circular(13)),child:const Icon(Icons.account_balance_wallet_rounded,color:gold,size:24)),const SizedBox(width:11),Expanded(child:Text(english?'Bharat Saathi':'भारत साथी',style:const TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)))]),
+    const SizedBox(height:17),
+    Text(english?'Your accounts, in one place':'आपका हिसाब, एक ही जगह',style:const TextStyle(color:Colors.white,fontSize:21,fontWeight:FontWeight.w900)),
     const SizedBox(height:5),
-    Text('₹'+money(monthExpense),style:const TextStyle(color:Colors.white,fontSize:29,fontWeight:FontWeight.w900)),
-    const SizedBox(height:13),
-    Container(height:1,color:const Color(0xFF405873)),
-    const SizedBox(height:11),
-    Row(children:[Expanded(child:_summary(english?'Shop receivable':'दुकान का बकाया',shopDue)),const SizedBox(width:12),Expanded(child:_summary(english?'Personal receivable':'पर्सनल बकाया',personalDue))])
+    Text(english?'A clear view of your daily business':'आपके रोज़ के कारोबार का साफ़ और आसान हिसाब',style:const TextStyle(color:Color(0xFFD5DFEA),fontSize:12))
    ])),
-   Text(english?'Mini Services':'मिनी सर्विसेज़',style:const TextStyle(color:Colors.white,fontSize:17,fontWeight:FontWeight.w900)),
-   const SizedBox(height:4),
-   Text(english?'Choose a service to continue':'किसी सुविधा को चुनने के लिए टैप करें',style:const TextStyle(color:Color(0xFF9EADC0),fontSize:11)),
-   const SizedBox(height:13),
-   GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:11,mainAxisSpacing:11,childAspectRatio:1.55,children:[
-    _tile(english?'Khata Book':'खाता बुक',Icons.menu_book_rounded,onKhata),
-    _tile(english?'Mobile Recharge':'मोबाइल रिचार्ज',Icons.phone_android_rounded,onRecharge),
-    _tile(english?'Bill Payment':'बिल पेमेंट',Icons.receipt_long_rounded,onBills),
-    _tile(english?'Challan Payment':'चालान पेमेंट',Icons.local_police_rounded,onChallan)
+   const SizedBox(height:14),
+   Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xFFE6EAF0))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text(english?'This month’s expenses':'इस महीने का खर्च',style:const TextStyle(color:muted,fontSize:12,fontWeight:FontWeight.w700)),
+    const SizedBox(height:4),Text('₹'+money(monthExpense),style:const TextStyle(color:navy,fontSize:27,fontWeight:FontWeight.w900)),
+    const SizedBox(height:13),Container(height:1,color:const Color(0xFFE9EDF2)),const SizedBox(height:12),
+    Row(children:[Expanded(child:_summary(english?'Shop receivable':'दुकान का बकाया',shopDue)),Container(width:1,height:35,color:const Color(0xFFE5EAF0)),const SizedBox(width:13),Expanded(child:_summary(english?'Personal receivable':'पर्सनल बकाया',personalDue))])
+   ])),
+   const SizedBox(height:21),
+   Row(children:[Expanded(child:Text(english?'Services':'मुख्य सेवाएँ',style:const TextStyle(color:navy,fontSize:18,fontWeight:FontWeight.w900))),Text(english?'Quick access':'आसान पहुँच',style:const TextStyle(color:muted,fontSize:11))]),
+   const SizedBox(height:4),Text(english?'Select a service to continue':'जिस सुविधा की जरूरत हो, उसे चुनें',style:const TextStyle(color:muted,fontSize:11)),
+   const SizedBox(height:12),
+   GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.52,children:[
+    _tile(english?'Khata Book':'खाता बुक',english?'Personal and shop ledger':'दुकान और पर्सनल हिसाब',Icons.menu_book_rounded,const Color(0xFFE8F0FF),onKhata),
+    _tile(english?'Mobile Recharge':'मोबाइल रिचार्ज',english?'Prepaid and postpaid':'प्रीपेड और पोस्टपेड',Icons.phone_android_rounded,const Color(0xFFE6F7F0),onRecharge),
+    _tile(english?'Bill Payment':'बिल पेमेंट',english?'Electricity, gas and more':'बिजली, गैस और दूसरे बिल',Icons.receipt_long_rounded,const Color(0xFFFFF2DE),onBills),
+    _tile(english?'Challan Payment':'चालान पेमेंट',english?'Traffic challan services':'ट्रैफिक चालान सुविधा',Icons.local_police_rounded,const Color(0xFFF1EAFE),onChallan)
    ]),
-   const SizedBox(height:17),
-   InkWell(onTap:onExpense,borderRadius:BorderRadius.circular(16),child:Container(padding:const EdgeInsets.symmetric(horizontal:15,vertical:16),decoration:BoxDecoration(color:const Color(0xFF1A2B41),borderRadius:BorderRadius.circular(16),border:Border.all(color:const Color(0xFF344B66))),child:Row(children:[
-    Container(width:42,height:42,decoration:BoxDecoration(color:const Color(0xFF3A2E35),borderRadius:BorderRadius.circular(13)),child:const Icon(Icons.payments_outlined,color:Color(0xFFFF9B91))),
-    const SizedBox(width:12),
-    Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Monthly expenses':'महीने का खर्च',style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:13)),Text(english?'View and add expense entries':'खर्च देखें और नई एंट्री जोड़ें',style:const TextStyle(color:Color(0xFF9EADC0),fontSize:10))])),
-    Text('₹'+money(monthExpense),style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:14)),
-    const SizedBox(width:5),const Icon(Icons.chevron_right,color:Color(0xFF9EADC0))
-   ]))),
-   const SizedBox(height:13),
-   Text(english?'Recharge, bill and challan services are coming soon.':'रिचार्ज, बिल और चालान सेवाएँ जल्द उपलब्ध होंगी।',style:const TextStyle(color:Color(0xFF91A2B7),fontSize:11))
+   const SizedBox(height:15),
+   Material(color:Colors.white,borderRadius:BorderRadius.circular(16),child:InkWell(onTap:onExpense,borderRadius:BorderRadius.circular(16),child:Padding(padding:const EdgeInsets.all(14),child:Row(children:[
+    Container(width:42,height:42,decoration:BoxDecoration(color:const Color(0xFFFFEEEE),borderRadius:BorderRadius.circular(13)),child:const Icon(Icons.payments_outlined,color:Color(0xFFCB625B))),
+    const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Monthly expenses':'महीने का खर्च',style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:13)),Text(english?'View and add expense entries':'खर्च देखें और नई एंट्री जोड़ें',style:const TextStyle(color:muted,fontSize:10))])),
+    Text('₹'+money(monthExpense),style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:14)),const SizedBox(width:5),const Icon(Icons.chevron_right,color:muted)
+   ])))),
+   const SizedBox(height:12),
+   Text(english?'Recharge, bill and challan services are being connected.':'रिचार्ज, बिल और चालान सेवाओं को जोड़ा जा रहा है।',style:const TextStyle(color:muted,fontSize:10))
   ])
  );
- Widget _summary(String label,double amount)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:const TextStyle(color:Color(0xFFB8C7D8),fontSize:10)),const SizedBox(height:4),Text('₹'+money(amount),style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:14))]);
- Widget _tile(String title,IconData icon,VoidCallback tap)=>Material(color:const Color(0xFF1A2B41),borderRadius:BorderRadius.circular(17),child:InkWell(onTap:tap,borderRadius:BorderRadius.circular(17),child:Container(padding:const EdgeInsets.all(12),decoration:BoxDecoration(borderRadius:BorderRadius.circular(17),border:Border.all(color:const Color(0xFF344B66))),child:Row(children:[
-  Container(width:39,height:39,decoration:BoxDecoration(color:const Color(0xFF2A405B),borderRadius:BorderRadius.circular(12)),child:Icon(icon,color:const Color(0xFFF2B85B),size:22)),
-  const SizedBox(width:9),
-  Expanded(child:Text(title,maxLines:2,softWrap:true,overflow:TextOverflow.visible,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:12.5,height:1.2)))
+ Widget _summary(String label,double amount)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:const TextStyle(color:muted,fontSize:10)),const SizedBox(height:4),Text('₹'+money(amount),style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:15))]);
+ Widget _tile(String title,String subtitle,IconData icon,Color iconBg,VoidCallback tap)=>Material(color:Colors.white,borderRadius:BorderRadius.circular(17),child:InkWell(onTap:tap,borderRadius:BorderRadius.circular(17),child:Container(padding:const EdgeInsets.all(13),decoration:BoxDecoration(borderRadius:BorderRadius.circular(17),border:Border.all(color:const Color(0xFFE6EAF0))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+  Container(width:40,height:40,decoration:BoxDecoration(color:iconBg,borderRadius:BorderRadius.circular(12)),child:Icon(icon,color:navy,size:22)),
+  const Spacer(),Text(title,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13)),const SizedBox(height:3),Text(subtitle,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(color:muted,fontSize:10))
  ]))));
 }
 class KhataHubPage extends StatelessWidget{
@@ -522,7 +521,176 @@ class ProfilePage extends StatelessWidget{
  final bool supabaseAvailable,english;final Future<void> Function() onRestore;final ValueChanged<bool> onLanguage;
  final List<Record> sales,expensesList,khata,personalTransactions;final List<Item> products;final List<Record> purchases,supplierLedger,salesReturns,stockAdjustments;
  const ProfilePage({super.key,required this.supabaseAvailable,required this.onRestore,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products,required this.purchases,required this.supplierLedger,required this.salesReturns,required this.stockAdjustments,required this.english,required this.onLanguage});
- @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading(english?'Profile & Settings':'प्रोफाइल और सेटिंग',english?'Manage your account':'अपने अकाउंट को मैनेज करें'),Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.language),title:const Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Email/password login; phone collected at registration':'ईमेल और पासवर्ड लॉगिन; रजिस्ट्रेशन में मोबाइल नंबर',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),setting(Icons.cloud_upload_outlined,english?'Data backup':'डेटा बैकअप',english?'Manual cloud backup':'मैनुअल क्लाउड बैकअप',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),Text(english?'Your mobile number is saved at registration. Login uses email and password. OTP is not enabled. SMS and email alerts need provider setup.':'मोबाइल नंबर रजिस्ट्रेशन में सेव होगा। लॉगिन ईमेल और पासवर्ड से होगा। OTP अभी नहीं है। SMS और ईमेल अलर्ट के लिए सेवा सेटअप बाकी है.',style:TextStyle(color:muted,fontSize:11)),const Text('UPI ट्रांसफर, स्टॉक, खरीदारी और बिक्री के फंक्शन नहीं रखे गए हैं।',style:TextStyle(color:muted,fontSize:11))]);
+ @override Widget build(BuildContext context){
+  final user=supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
+  final admin=user!=null&&(user.appMetadata['role']=='admin'||user.appMetadata['role']=='super_admin');
+  return ListView(padding:const EdgeInsets.all(17),children:[
+   heading(english?'Profile & Settings':'प्रोफाइल और सेटिंग',english?'Manage your account':'अपने अकाउंट को मैनेज करें'),
+   Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.language),title:const Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
+   setting(Icons.account_balance_wallet_outlined,english?'Service Wallet & Earnings':'सर्विस वॉलेट और कमाई',english?'Service balance and commission balance':'सर्विस बैलेंस और कमीशन की कमाई',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommerceWalletPage(supabaseAvailable:supabaseAvailable)))),
+   setting(Icons.percent_rounded,english?'Commission List':'कमीशन लिस्ट',english?'Self and referral commission by service':'हर सर्विस का सेल्फ और रेफरल कमीशन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommissionListPage(supabaseAvailable:supabaseAvailable)))),
+   setting(Icons.share_outlined,english?'Refer & Earn':'रेफर करें और कमाएँ',english?'Your referral code and referral history':'आपका रेफरल कोड और रेफरल जानकारी',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
+   if(admin)setting(Icons.admin_panel_settings_outlined,english?'Admin Commission Settings':'एडमिन कमीशन सेटिंग',english?'Configure service and referral rates':'सर्विस और रेफरल कमीशन की दरें सेट करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const AdminCommissionPage()))),
+   setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Email/password login; phone collected at registration':'ईमेल और पासवर्ड लॉगिन; रजिस्ट्रेशन में मोबाइल नंबर',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
+   setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
+   setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),
+   setting(Icons.cloud_upload_outlined,english?'Data backup':'डेटा बैकअप',english?'Manual cloud backup':'मैनुअल क्लाउड बैकअप',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),
+   Text(english?'Your mobile number is saved at registration. Login uses email and password. OTP is not enabled. SMS and email alerts need provider setup.':'मोबाइल नंबर रजिस्ट्रेशन में सेव होगा। लॉगिन ईमेल और पासवर्ड से होगा। OTP अभी नहीं है। SMS और ईमेल अलर्ट के लिए सेवा सेटअप बाकी है.',style:const TextStyle(color:muted,fontSize:11)),
+   const Text('खाता बुक व्यक्तिगत/दुकान के हिसाब के लिए अलग रहेगा। सर्विस वॉलेट और कमीशन बैलेंस अलग हैं।',style:TextStyle(color:muted,fontSize:11))
+  ]);
+ }
+}
+class CommissionListPage extends StatefulWidget{
+ final bool supabaseAvailable;const CommissionListPage({super.key,required this.supabaseAvailable});
+ @override State<CommissionListPage> createState()=>_CommissionListPageState();
+}
+class _CommissionListPageState extends State<CommissionListPage>{
+ bool loading=true;String? error;String plan='free';String referralCode='';List<Map<String,dynamic>> rules=[];List<Map<String,dynamic>> referralRules=[];
+ Future<void> _load()async{
+  if(!widget.supabaseAvailable){setState(()=>loading=false);return;}
+  final user=Supabase.instance.client.auth.currentUser;
+  if(user==null){setState(()=>loading=false);return;}
+  try{
+   final p=await Supabase.instance.client.from('commerce_profiles').select('plan_tier,referral_code').eq('user_id',user.id).maybeSingle();
+   final r=await Supabase.instance.client.from('service_commission_rules').select().eq('is_active',true).order('service_name');
+   final rr=await Supabase.instance.client.from('referral_subscription_rules').select('level,amount').eq('is_active',true).order('level');
+   if(mounted)setState(()=>{plan=(p?['plan_tier'] as String?)??'free',referralCode=(p?['referral_code'] as String?)??'',rules=r.map((e)=>Map<String,dynamic>.from(e)).toList(),referralRules=rr.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});
+  }catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
+ }
+ @override void initState(){super.initState();_load();}
+ String pct(dynamic v)=>'${((v as num?)??0).toStringAsFixed(2)}%';
+ @override Widget build(BuildContext context){
+  final signed=widget.supabaseAvailable&&Supabase.instance.client.auth.currentUser!=null;
+  return Scaffold(appBar:AppBar(title:const Text('कमीशन लिस्ट')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
+   if(!signed)Card(color:Colors.white,child:ListTile(leading:const Icon(Icons.lock_outline),title:const Text('कमीशन देखने के लिए लॉगिन करें'),subtitle:const Text('आपका प्लान और कमीशन आपके अकाउंट से जुड़े हैं'),onTap:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:widget.supabaseAvailable))))),
+   if(error!=null)Text(error!,style:const TextStyle(color:red)),
+   if(signed)Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text(plan=='lifetime'?'LIFETIME PLAN':'FREE PLAN',style:const TextStyle(color:gold,fontWeight:FontWeight.w900,letterSpacing:1)),
+    const SizedBox(height:5),Text(plan=='lifetime'?'आप सर्विस और रेफरल कमीशन के पात्र हैं':'Free Plan में केवल Self Commission लागू है',style:const TextStyle(color:Colors.white,fontSize:14,fontWeight:FontWeight.w700)),
+    if(referralCode.isNotEmpty)Text('Referral ID: $referralCode',style:const TextStyle(color:Colors.white70,fontSize:11))
+   ])),
+   if(signed&&rules.isEmpty)const Padding(padding:EdgeInsets.all(12),child:Text('अभी एडमिन ने किसी सर्विस की कमीशन दर सेट नहीं की है।')),
+   ...rules.map((r)=>Card(color:Colors.white,child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text(r['service_name']?.toString()??r['service_code']?.toString()??'Service',style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:15)),
+    const SizedBox(height:9),
+    _commissionLine('Self Commission',pct(plan=='lifetime'?r['lifetime_self_pct']:r['free_self_pct'])),
+    if(plan=='lifetime')...[
+     _commissionLine('First Level',pct(r['level1_pct'])),
+     _commissionLine('Second Level',pct(r['level2_pct'])),
+     _commissionLine('Third Level',pct(r['level3_pct']))
+    ],
+    Text('कुल उपलब्ध प्रदाता कमीशन: ${pct(r['total_provider_commission_pct'])}',style:const TextStyle(color:muted,fontSize:10))
+   ])))),
+   if(plan=='lifetime')...[
+    const Padding(padding:EdgeInsets.only(top:12,bottom:4),child:Text('Lifetime Plan Referral Commission',style:TextStyle(color:navy,fontSize:16,fontWeight:FontWeight.w900))),
+    ...referralRules.map((r)=>_commissionLine('Level ${r['level']}', '₹${(r['amount'] as num).toStringAsFixed(0)}'))
+   ]else if(signed)...[
+    const SizedBox(height:12),
+    Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:const Color(0xFFFFF5E5),borderRadius:BorderRadius.circular(16)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+     Text('Referral Commission पाने के लिए Lifetime Plan लें',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
+     SizedBox(height:5),Text('₹299 एक बार • Lifetime membership',style:TextStyle(color:muted,fontSize:12))
+    ])),
+    const SizedBox(height:10),
+    FilledButton(onPressed:()=>ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Google Play Billing का ₹299 Lifetime product Play Console में configure होने के बाद खरीद चालू होगी।'))),child:const Text('Subscribe Now • ₹299'))
+   ],
+   const SizedBox(height:12),
+   const Text('कमीशन दरें एडमिन पैनल से नियंत्रित होती हैं। कमीशन की निकासी बैंक/UPI में उपलब्ध नहीं है; इसे सर्विस वॉलेट में ट्रांसफर किया जा सकता है।',style:TextStyle(color:muted,fontSize:11))
+  ]));
+ }
+ Widget _commissionLine(String label,String value)=>Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Row(children:[Expanded(child:Text(label,style:const TextStyle(color:muted,fontSize:12))),Text(value,style:const TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13))]));
+}
+class CommerceWalletPage extends StatefulWidget{
+ final bool supabaseAvailable;const CommerceWalletPage({super.key,required this.supabaseAvailable});
+ @override State<CommerceWalletPage> createState()=>_CommerceWalletPageState();
+}
+class _CommerceWalletPageState extends State<CommerceWalletPage>{
+ Map<String,dynamic>? wallet;List<Map<String,dynamic>> history=[];bool loading=true;String? error;
+ Future<void> _load()async{
+  final user=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
+  if(user==null){setState(()=>loading=false);return;}
+  try{
+   final w=await Supabase.instance.client.from('commerce_wallets').select().eq('user_id',user.id).maybeSingle();
+   final h=await Supabase.instance.client.from('commerce_wallet_transactions').select().order('created_at',ascending:false).limit(30);
+   if(mounted)setState(()=>{wallet=w,history:h.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});
+  }catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
+ }
+ @override void initState(){super.initState();_load();}
+ Future<void> _transfer()async{
+  final c=TextEditingController();final amount=await showDialog<double>(context:context,builder:(ctx)=>AlertDialog(title:const Text('कमीशन से सर्विस वॉलेट में ट्रांसफर'),content:TextField(controller:c,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'राशि (₹)')),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,double.tryParse(c.text)),child:const Text('ट्रांसफर करें'))]));
+  if(amount==null||amount<=0)return;
+  try{await Supabase.instance.client.rpc('transfer_commission_to_service_wallet',params:{'p_amount':amount});await _load();if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('राशि सर्विस वॉलेट में ट्रांसफर हो गई।')));}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('ट्रांसफर नहीं हुआ: $e')));}
+ }
+ @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Service Wallet & Earnings')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
+  if(Supabase.instance.client.auth.currentUser==null)const Text('वॉलेट देखने के लिए पहले लॉगिन करें।'),
+  if(error!=null)Text(error!,style:const TextStyle(color:red)),
+  _walletCard('Service Wallet','सर्विस इस्तेमाल करने और रिचार्ज के लिए','₹${(wallet?['service_balance'] as num?)?.toStringAsFixed(2)??'0.00'}',Icons.account_balance_wallet),
+  const SizedBox(height:10),_walletCard('Commission Wallet','Self और Referral Commission की कमाई','₹${(wallet?['commission_balance'] as num?)?.toStringAsFixed(2)??'0.00'}',Icons.savings_outlined),
+  const SizedBox(height:12),
+  FilledButton.icon(onPressed:_transfer,icon:const Icon(Icons.swap_horiz),label:const Text('कमीशन से सर्विस वॉलेट में डालें')),
+  OutlinedButton.icon(onPressed:()=>ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Service Wallet में पैसे जोड़ने के लिए payment gateway जोड़ना बाकी है।'))),icon:const Icon(Icons.add_card),label:const Text('Add Money')),
+  const Text('कमीशन बैंक या UPI में withdraw नहीं होगा। इसे केवल Service Wallet में ट्रांसफर किया जा सकता है।',style:TextStyle(color:muted,fontSize:11)),
+  const SizedBox(height:16),const Text('Wallet Transactions',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:16)),
+  ...history.map((e)=>ListTile(dense:true,leading:Icon(e['wallet_type']=='service'?Icons.account_balance_wallet:Icons.savings_outlined,color:blue),title:Text(e['description']?.toString()??e['transaction_type'].toString()),subtitle:Text('${e['wallet_type']} • ${e['created_at']}'),trailing:Text('₹${(e['amount'] as num).toStringAsFixed(2)}')))
+ ]));
+ Widget _walletCard(String title,String subtitle,String amount,IconData icon)=>Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(17)),child:Row(children:[Icon(icon,color:gold,size:28),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900)),Text(subtitle,style:const TextStyle(color:Colors.white70,fontSize:11))])),Text(amount,style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:18))]));
+}
+class ReferralPage extends StatefulWidget{
+ final bool supabaseAvailable;const ReferralPage({super.key,required this.supabaseAvailable});
+ @override State<ReferralPage> createState()=>_ReferralPageState();
+}
+class _ReferralPageState extends State<ReferralPage>{
+ String code='';bool loading=true;String? error;
+ @override void initState(){super.initState();_load();}
+ Future<void> _load()async{
+  final u=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
+  if(u==null){setState(()=>loading=false);return;}
+  try{final r=await Supabase.instance.client.from('commerce_profiles').select('referral_code,plan_tier').eq('user_id',u.id).maybeSingle();if(mounted)setState(()=>{code=r?['referral_code'] as String???'',loading=false});}catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}
+ }
+ Future<void> _apply()async{
+  final c=TextEditingController();final value=await showDialog<String>(context:context,builder:(ctx)=>AlertDialog(title:const Text('Referral Code लगाएँ'),content:TextField(controller:c,decoration:const InputDecoration(labelText:'Referral Code')),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,c.text.trim()),child:const Text('Apply'))]));
+  if(value==null||value.isEmpty)return;
+  try{await Supabase.instance.client.rpc('apply_bharat_saathi_referral_code',params:{'p_referral_code':value});if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Referral Code जुड़ गया।')));}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Referral Code लागू नहीं हुआ: $e')));}
+ }
+ @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Refer & Earn')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(18),children:[
+  if(Supabase.instance.client.auth.currentUser==null)const Text('रेफरल कोड देखने के लिए लॉगिन करें।'),
+  if(error!=null)Text(error!,style:const TextStyle(color:red)),
+  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('आपका Referral Code',style:TextStyle(color:Colors.white70)),const SizedBox(height:8),Text(code.isEmpty?'—':code,style:const TextStyle(color:gold,fontSize:27,fontWeight:FontWeight.w900)),const SizedBox(height:12),Row(children:[Expanded(child:OutlinedButton(onPressed:code.isEmpty?null:()=>Clipboard.setData(ClipboardData(text:code)),child:const Text('Copy Code'))),const SizedBox(width:8),Expanded(child:FilledButton(onPressed:code.isEmpty?null:()=>Share.share('Bharat Saathi से जुड़ें। मेरा Referral Code: $code'),child:const Text('Share')))])])),
+  const SizedBox(height:12),OutlinedButton(onPressed:_apply,child:const Text('किसी का Referral Code लगाएँ')),
+  const Text('Referral Commission पाने के लिए आपका Lifetime Plan सक्रिय होना चाहिए। कमीशन के तीन स्तर हैं: ₹50, ₹30 और ₹20।',style:TextStyle(color:muted,fontSize:12))
+ ]));
+}
+class AdminCommissionPage extends StatefulWidget{const AdminCommissionPage({super.key});@override State<AdminCommissionPage> createState()=>_AdminCommissionPageState();}
+class _AdminCommissionPageState extends State<AdminCommissionPage>{
+ List<Map<String,dynamic>> rules=[];List<Map<String,dynamic>> referral=[];bool loading=true;String? error;
+ Future<void> _load()async{try{final c=Supabase.instance.client;final a=await c.from('service_commission_rules').select().order('service_name');final b=await c.from('referral_subscription_rules').select().order('level');if(mounted)setState(()=>{rules:a.map((e)=>Map<String,dynamic>.from(e)).toList(),referral:b.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});}catch(e){if(mounted)setState(()=>{error=e.toString(),loading=false});}}
+ @override void initState(){super.initState();_load();}
+ Future<void> _editRule([Map<String,dynamic>? old])async{
+  final code=TextEditingController(text:old?['service_code']?.toString()??''),name=TextEditingController(text:old?['service_name']?.toString()??'');
+  final total=TextEditingController(text:old?['total_provider_commission_pct']?.toString()??'0'),company=TextEditingController(text:old?['company_share_pct']?.toString()??'0'),free=TextEditingController(text:old?['free_self_pct']?.toString()??'0'),self=TextEditingController(text:old?['lifetime_self_pct']?.toString()??'0'),l1=TextEditingController(text:old?['level1_pct']?.toString()??'0'),l2=TextEditingController(text:old?['level2_pct']?.toString()??'0'),l3=TextEditingController(text:old?['level3_pct']?.toString()??'0');
+  final ok=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(title:Text(old==null?'नई सर्विस कमीशन':'कमीशन दर बदलें'),content:SizedBox(width:420,child:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
+   TextField(controller:code,decoration:const InputDecoration(labelText:'Service code (unique)')),TextField(controller:name,decoration:const InputDecoration(labelText:'Service name')),
+   TextField(controller:total,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Provider total commission %')),TextField(controller:company,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Company share %')),
+   TextField(controller:free,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Free user Self %')),TextField(controller:self,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Lifetime Self %')),
+   TextField(controller:l1,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Level 1 %')),TextField(controller:l2,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Level 2 %')),TextField(controller:l3,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'Level 3 %'))
+  ]))),actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('सेव करें'))]));
+  if(ok!=true)return;
+  try{final c=Supabase.instance.client;await c.from('service_commission_rules').upsert({'service_code':code.text.trim().toLowerCase(),'service_name':name.text.trim(),'total_provider_commission_pct':double.parse(total.text),'company_share_pct':double.parse(company.text),'free_self_pct':double.parse(free.text),'lifetime_self_pct':double.parse(self.text),'level1_pct':double.parse(l1.text),'level2_pct':double.parse(l2.text),'level3_pct':double.parse(l3.text),'updated_by':c.auth.currentUser!.id,'updated_at':DateTime.now().toUtc().toIso8601String()});await _load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('सेव नहीं हुआ: $e')));}
+ }
+ Future<void> _editReferral()async{
+  final c=Supabase.instance.client;final fields=<int,TextEditingController>{for(final r in referral)(r['level'] as num).toInt():TextEditingController(text:(r['amount'] as num).toStringAsFixed(0))};
+  final ok=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(title:const Text('Referral Subscription Commission'),content:Column(mainAxisSize:MainAxisSize.min,children:[for(int i=1;i<=3;i++)TextField(controller:fields[i],keyboardType:TextInputType.number,decoration:InputDecoration(labelText:'Level $i amount ₹'))]),actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('सेव करें'))]));
+  if(ok!=true)return;
+  try{for(int i=1;i<=3;i++){await c.from('referral_subscription_rules').update({'amount':double.parse(fields[i]!.text),'updated_by':c.auth.currentUser!.id,'updated_at':DateTime.now().toUtc().toIso8601String()}).eq('level',i);}await _load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('सेव नहीं हुआ: $e')));}
+ }
+ @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Admin Commission Settings')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
+  if(error!=null)Text(error!,style:const TextStyle(color:red)),
+  const Text('Service-wise Commission',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),
+  FilledButton.icon(onPressed:()=>_editRule(),icon:const Icon(Icons.add),label:const Text('नई सर्विस कमीशन जोड़ें')),
+  ...rules.map((r)=>Card(color:Colors.white,child:ListTile(title:Text(r['service_name'].toString()),subtitle:Text('Free Self ${r['free_self_pct']}% • Lifetime Self ${r['lifetime_self_pct']}% • L1 ${r['level1_pct']}% • L2 ${r['level2_pct']}% • L3 ${r['level3_pct']}%'),trailing:IconButton(onPressed:()=>_editRule(r),icon:const Icon(Icons.edit_outlined))))),
+  const SizedBox(height:16),const Text('₹299 Lifetime Referral Commission',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),
+  ...referral.map((r)=>ListTile(title:Text('Level ${r['level']}'),trailing:Text('₹${(r['amount'] as num).toStringAsFixed(0)}'))),
+  OutlinedButton(onPressed:_editReferral,child:const Text('Referral Commission बदलें'))
+ ]));
 }
 class ReportsPage extends StatefulWidget{
  final List<Record> sales,expensesList,khata,personalTransactions;
