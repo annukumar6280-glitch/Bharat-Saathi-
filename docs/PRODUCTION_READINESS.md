@@ -1,0 +1,56 @@
+# Bharat Saathi – Production Readiness
+
+This file is the source of truth for what is implemented, what is local-only, and what is blocked on external credentials or approvals.
+
+## Working in the current Flutter prototype
+
+- Hindi retailer dashboard and six-tab navigation: Home, Personal, Stock, Sales, Khata and Profile.
+- Personal ledger: income, expense, net total and a user-configured spending cap.
+- Retailer ledger: products, stock count, sales, expenses and customer receivables.
+- Sales select an existing product and quantity, validate available stock, and deduct inventory.
+- Sales distinguish cash/bank payment from customer credit. Credit sales create a khata receivable; recorded customer payments reduce receivables and add to recorded cash flow.
+- Records persist on the current device through SharedPreferences.
+- First launch contains no fabricated customer, invoice, stock or balance data.
+- Provider-dependent service tiles display Coming Soon.
+
+## Important data limitation
+
+The current local prototype uses a key-value store. It is not a production accounting database, is not encrypted as a financial vault, has no automatic cloud backup, and does not synchronize between devices. Do not use it as the final ledger for real business transactions. Before production, migrate to SQLite/Drift or another transactional local database, add schema migrations, audit history, export/restore, and a conflict-safe Supabase sync engine.
+
+## Supabase backend already present
+
+Project is active in Mumbai. Existing database migrations cover:
+- Profiles, accounts and account membership.
+- Financial categories, financial transactions and budgets.
+- Parties and khata entries.
+- Products, stock movements, purchases, purchase items, sales, sale items and stock summary.
+- Database routines for receiving purchases, completing sales and adjusting inventory.
+
+The Flutter client has not yet been connected to Supabase Auth or those tables/RPCs. The mobile build must use only a Supabase publishable key. A service-role/secret key must never be embedded in the APK. The project publishable key and chosen sign-in method still need to be configured securely.
+
+## Coming Soon – external provider dependencies
+
+Keep these disabled until credentials, contracts, callback/webhook validation, reconciliation and compliance approval are complete:
+- Mobile, DTH and FASTag recharge.
+- BBPS bill payments.
+- Traffic challan payments.
+- UPI collect, payout, wallet and money transfer.
+- SMS/WhatsApp OTP and transactional messaging.
+- Subscription payments, platform commissions and settlement.
+
+Never simulate a successful external transaction or fabricate balances, commissions, provider references or transaction history.
+
+## Remaining product work
+
+1. Replace local key-value storage with a transactional offline database and migrations.
+2. Connect Supabase Auth, profile onboarding, personal/business account selection and membership-aware data access.
+3. Sync personal finance, budgets, parties, khata, products, purchases, sales and stock movements through RLS-protected tables/RPCs.
+4. Add full customer and supplier management, purchase entry, invoice details, sales returns, stock adjustment history and tax fields.
+5. Add categories, recurring bills/reminders, family accounts, date filters, reports and CSV/PDF export.
+6. Add backup/restore, account deletion/export flows, privacy policy, terms, support and accessibility review.
+7. Complete security advisor review, API exposure verification, end-to-end tests and Android release signing.
+8. Integrate external services only after provider credentials and approvals are supplied.
+
+## CI validation
+
+GitHub Actions runs Flutter analysis, widget tests and Android debug APK build. A passing debug build is not equivalent to a signed Play Store release or provider certification.
