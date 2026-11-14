@@ -25,8 +25,7 @@ void main() {
   });
 
   testWidgets('Personal finance tab opens', (tester) async {
-    await tester.pumpWidget(const BharatSaathiApp());
-    await tester.pumpAndSettle();
+    await pumpApp(tester);
     await tester.tap(find.text('पर्सनल'));
     await tester.pumpAndSettle();
     expect(find.text('पर्सनल फाइनेंस'), findsOneWidget);
@@ -35,8 +34,7 @@ void main() {
   });
 
   testWidgets('Reports page summarizes local records and explains export limits', (tester) async {
-    await tester.pumpWidget(const BharatSaathiApp());
-    await tester.pumpAndSettle();
+    await pumpApp(tester);
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('रिपोर्ट और डेटा एक्सपोर्ट'));
@@ -47,8 +45,7 @@ void main() {
   });
 
   testWidgets('Provider-dependent services are clearly marked Coming Soon', (tester) async {
-    await tester.pumpWidget(const BharatSaathiApp());
-    await tester.pumpAndSettle();
+    await pumpApp(tester);
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('मोबाइल / DTH / FASTag रिचार्ज'), 200);
@@ -56,8 +53,7 @@ void main() {
   });
 
   testWidgets('Retailer purchase records supplier and increases stock', (tester) async {
-    await tester.pumpWidget(const BharatSaathiApp());
-    await tester.pumpAndSettle();
+    await pumpApp(tester);
 
     await tester.tap(find.text('स्टॉक'));
     await tester.pumpAndSettle();
@@ -83,8 +79,7 @@ void main() {
   });
 
   testWidgets('SQLite-backed local records survive app restart', (tester) async {
-    await tester.pumpWidget(const BharatSaathiApp());
-    await tester.pumpAndSettle();
+    await pumpApp(tester);
     await tester.tap(find.text('स्टॉक'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('प्रोडक्ट'));
@@ -96,16 +91,14 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pumpWidget(const BharatSaathiApp());
-    await tester.pumpAndSettle();
+    await pumpApp(tester);
     await tester.tap(find.text('स्टॉक'));
     await tester.pumpAndSettle();
     expect(find.text('टेस्ट आटा'), findsOneWidget);
   });
 
   testWidgets('Supplier credit purchase creates payable balance', (tester) async {
-    await tester.pumpWidget(const BharatSaathiApp());
-    await tester.pumpAndSettle();
+    await pumpApp(tester);
     await tester.tap(find.text('स्टॉक'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('प्रोडक्ट'));
@@ -137,8 +130,7 @@ void main() {
   });
 
   testWidgets('Sales return restores stock and records refund', (tester) async {
-    await tester.pumpWidget(const BharatSaathiApp());
-    await tester.pumpAndSettle();
+    await pumpApp(tester);
     await tester.tap(find.text('स्टॉक'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('प्रोडक्ट'));
