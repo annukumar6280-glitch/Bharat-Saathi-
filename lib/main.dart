@@ -10,7 +10,7 @@ Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=fal
 const navy=Color(0xFF14233B),blue=Color(0xFF29496D),gold=Color(0xFFF2A93B),bg=Color(0xFFE7EBF1),muted=Color(0xFF788596),green=Color(0xFF16845B),red=Color(0xFFD95454);
 class BharatSaathiApp extends StatelessWidget{final bool supabaseAvailable;const BharatSaathiApp({super.key,this.supabaseAvailable=false});@override Widget build(BuildContext context)=>MaterialApp(title:'Bharat Saathi',debugShowCheckedModeBanner:false,theme:ThemeData(useMaterial3:true,scaffoldBackgroundColor:bg,colorScheme:ColorScheme.fromSeed(seedColor:navy),appBarTheme:const AppBarTheme(backgroundColor:bg,foregroundColor:navy,elevation:0)),home:RetailerHome(supabaseAvailable:supabaseAvailable));}
 class Item{String name,detail;int qty;double price;Item(this.name,this.detail,this.qty,this.price);Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'qty':qty,'price':price};factory Item.fromJson(Map<String,dynamic> j)=>Item(j['name'] as String,j['detail'] as String,(j['qty'] as num).toInt(),(j['price'] as num).toDouble());}
-class Record{String name,detail;double amount;IconData icon;Record(this.name,this.detail,this.amount,this.icon);Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint};factory Record.fromJson(Map<String,dynamic> j)=>Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long);}
+class Record{String name,detail;double amount;IconData icon;DateTime? createdAt;Record(this.name,this.detail,this.amount,this.icon,[this.createdAt]);Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint,'createdAt':createdAt?.toIso8601String()};factory Record.fromJson(Map<String,dynamic> j)=>Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long,j['createdAt'] is String?DateTime.tryParse(j['createdAt'] as String):null);}
 class RetailerHome extends StatefulWidget{final bool supabaseAvailable;const RetailerHome({super.key,this.supabaseAvailable=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
 class _RetailerHomeState extends State<RetailerHome>{
  int tab=0;double cash=0,expenses=0,personalBudget=0;String personalBudgetName='व्यक्तिगत खर्च सीमा';bool loaded=false;
@@ -374,12 +374,12 @@ class ReportsPage extends StatelessWidget{
  double get personalExpense=>-personalTransactions.where((e)=>e.amount<0).fold<double>(0,(s,e)=>s+e.amount);
  String _cell(String value)=>"\"${value.replaceAll('"','""')}\"";
  String _csv(){
- final rows=<List<String>>[['श्रेणी','नाम','विवरण','राशि (INR)','मात्रा','बिक्री मूल्य']];
- for(final e in sales){rows.add(['बिक्री',e.name,e.detail,e.amount.toStringAsFixed(2),'','']);}
- for(final e in expensesList){rows.add(['कारोबारी खर्च',e.name,e.detail,e.amount.toStringAsFixed(2),'','']);}
- for(final e in khata){rows.add(['ग्राहक खाता',e.name,e.detail,e.amount.toStringAsFixed(2),'','']);}
- for(final e in personalTransactions){rows.add(['व्यक्तिगत',e.name,e.detail,e.amount.toStringAsFixed(2),'','']);}
- for(final e in products){rows.add(['स्टॉक',e.name,e.detail,'',e.qty.toString(),e.price.toStringAsFixed(2)]);}
+ final rows=<List<String>>[['श्रेणी','नाम','विवरण','राशि (INR)','तारीख़ / समय','मात्रा','बिक्री मूल्य']];
+ for(final e in sales){rows.add(['बिक्री',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
+ for(final e in expensesList){rows.add(['कारोबारी खर्च',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
+ for(final e in khata){rows.add(['ग्राहक खाता',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
+ for(final e in personalTransactions){rows.add(['व्यक्तिगत',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
+ for(final e in products){rows.add(['स्टॉक',e.name,e.detail,'','','${e.qty}',e.price.toStringAsFixed(2)]);}
  return rows.map((r)=>r.map(_cell).join(',')).join('\r\n');
  }
  Future<void> _export(BuildContext context)async{
