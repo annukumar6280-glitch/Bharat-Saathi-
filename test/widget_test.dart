@@ -45,7 +45,9 @@ void main() {
     expect(find.text('मोबाइल रिचार्ज'), findsOneWidget);
     expect(find.text('बिल पेमेंट'), findsOneWidget);
     expect(find.text('चालान पेमेंट'), findsOneWidget);
-    expect(find.text('सर्विस वॉलेट'), findsOneWidget);
+    expect(find.text('कमीशन वॉलेट'), findsOneWidget);
+    expect(find.textContaining('सीधे UPI / Gateway से होगा'), findsOneWidget);
+    expect(find.text('सर्विस वॉलेट'), findsNothing);
     expect(find.text('स्टॉक'), findsNothing);
     expect(find.text('बिक्री'), findsNothing);
   });
