@@ -112,7 +112,7 @@ class _RetailerHomeState extends State<RetailerHome>{
  final q=int.tryParse(quantity.text);final client=customer.text.trim();if(client.isEmpty||q==null||q<1){msg('ग्राहक और सही मात्रा भरें');return;}
  final matching=sales.where((e)=>e.name.toLowerCase()==client.toLowerCase()&&e.detail.startsWith('${selected.name} × ')).toList();int soldQty=0;double soldValue=0;
  for(final e in matching){final match=RegExp(r'×\s*(\d+)').firstMatch(e.detail);if(match!=null){soldQty+=int.parse(match.group(1)!);soldValue+=e.amount;}}
- int returnedQty=0;for(final e in salesReturns.where((e)=>e.name.toLowerCase()==client.toLowerCase()&&e.detail.startsWith(selected.name+' × '))){final match=RegExp(r'×\s*(\d+)').firstMatch(e.detail);if(match!=null)returnedQty+=int.parse(match.group(1)!);}
+ int returnedQty=0;for(final e in salesReturns.where((e)=>e.name.toLowerCase()==client.toLowerCase()&&e.detail.startsWith('${selected.name} × '))){final match=RegExp(r'×\s*(\d+)').firstMatch(e.detail);if(match!=null)returnedQty+=int.parse(match.group(1)!);}
  if(soldQty==0||q>soldQty-returnedQty){msg('इस ग्राहक की उपलब्ध बिक्री मात्रा से अधिक वापसी दर्ज नहीं हो सकती');return;}
  final refund=(soldValue/soldQty)*q;
  if(refundMode=='उधार समायोजन'){final due=khata.where((e)=>e.name.toLowerCase()==client.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);if(due<refund){msg('ग्राहक का बकाया रिफंड समायोजन के लिए पर्याप्त नहीं है');return;}}
