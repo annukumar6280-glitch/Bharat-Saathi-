@@ -169,7 +169,7 @@ class HomeServiceWalletCard extends StatelessWidget{
   const Icon(Icons.account_balance_wallet_rounded,color:Color(0xFFFFD58A),size:25),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
    Text(english?'Commission Wallet':'कमीशन वॉलेट',style:const TextStyle(color:Colors.white,fontSize:16,fontWeight:FontWeight.w900)),
    const SizedBox(height:4),Text(english?'Your service and referral earnings':'आपकी सेल्फ और रेफरल कमीशन की कमाई',style:const TextStyle(color:Colors.white70,fontSize:11)),
-   const SizedBox(height:5),Text(english?'Services are paid directly at checkout':'हर सर्विस का भुगतान सीधे UPI / Gateway से होगा',style:const TextStyle(color:Color(0xFFFFD58A),fontSize:10,fontWeight:FontWeight.w700))
+   const SizedBox(height:5),Text(english?'Use earned commission as a discount on services':'कमाई हुई कमीशन राशि अगली सर्विस पर छूट बनेगी',style:const TextStyle(color:Color(0xFFFFD58A),fontSize:10,fontWeight:FontWeight.w700))
   ])),const Icon(Icons.chevron_right,color:Colors.white70)
  ]))));
 }
@@ -617,9 +617,9 @@ class _CommerceWalletPageState extends State<CommerceWalletPage>{
   if(error!=null)Text(error!,style:const TextStyle(color:red)),
   _walletCard('Commission Wallet','Self और Direct Referral Commission की कमाई','₹${(wallet?['commission_balance'] as num?)?.toStringAsFixed(2)??'0.00'}',Icons.savings_outlined),
   const SizedBox(height:12),
-  const Text('रिचार्ज और बिल का भुगतान हर बार सीधे UPI / कार्ड / नेट बैंकिंग से होगा। ऐप में Service Wallet या Add Money सुविधा नहीं है।',style:TextStyle(color:muted,fontSize:12)),
+  const Text('कमीशन राशि अगली Recharge या Bill Payment के checkout पर छूट के रूप में लगाई जाएगी। Add Money या अलग Service Wallet नहीं होगा।',style:TextStyle(color:muted,fontSize:12)),
   const SizedBox(height:8),
-  const Text('कमीशन बैलेंस केवल कमाई का रिकॉर्ड है। बैंक / UPI निकासी या सर्विस भुगतान में उपयोग की सुविधा अभी सक्रिय नहीं है।',style:TextStyle(color:muted,fontSize:11)),
+  const Text('सुरक्षित आरक्षण और असफल भुगतान पर कमीशन वापसी का सर्वर सिस्टम तैयार है। Recharge/Bill Payment अभी Coming Soon हैं; Gateway और सर्विस पार्टनर जुड़ने के बाद checkout पर “कमीशन इस्तेमाल करें” विकल्प सक्रिय होगा। बैंक / UPI निकासी उपलब्ध नहीं है।',style:TextStyle(color:muted,fontSize:11)),
   const SizedBox(height:16),const Text('Commission Transactions',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:16)),
   ...history.map((e)=>ListTile(dense:true,leading:const Icon(Icons.savings_outlined,color:blue),title:Text(e['description']?.toString()??e['transaction_type'].toString()),subtitle:Text('${e['created_at']}'),trailing:Text('₹${(e['amount'] as num).toStringAsFixed(2)}')))
  ]));
