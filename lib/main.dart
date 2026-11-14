@@ -211,11 +211,18 @@ class _LinkedKhataPageState extends State<LinkedKhataPage>{
 
  Future<void> addEntry(Map<String,dynamic> link,String type)async{
  final amount=TextEditingController(),note=TextEditingController();
- await showModalBottomSheet<void>(context:context,isScrollControlled:true,builder:(c)=>Padding(padding:EdgeInsets.fromLTRB(18,18,18,18+MediaQuery.of(c).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'राशि (₹)')),
- TextField(controller:note,decoration:const InputDecoration(labelText:'विवरण')),
- FilledButton(onPressed:()async{final v=double.tryParse(amount.text);if(v==null||v<=0)return;Navigator.pop(ctx);try{await Supabase.instance.client.rpc('add_khata_transaction',params:{'p_link_id':link['id'],'p_type':type,'p_amount':v,'p_note':note.text});await load();}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}},child:const Text('सेव करें'))
- ]))));
+ await showModalBottomSheet<void>(context:context,isScrollControlled:true,builder:(ctx)=>Padding(
+  padding:EdgeInsets.fromLTRB(18,18,18,18+MediaQuery.of(ctx).viewInsets.bottom),
+  child:Column(mainAxisSize:MainAxisSize.min,children:[
+   TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'राशि (₹)')),
+   TextField(controller:note,decoration:const InputDecoration(labelText:'विवरण')),
+   FilledButton(onPressed:()async{
+    final v=double.tryParse(amount.text);if(v==null||v<=0)return;
+    Navigator.pop(ctx);
+    try{await Supabase.instance.client.rpc('add_khata_transaction',params:{'p_link_id':link['id'],'p_type':type,'p_amount':v,'p_note':note.text});await load();}
+    catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}
+   },child:const Text('सेव करें'))
+  ])));
  }
  @override Widget build(BuildContext context){final u=c.auth.currentUser;if(!widget.supabaseAvailable||u==null)return Scaffold(appBar:AppBar(title:const Text('लिंक किया हुआ खाता')),body:const Center(child:Text('पहले ईमेल और पासवर्ड से लॉगिन करें।')));return Scaffold(appBar:AppBar(title:const Text('लिंक किया हुआ खाता'),actions:[IconButton(onPressed:load,icon:const Icon(Icons.refresh))]),body:ListView(padding:const EdgeInsets.all(16),children:[const Text('ग्राहक का रजिस्टर्ड मोबाइल नंबर डालें। ग्राहक की स्वीकृति के बाद दोनों तरफ एक ही खाता दिखेगा।'),FilledButton(onPressed:request,child:const Text('ग्राहक को जोड़ें')),if(busy)const LinearProgressIndicator(),...rows.map((r){final retailer=r['retailer_id']==u.id;final pending=r['status']=='pending';final name=retailer?(r['customer_name']??'ग्राहक'):(r['retailer_name']??'दुकानदार');return Card(color:Colors.white,child:ListTile(title:Text(name.toString()),subtitle:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(r['status'].toString()),if(r['status']=='accepted')_LinkedDetails(link:r,retailer:retailer,onCredit:()=>addEntry(r,'credit'),onPayment:()=>addEntry(r,'payment'))]),trailing:pending&&!retailer?TextButton(onPressed:()=>respond(r['id'],true),child:const Text('स्वीकार करें')):null));})]));}
 }
