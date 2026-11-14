@@ -2,12 +2,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bharat_saathi/main.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 
 void main() {
-  setUpAll(() { sqfliteFfiInit(); databaseFactory = databaseFactoryFfi; });
+  setUpAll(() { sqfliteFfiInit(); databaseFactory = databaseFactoryFfi; sqflite.databaseFactory = databaseFactoryFfi; });
   setUp(() async { SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty(); await LocalStore.clear(); });
   tearDown(() { SharedPreferencesAsyncPlatform.instance = null; });
   testWidgets('Bharat Saathi home screen renders without seeded demo records', (tester) async {
