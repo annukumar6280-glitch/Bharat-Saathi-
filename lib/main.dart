@@ -247,7 +247,7 @@ class _AuthPageState extends State<AuthPage>{
  SupabaseClient get client=>Supabase.instance.client;
  void message(String text,{bool error=false}){if(!mounted)return;setState((){notice=text;errorNotice=error;});}
  Future<void> _ensureProfileAndAccounts()async{
- final user=client.auth.currentUser;if(user==null)throw AuthException('लॉगिन सत्र उपलब्ध नहीं है');
+ final user=client.auth.currentUser;if(user==null)throw const AuthException('लॉगिन सत्र उपलब्ध नहीं है');
  final name=fullName.text.trim().isNotEmpty?fullName.text.trim():(user.email??'Bharat Saathi').split('@').first;
  await client.from('profiles').upsert({'id':user.id,'full_name':name,'preferred_language':'hi'});
  final existing=await client.from('accounts').select('id,account_type').eq('created_by',user.id);
@@ -282,7 +282,7 @@ class _AuthPageState extends State<AuthPage>{
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
  return Scaffold(appBar:AppBar(title:const Text('अकाउंट और सुरक्षा')),body:ListView(padding:const EdgeInsets.all(20),children:[
- Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Bharat Saathi अकाउंट',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),SizedBox(height:6),Text('ईमेल से सुरक्षित लॉगिन। SMS OTP अभी Coming Soon है।',style:TextStyle(color:Colors.white70,fontSize:12))]),
+ Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Bharat Saathi अकाउंट',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),SizedBox(height:6),Text('ईमेल से सुरक्षित लॉगिन। SMS OTP अभी Coming Soon है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
  const SizedBox(height:18),
  if(!widget.supabaseAvailable)const Text('Supabase कनेक्शन शुरू नहीं हो पाया। अभी स्थानीय ऑफलाइन सुविधाएँ उपयोग करें।',style:TextStyle(color:red))
  else if(user!=null)...[
@@ -321,6 +321,7 @@ class _CloudBackupPageState extends State<CloudBackupPage>{
  if(row==null){showMessage('इस अकाउंट का कोई क्लाउड बैकअप नहीं मिला।');}
  else if((row['schema_version'] as num?)?.toInt()!=1){showMessage('यह बैकअप इस ऐप संस्करण के अनुकूल नहीं है।',error:true);}
  else{
+ if(!mounted)return;
  final confirmed=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(title:const Text('क्लाउड बैकअप रीस्टोर करें?'),content:const Text('यह इस फोन के मौजूदा स्थानीय रिकॉर्ड को क्लाउड बैकअप से बदल देगा। पहले स्थानीय बैकअप कर लें।'),actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('रीस्टोर करें'))]));
  if(confirmed==true){await prefs.setString('bharat_saathi_store_v1',jsonEncode(row['payload']));await widget.onRestore();showMessage('क्लाउड बैकअप इस डिवाइस पर रीस्टोर हो गया।');}
  }
