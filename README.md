@@ -1,25 +1,48 @@
 # Bharat Saathi
 
-Bharat Saathi – Personal finance and retailer management app.
+Bharat Saathi is a Flutter Android app for personal finance and small-retailer operations.
 
-## Retailer UI prototype (v0.2)
-The Flutter prototype currently includes:
-- A redesigned retailer dashboard with cash/bank balance, sales, expenses and customer dues cards
-- Quick actions for sale entry, expense entry and customer khata
-- Weekly sales chart visual and recent activity list
-- Product inventory list with low-stock highlighting
-- Sales records, customer khata and profile/settings screens
-- Bottom navigation and local demo entry forms
+## Current app implementation
 
-**Important:** the dashboard figures, chart and sample records are illustrative demo data stored only in app memory. They are not real business records and do not persist after closing the app. Supabase authentication and live database integration are not connected yet.
+- Hindi-first retailer dashboard with a muted slate background.
+- Product list, sale entry, expense entry and customer khata entry.
+- On-device persistence for the current retailer prototype using SharedPreferences.
+- Empty first-run state: no seeded sample customers, fake invoices, chart totals or fictional cash balance.
+- Android debug APK is built by GitHub Actions; analyzer, widget test and APK build are part of CI.
 
-## Run locally
-1. Install Flutter SDK and Android Studio with Android SDK.
-2. From this repository root run `flutter pub get`.
-3. Run on an Android device/emulator with `flutter run`.
+## Data and production status
 
-## Next development stages
-1. Run Flutter analyzer/build and refine UI against an Android device.
-2. Add Supabase Auth and account onboarding using environment-provided URL and publishable key (never commit secrets).
-3. Connect inventory, purchases, sales, stock ledger and khata to secured database RPCs.
-4. Add personal finance screens, reports, tests, offline sync, backup and release signing.
+The current retailer records are stored locally on the device. They are **not yet synced to Supabase**, are not shared across devices, and are not a production-grade financial ledger. SharedPreferences is used for the current prototype only; before production financial use it must be migrated to a transactional local database with backup/export and conflict-safe sync.
+
+Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, products, purchases, sales, stock movements and a stock summary view. The Flutter client is not yet connected to Supabase Auth or the live database. Never place a Supabase secret/service-role key in the mobile app. A publishable key and auth/provider configuration must be supplied through secure build configuration before live account sign-in can be enabled.
+
+## Provider-dependent services
+
+The following remain **Coming Soon** until approved provider credentials, commercial agreements, webhook verification, reconciliation and required compliance checks are available:
+- Mobile, DTH and FASTag recharge.
+- BBPS bill payments.
+- Challan / traffic fine payments.
+- UPI collect, payouts, wallet or money transfer.
+- SMS/WhatsApp OTP and transactional notifications.
+- Paid plans, commissions and payment settlement.
+
+The app must not create simulated payment success, balances, commissions or transaction references for these services.
+
+## Build
+
+GitHub Actions workflow: `.github/workflows/flutter-android.yml`
+1. Install Flutter stable and Java 17.
+2. Generate Android platform files.
+3. Run `flutter pub get`.
+4. Run `flutter analyze`.
+5. Run widget tests.
+6. Build a debug APK and upload it as an artifact.
+
+## Next implementation priorities
+
+1. Move local records to SQLite/Drift with migrations and CSV/PDF export.
+2. Implement Supabase Auth onboarding and connect account-scoped tables/RPCs using a publishable key.
+3. Implement personal finance UI: income, expenses, budgets, family accounts and reports.
+4. Finish retailer workflows: customer/supplier management, purchases, stock adjustments, invoice details and sales returns.
+5. Add tested backup/restore, offline-first sync, audit trail and release signing.
+6. Integrate external services only after credentials and provider certification are available.
