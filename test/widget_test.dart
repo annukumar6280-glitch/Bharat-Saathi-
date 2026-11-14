@@ -7,6 +7,11 @@ import 'package:shared_preferences_platform_interface/in_memory_shared_preferenc
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 
+Future<void> flushStorage(WidgetTester tester) async {
+  await tester.runAsync(() async { await Future<void>.delayed(const Duration(milliseconds: 400)); });
+  await tester.pump();
+}
+
 Future<void> pumpApp(WidgetTester tester) async {
   await tester.pumpWidget(const BharatSaathiApp());
   await tester.runAsync(() async { await Future<void>.delayed(const Duration(seconds: 3)); });
@@ -40,6 +45,7 @@ void main() {
     await tester.tap(find.text('रिपोर्ट और डेटा एक्सपोर्ट'));
     await tester.pumpAndSettle();
     expect(find.text('रिपोर्ट और एक्सपोर्ट'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('CSV रिपोर्ट डाउनलोड / शेयर करें'), 200);
     expect(find.text('CSV रिपोर्ट डाउनलोड / शेयर करें'), findsOneWidget);
     expect(find.text('तारीख़ के अनुसार फ़िल्टर करें'), findsOneWidget);
   });
@@ -65,6 +71,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(2), '100');
     await tester.tap(find.text('प्रोडक्ट सेव करें'));
     await tester.pumpAndSettle();
+    await flushStorage(tester);
 
     await tester.tap(find.text('खरीद दर्ज करें'));
     await tester.pumpAndSettle();
@@ -73,6 +80,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(2), '70');
     await tester.tap(find.text('खरीद सेव करें'));
     await tester.pumpAndSettle();
+    await flushStorage(tester);
 
     expect(find.text('ABC सप्लायर'), findsOneWidget);
     expect(find.text('8'), findsOneWidget);
@@ -89,6 +97,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(2), '45');
     await tester.tap(find.text('प्रोडक्ट सेव करें'));
     await tester.pumpAndSettle();
+    await flushStorage(tester);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await pumpApp(tester);
@@ -108,6 +117,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(2), '80');
     await tester.tap(find.text('प्रोडक्ट सेव करें'));
     await tester.pumpAndSettle();
+    await flushStorage(tester);
 
     await tester.tap(find.text('खरीद दर्ज करें'));
     await tester.pumpAndSettle();
@@ -120,6 +130,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('खरीद सेव करें'));
     await tester.pumpAndSettle();
+    await flushStorage(tester);
 
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
@@ -140,6 +151,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(2), '100');
     await tester.tap(find.text('प्रोडक्ट सेव करें'));
     await tester.pumpAndSettle();
+    await flushStorage(tester);
 
     await tester.tap(find.text('बिक्री').first);
     await tester.pumpAndSettle();
@@ -149,6 +161,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(1), '2');
     await tester.tap(find.text('बिक्री सेव करें'));
     await tester.pumpAndSettle();
+    await flushStorage(tester);
 
     await tester.tap(find.text('बिक्री वापसी दर्ज करें'));
     await tester.pumpAndSettle();
@@ -156,6 +169,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(1), '1');
     await tester.tap(find.text('वापसी सेव करें'));
     await tester.pumpAndSettle();
+    await flushStorage(tester);
 
     await tester.tap(find.text('स्टॉक'));
     await tester.pumpAndSettle();
