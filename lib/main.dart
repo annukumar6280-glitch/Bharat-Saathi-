@@ -247,7 +247,7 @@ class _AuthPageState extends State<AuthPage>{
  SupabaseClient get client=>Supabase.instance.client;
  void message(String text,{bool error=false}){if(!mounted)return;setState((){notice=text;errorNotice=error;});}
  Future<void> _ensureProfileAndAccounts()async{
- final user=client.auth.currentUser;if(user==null)throw const AuthException('लॉगिन सत्र उपलब्ध नहीं है');
+ final user=client.auth.currentUser;if(user==null)throw AuthException('लॉगिन सत्र उपलब्ध नहीं है');
  final name=fullName.text.trim().isNotEmpty?fullName.text.trim():(user.email??'Bharat Saathi').split('@').first;
  await client.from('profiles').upsert({'id':user.id,'full_name':name,'preferred_language':'hi'});
  final existing=await client.from('accounts').select('id,account_type').eq('created_by',user.id);
