@@ -25,6 +25,39 @@ jobs:
           cache: true
       - name: Generate Android platform files
         run: flutter create --platforms=android --org com.bharatsaathi --project-name bharat_saathi .
+      - name: Set and verify Android 16 target API
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          candidates = [
+              Path("android/app/build.gradle.kts"),
+              Path("android/app/build.gradle"),
+          ]
+          gradle = next((p for p in candidates if p.exists()), None)
+          if gradle is None:
+              raise SystemExit("Android app Gradle file was not generated")
+
+          content = gradle.read_text()
+          patterns = [
+              (r"targetSdk\\s*=\\s*flutter\\.targetSdkVersion", "targetSdk = 36"),
+              (r"targetSdkVersion\\s+flutter\\.targetSdkVersion", "targetSdkVersion 36"),
+          ]
+          updated = content
+          for pattern, replacement in patterns:
+              updated, count = re.subn(pattern, replacement, updated)
+              if count:
+                  break
+          if updated == content and not re.search(r"targetSdk(?:Version)?\\s*(?:=\\s*)?36\\b", content):
+              raise SystemExit("Could not safely set targetSdk to 36 in " + str(gradle))
+
+          gradle.write_text(updated)
+          verified = gradle.read_text()
+          if not re.search(r"targetSdk(?:Version)?\\s*(?:=\\s*)?36\\b", verified):
+              raise SystemExit("Target API 36 verification failed")
+          print(f"Verified Android target API 36 in {gradle}")
+          PY
       - name: Configure Google Mobile Ads test App ID
         run: |
           python3 - <<'PY'
