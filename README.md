@@ -8,14 +8,14 @@ Bharat Saathi is a Flutter Android app for personal finance and small-retailer o
 - Product list, sale entry, expense entry, customer khata and customer payment entries.
 - Separate Personal Finance tab for income, expenses, net balance and a user-defined spending limit.
 - On-device persistence for current prototype records using SharedPreferences.
-- Expense history alongside sales.
+- Expense history alongside sales.\n- Local business summary with copyable CSV export for sales, expenses, customer khata, personal finance and stock.
 - Provider-dependent recharge, BBPS, challan, UPI and transfer screens explicitly marked Coming Soon.
 - Empty first-run state: no seeded sample customers, fake invoices, chart totals or fictional cash balance.
 - Android debug APK is built by GitHub Actions; analyzer, widget test and APK build are part of CI.
 
 ## Data and production status
 
-The current retailer records are stored locally on the device. They are **not yet synced to Supabase**, are not shared across devices, and are not a production-grade financial ledger. SharedPreferences is used for the current prototype only; before production financial use it must be migrated to a transactional local database with backup/export and conflict-safe sync.
+The current retailer records are stored locally on the device. The reports screen summarizes those local records and copies a CSV to the clipboard; date-wise exports and PDF generation are not yet implemented. They are **not yet synced to Supabase**, are not shared across devices, and are not a production-grade financial ledger. SharedPreferences is used for the current prototype only; before production financial use it must be migrated to a transactional local database with backup/export and conflict-safe sync.
 
 Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, products, purchases, sales, stock movements and a stock summary view. The Flutter client now initializes Supabase and supports email/password authentication and account provisioning. Existing local finance and retailer records are still not live-synchronized to normalized Supabase ledger tables. Cloud backup is a manual snapshot/restore, not real-time sync; restore replaces the current local snapshot after confirmation. Email confirmation depends on the project's Auth email settings and production SMTP configuration. Never place a Supabase secret/service-role key in the mobile app; only the publishable key is included.
 
