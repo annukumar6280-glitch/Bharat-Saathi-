@@ -41,20 +41,20 @@ jobs:
 
           content = gradle.read_text()
           patterns = [
-              (r"targetSdk\\s*=\\s*flutter\\.targetSdkVersion", "targetSdk = 36"),
-              (r"targetSdkVersion\\s+flutter\\.targetSdkVersion", "targetSdkVersion 36"),
+              (r"targetSdk\s*=\s*flutter\.targetSdkVersion", "targetSdk = 36"),
+              (r"targetSdkVersion\s+flutter\.targetSdkVersion", "targetSdkVersion 36"),
           ]
           updated = content
           for pattern, replacement in patterns:
               updated, count = re.subn(pattern, replacement, updated)
               if count:
                   break
-          if updated == content and not re.search(r"targetSdk(?:Version)?\\s*(?:=\\s*)?36\\b", content):
+          if updated == content and not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", content):
               raise SystemExit("Could not safely set targetSdk to 36 in " + str(gradle))
 
           gradle.write_text(updated)
           verified = gradle.read_text()
-          if not re.search(r"targetSdk(?:Version)?\\s*(?:=\\s*)?36\\b", verified):
+          if not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", verified):
               raise SystemExit("Target API 36 verification failed")
           print(f"Verified Android target API 36 in {gradle}")
           PY
