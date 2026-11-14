@@ -611,7 +611,7 @@ class _CommerceWalletPageState extends State<CommerceWalletPage>{
   try{
    final w=await Supabase.instance.client.from('commerce_wallets').select().eq('user_id',user.id).maybeSingle();
    final h=await Supabase.instance.client.from('commerce_wallet_transactions').select().order('created_at',ascending:false).limit(30);
-   if(mounted)setState(()=>{wallet=w,history:h.map((e)=>Map<String,dynamic>.from(e)).toList(),loading=false});
+   if(mounted)setState((){wallet=w;history=h.map((e)=>Map<String,dynamic>.from(e)).toList();loading=false;});
   }catch(e){if(mounted)setState((){error=e.toString();loading=false;});}
  }
  @override void initState(){super.initState();_load();}
