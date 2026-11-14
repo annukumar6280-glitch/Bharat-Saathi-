@@ -427,7 +427,7 @@ class ProfilePage extends StatelessWidget{
  Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18)),child:Column(children:[const CircleAvatar(radius:34,backgroundColor:navy,child:Icon(Icons.storefront,color:gold,size:31)),const SizedBox(height:10),const Text('मेरा रिटेल स्टोर',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),Text(supabaseAvailable?'स्थानीय मोड • Supabase लॉगिन उपलब्ध':'ऑफ़लाइन प्रोफ़ाइल • क्लाउड लॉगिन उपलब्ध नहीं',style:const TextStyle(color:muted,fontSize:10))])),
  setting(Icons.lock_outline,'अकाउंट और सुरक्षा',supabaseAvailable?'ईमेल और पासवर्ड से लॉगिन / रजिस्ट्रेशन':'Coming Soon • Supabase कनेक्शन उपलब्ध नहीं',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
  setting(Icons.cloud_upload_outlined,'डेटा बैकअप',supabaseAvailable?'मैनुअल क्लाउड बैकअप और रीस्टोर':'Coming Soon • Supabase कनेक्शन उपलब्ध नहीं',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),
- setting(Icons.analytics_outlined,'रिपोर्ट और डेटा एक्सपोर्ट','बिक्री, खर्च, खाता और स्टॉक सारांश',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReportsPage(sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products,purchases:purchases,supplierLedger:supplierLedger)))),
+ setting(Icons.analytics_outlined,'रिपोर्ट और डेटा एक्सपोर्ट','बिक्री, खर्च, खाता और स्टॉक सारांश',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReportsPage(sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products,purchases:purchases,supplierLedger:supplierLedger,salesReturns:salesReturns)))),
  setting(Icons.language,'भाषा','हिन्दी'),
  setting(Icons.help_outline,'सहायता केंद्र','सपोर्ट विवरण जल्द जोड़ा जाएगा',()=>openComingSoon(context,'सहायता केंद्र')),
  setting(Icons.sms_outlined,'मोबाइल OTP / SMS अलर्ट','Coming Soon • SMS प्रदाता API आवश्यक',()=>openComingSoon(context,'मोबाइल OTP और SMS अलर्ट')),
@@ -439,8 +439,8 @@ class ProfilePage extends StatelessWidget{
 }
 class ReportsPage extends StatelessWidget{
  final List<Record> sales,expensesList,khata,personalTransactions;
- final List<Item> products;final List<Record> purchases,supplierLedger;
- const ReportsPage({super.key,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products,required this.purchases,required this.supplierLedger});
+ final List<Item> products;final List<Record> purchases,supplierLedger,salesReturns;
+ const ReportsPage({super.key,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products,required this.purchases,required this.supplierLedger,required this.salesReturns});
  double get salesTotal=>sales.fold<double>(0,(s,e)=>s+e.amount);
  double get purchaseTotal=>purchases.fold<double>(0,(s,e)=>s+e.amount);
  double get supplierDue=>supplierLedger.fold<double>(0,(s,e)=>s+e.amount);
