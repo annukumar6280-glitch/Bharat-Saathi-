@@ -26,7 +26,7 @@ Project is active in Mumbai. Existing database migrations cover:
 - Products, stock movements, purchases, purchase items, sales, sale items and stock summary.
 - Database routines for receiving purchases, completing sales and adjusting inventory.
 
-The Flutter client initializes Supabase with the project's public publishable key and supports email/password sign-up/sign-in. On successful authentication it upserts the user's profile and provisions personal and retailer accounts with owner memberships using RLS-protected inserts. Local finance and retailer records are not yet synchronized to these tables. Email confirmation depends on Supabase Auth settings and production SMTP configuration. SMS OTP remains Coming Soon. A service-role/secret key must never be embedded in the APK.
+The Flutter client initializes Supabase with the project's public publishable key and supports email/password sign-up/sign-in. On successful authentication it upserts the user's profile and provisions personal and retailer accounts with owner memberships using RLS-protected inserts. Local finance and retailer records are not yet synchronized to normalized ledger tables. A manual JSON snapshot backup/restore is available; restore replaces the current device snapshot after confirmation. Email confirmation depends on Supabase Auth settings and production SMTP configuration. SMS OTP remains Coming Soon. A service-role/secret key must never be embedded in the APK.
 
 ## Coming Soon – external provider dependencies
 
@@ -46,7 +46,7 @@ Never simulate a successful external transaction or fabricate balances, commissi
 2. Extend the current Supabase email auth/account provisioning with account switching, session lifecycle handling, password recovery and verified email delivery.
 3. Sync personal finance, budgets, parties, khata, products, purchases, sales and stock movements through RLS-protected tables/RPCs.
 4. Add full customer and supplier management, purchase entry, invoice details, sales returns, stock adjustment history and tax fields.
-5. Add categories, recurring bills/reminders, family accounts, date filters, reports and CSV/PDF export.
+5. Add live sync from local records to normalized tables with conflict handling; add categories, recurring bills/reminders, family accounts, date filters, reports and CSV/PDF export.
 6. Add backup/restore, account deletion/export flows, privacy policy, terms, support and accessibility review.
 7. Complete security advisor review, API exposure verification, end-to-end tests and Android release signing.
 8. Integrate external services only after provider credentials and approvals are supplied.
