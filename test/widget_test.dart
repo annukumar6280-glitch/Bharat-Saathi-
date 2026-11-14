@@ -34,7 +34,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('मोबाइल / DTH / FASTag रिचार्ज'));
+    await tester.scrollUntilVisible(find.text('मोबाइल / DTH / FASTag रिचार्ज'), 200);
     await tester.tap(find.text('मोबाइल / DTH / FASTag रिचार्ज'));
     await tester.pumpAndSettle();
     expect(find.text('COMING SOON'), findsOneWidget);
