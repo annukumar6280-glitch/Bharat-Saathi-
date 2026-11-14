@@ -372,7 +372,7 @@ class ReportsPage extends StatelessWidget{
  double get dueTotal=>khata.fold<double>(0,(s,e)=>s+e.amount);
  double get personalIncome=>personalTransactions.where((e)=>e.amount>0).fold<double>(0,(s,e)=>s+e.amount);
  double get personalExpense=>-personalTransactions.where((e)=>e.amount<0).fold<double>(0,(s,e)=>s+e.amount);
- String _cell(String value)=>'"\${value.replaceAll('"','""')}"';
+ String _cell(String value)=>"\\"\${value.replaceAll('"','""')}\\"";
  String _csv(){
  final rows=<List<String>>[['श्रेणी','नाम','विवरण','राशि (INR)','मात्रा','बिक्री मूल्य']];
  for(final e in sales){rows.add(['बिक्री',e.name,e.detail,e.amount.toStringAsFixed(2),'','']);}
