@@ -14,7 +14,7 @@ void main() {
   testWidgets('Bharat Saathi home screen renders without seeded demo records', (tester) async {
     await tester.pumpWidget(const BharatSaathiApp());
     await tester.pumpAndSettle();
-    expect(find.text('भारत साथी'), findsOneWidget);
+    expect(find.text('आपका बिजनेस डैशबोर्ड'), findsOneWidget);
     expect(find.text('● ऑफलाइन'), findsOneWidget);
     expect(find.text('● DEMO'), findsNothing);
   });
@@ -34,6 +34,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('मोबाइल / DTH / FASTag रिचार्ज'));
     await tester.tap(find.text('मोबाइल / DTH / FASTag रिचार्ज'));
     await tester.pumpAndSettle();
     expect(find.text('COMING SOON'), findsOneWidget);
