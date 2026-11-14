@@ -47,12 +47,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
-    final serviceText = find.text('मोबाइल / DTH / FASTag रिचार्ज');
-    final serviceRow = find.ancestor(of: serviceText, matching: find.byType(InkWell)).first;
-    await tester.ensureVisible(serviceRow);
-    await tester.pumpAndSettle();
-    await tester.tap(serviceRow);
-    await tester.pumpAndSettle();
-    expect(find.text('COMING SOON'), findsOneWidget);
-  });
-}
+    expect(find.text('Coming Soon • स्वीकृत प्रदाता API आवश्यक'), findsOneWidget);
+    expect(find.text('Coming Soon • BBPS पार्टनर आवश्यक'), findsOneWidget);
+    expect(find.text('Coming Soon • बैंकिंग पार्टनर और अनुपालन आवश्यक'), findsOneWidget);
+  });}
