@@ -26,7 +26,7 @@ Project is active in Mumbai. Existing database migrations cover:
 - Products, stock movements, purchases, purchase items, sales, sale items and stock summary.
 - Database routines for receiving purchases, completing sales and adjusting inventory.
 
-The Flutter client has not yet been connected to Supabase Auth or those tables/RPCs. The mobile build must use only a Supabase publishable key. A service-role/secret key must never be embedded in the APK. The project publishable key and chosen sign-in method still need to be configured securely.
+The Flutter client initializes Supabase with the project's public publishable key and supports email/password sign-up/sign-in. On successful authentication it upserts the user's profile and provisions personal and retailer accounts with owner memberships using RLS-protected inserts. Local finance and retailer records are not yet synchronized to these tables. Email confirmation depends on Supabase Auth settings and production SMTP configuration. SMS OTP remains Coming Soon. A service-role/secret key must never be embedded in the APK.
 
 ## Coming Soon – external provider dependencies
 
@@ -43,7 +43,7 @@ Never simulate a successful external transaction or fabricate balances, commissi
 ## Remaining product work
 
 1. Replace local key-value storage with a transactional offline database and migrations.
-2. Connect Supabase Auth, profile onboarding, personal/business account selection and membership-aware data access.
+2. Extend the current Supabase email auth/account provisioning with account switching, session lifecycle handling, password recovery and verified email delivery.
 3. Sync personal finance, budgets, parties, khata, products, purchases, sales and stock movements through RLS-protected tables/RPCs.
 4. Add full customer and supplier management, purchase entry, invoice details, sales returns, stock adjustment history and tax fields.
 5. Add categories, recurring bills/reminders, family accounts, date filters, reports and CSV/PDF export.
