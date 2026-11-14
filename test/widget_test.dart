@@ -7,13 +7,18 @@ import 'package:shared_preferences_platform_interface/in_memory_shared_preferenc
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 
+Future<void> pumpApp(WidgetTester tester) async {
+  await tester.pumpWidget(const BharatSaathiApp());
+  await tester.runAsync(() async { await Future<void>.delayed(const Duration(seconds: 3)); });
+  await tester.pump();
+}
+
 void main() {
   setUpAll(() { sqfliteFfiInit(); databaseFactory = databaseFactoryFfi; sqflite.databaseFactory = databaseFactoryFfi; });
   setUp(() async { SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty(); await LocalStore.clear(); });
   tearDown(() { SharedPreferencesAsyncPlatform.instance = null; });
   testWidgets('Bharat Saathi home screen renders without seeded demo records', (tester) async {
-    await tester.pumpWidget(const BharatSaathiApp());
-    await tester.pumpAndSettle();
+    await pumpApp(tester);
     expect(find.text('आपका बिजनेस डैशबोर्ड'), findsOneWidget);
     expect(find.text('● ऑफलाइन'), findsOneWidget);
     expect(find.text('● DEMO'), findsNothing);
