@@ -140,6 +140,32 @@ void main() {
     expect(find.text('रजिस्टर करें'), findsOneWidget);
   });
 
+  testWidgets('Referral page shows the one-time ₹10 first-success reward and no paid membership', (tester) async {
+    await pumpDashboardPhone(tester);
+    await tester.tap(find.text('प्रोफाइल'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('रेफर करें और कमाएँ'));
+    await tester.tap(find.text('रेफर करें और कमाएँ'));
+    await tester.pumpAndSettle();
+    expect(find.text('₹10 First Successful Referral Reward'), findsOneWidget);
+    expect(find.textContaining('Level 2'), findsNothing);
+    expect(find.textContaining('Lifetime'), findsNothing);
+    expect(find.textContaining('₹299'), findsNothing);
+  });
+
+  testWidgets('Commission page has no lifetime membership purchase option', (tester) async {
+    await pumpDashboardPhone(tester);
+    await tester.tap(find.text('प्रोफाइल'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('कमीशन लिस्ट'));
+    await tester.tap(find.text('कमीशन लिस्ट'));
+    await tester.pumpAndSettle();
+    expect(find.text('कमीशन लिस्ट'), findsOneWidget);
+    expect(find.textContaining('Subscribe Now'), findsNothing);
+    expect(find.textContaining('Lifetime'), findsNothing);
+    expect(find.textContaining('₹299'), findsNothing);
+  });
+
   testWidgets('Local SQLite records survive app restart', (tester) async {
     await pumpApp(tester);
     await tester.tap(find.text('खर्च'));
