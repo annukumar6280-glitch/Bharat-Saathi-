@@ -11,9 +11,14 @@ This file is the source of truth for what is implemented, what is local-only, an
 - Sales distinguish cash/bank payment from customer credit. Credit sales create a khata receivable; recorded customer payments reduce receivables and add to recorded cash flow.
 - Records persist on the current device through SharedPreferences.
 - First launch contains no fabricated customer, invoice, stock or balance data.
-- Provider-dependent service tiles display Coming Soon.\n- Local reports summarize sales, business expenses, customer khata, personal income/expenses and estimated stock value. CSV rows can be copied to the clipboard for use in a spreadsheet.
+- Provider-dependent service tiles display Coming Soon.
+- Local reports summarize sales, business expenses, customer khata, personal income/expenses and estimated stock value. CSV rows can be copied to the clipboard for use in a spreadsheet.
 
-## Reports and export limitation\n\nThe reports page and CSV clipboard export operate only on the current device snapshot. Existing records do not store transaction timestamps, so date-range reports and PDF statements are not available yet. CSV export does not imply cloud synchronization.\n\n## Important data limitation
+## Reports and export limitation
+
+The reports page and CSV clipboard export operate only on the current device snapshot. Existing records do not store transaction timestamps, so date-range reports and PDF statements are not available yet. CSV export does not imply cloud synchronization.
+
+## Important data limitation
 
 The current local prototype uses a key-value store. It is not a production accounting database, is not encrypted as a financial vault, has no automatic cloud backup, and does not synchronize between devices. Do not use it as the final ledger for real business transactions. Before production, migrate to SQLite/Drift or another transactional local database, add schema migrations, audit history, export/restore, and a conflict-safe Supabase sync engine.
 
