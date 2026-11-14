@@ -1,106 +1,69 @@
 import 'package:flutter/material.dart';
-
-void main() => runApp(const BharatSaathiApp());
-const navy = Color(0xFF14213D), orange = Color(0xFFFF9F1C), bg = Color(0xFFF5F7FA), green = Color(0xFF16845B), red = Color(0xFFD94B4B);
-
-class BharatSaathiApp extends StatelessWidget {
-  const BharatSaathiApp({super.key});
-  @override Widget build(BuildContext context) => MaterialApp(
-    title: 'Bharat Saathi', debugShowCheckedModeBanner: false,
-    theme: ThemeData(useMaterial3: true, scaffoldBackgroundColor: bg,
-      colorScheme: ColorScheme.fromSeed(seedColor: navy),
-      appBarTheme: const AppBarTheme(backgroundColor: bg, foregroundColor: navy, elevation: 0)),
-    home: const RetailerShell());
+void main()=>runApp(const BharatSaathiApp());
+const navy=Color(0xFF14233B),blue=Color(0xFF29496D),gold=Color(0xFFF2A93B),bg=Color(0xFFF4F6F9),muted=Color(0xFF788596),green=Color(0xFF16845B),red=Color(0xFFD95454);
+class BharatSaathiApp extends StatelessWidget{const BharatSaathiApp({super.key});@override Widget build(BuildContext context)=>MaterialApp(title:'Bharat Saathi',debugShowCheckedModeBanner:false,theme:ThemeData(useMaterial3:true,scaffoldBackgroundColor:bg,colorScheme:ColorScheme.fromSeed(seedColor:navy),appBarTheme:const AppBarTheme(backgroundColor:bg,foregroundColor:navy,elevation:0)),home:const RetailerHome());}
+class Item{String name,detail;int qty;double price;Item(this.name,this.detail,this.qty,this.price);}
+class Record{String name,detail;double amount;IconData icon;Record(this.name,this.detail,this.amount,this.icon);}
+class RetailerHome extends StatefulWidget{const RetailerHome({super.key});@override State<RetailerHome> createState()=>_RetailerHomeState();}
+class _RetailerHomeState extends State<RetailerHome>{
+ int tab=0;double cash=28450,expenses=6320;
+ final products=<Item>[Item('Aashirvaad Atta','5 kg pack • Grocery',18,285),Item('Tata Salt','1 kg pack • Grocery',32,28),Item('Parle-G Family Pack','800 g • Snacks',12,95),Item('Amul Gold Milk','500 ml • Dairy',24,35)];
+ final sales=<Record>[Record('Walk-in Customer','Invoice #1042 • 10:42 AM',2450,Icons.receipt_long),Record('Ramesh Kumar','Invoice #1041 • 09:18 AM',780,Icons.person_outline),Record('Walk-in Customer','Invoice #1040 • Yesterday',1320,Icons.shopping_bag_outlined)];
+ final khata=<Record>[Record('Ramesh Kumar','उधार • 12 Nov',1250,Icons.person),Record('Sita General Store','भुगतान • 10 Nov',-800,Icons.store),Record('Mohan Lal','उधार • 09 Nov',640,Icons.person)];
+ void msg(String s)=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s),behavior:SnackBarBehavior.floating));
+ Future<void> form(String title,String label,String valueLabel,void Function(String,double) save)async{
+ final n=TextEditingController(),v=TextEditingController();
+ await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(c)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(c).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
+ Text(title,style:const TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),const SizedBox(height:16),
+ TextField(controller:n,decoration:InputDecoration(labelText:label,prefixIcon:const Icon(Icons.edit_outlined))),
+ const SizedBox(height:10),TextField(controller:v,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:InputDecoration(labelText:valueLabel,prefixIcon:const Icon(Icons.currency_rupee))),
+ const SizedBox(height:18),SizedBox(width:double.infinity,child:FilledButton(style:FilledButton.styleFrom(backgroundColor:navy,padding:const EdgeInsets.all(15)),onPressed:(){final a=double.tryParse(v.text);if(n.text.trim().isEmpty||a==null||a<=0){msg('सही जानकारी भरें');return;}save(n.text.trim(),a);Navigator.pop(c);},child:const Text('सेव करें')))
+ ])));
+ }
+ void sale()=>form('नई बिक्री','ग्राहक / विवरण','बिक्री राशि (₹)',(n,a){setState((){sales.insert(0,Record(n,'नई बिक्री • अभी',a,Icons.receipt_long));cash+=a;});msg('डेमो बिक्री जोड़ी गई');});
+ void expense()=>form('खर्च दर्ज करें','खर्च का विवरण','खर्च राशि (₹)',(n,a){setState(()=>expenses+=a);msg('डेमो खर्च दर्ज हुआ');});
+ void entry()=>form('खाता एंट्री','ग्राहक का नाम','उधार राशि (₹)',(n,a){setState(()=>khata.insert(0,Record(n,'उधार • अभी',a,Icons.person)));msg('डेमो खाता एंट्री जोड़ी गई');});
+ void product()=>form('नया प्रोडक्ट','प्रोडक्ट का नाम','शुरुआती स्टॉक', (n,a){setState(()=>products.add(Item(n,'नया प्रोडक्ट',a.round(),0)));msg('डेमो प्रोडक्ट जोड़ा गया');});
+ @override Widget build(BuildContext context){
+ final pages=<Widget>[Dashboard(cash:cash,expenses:expenses,sales:sales,khata:khata,onSale:sale,onExpense:expense,onKhata:entry),ProductPage(items:products),SalesPage(items:sales),KhataPage(items:khata),const ProfilePage()];
+ return Scaffold(appBar:AppBar(titleSpacing:17,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:gold)),const SizedBox(width:10),const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('भारत साथी',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text('आपका कारोबार, आपका हिसाब',style:TextStyle(fontSize:10,color:muted))])]),actions:[IconButton(onPressed:()=>msg('नोटिफिकेशन अगला चरण है'),icon:const Icon(Icons.notifications_none))]),body:SafeArea(child:IndexedStack(index:tab,children:pages)),floatingActionButton:tab==1?fab('प्रोडक्ट',product):tab==2?fab('बिक्री',sale):tab==3?fab('खाता एंट्री',entry):null,bottomNavigationBar:NavigationBar(height:68,backgroundColor:Colors.white,indicatorColor:const Color(0xFFE8EDF4),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:const[NavigationDestination(icon:Icon(Icons.space_dashboard_outlined),selectedIcon:Icon(Icons.space_dashboard),label:'होम'),NavigationDestination(icon:Icon(Icons.inventory_2_outlined),label:'स्टॉक'),NavigationDestination(icon:Icon(Icons.receipt_long_outlined),label:'बिक्री'),NavigationDestination(icon:Icon(Icons.menu_book_outlined),label:'खाता'),NavigationDestination(icon:Icon(Icons.person_outline),label:'प्रोफाइल')]));
+ }
+ Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:const Icon(Icons.add),label:Text(s));
 }
-
-class RetailerShell extends StatefulWidget {
-  const RetailerShell({super.key});
-  @override State<RetailerShell> createState() => _RetailerShellState();
-}
-class _RetailerShellState extends State<RetailerShell> {
-  int tab = 0;
-  double cash = 18450, expenses = 6320;
-  final products = <String>['Aashirvaad Atta 5kg','Tata Salt 1kg','Parle-G Family Pack','Amul Gold Milk'];
-  final stock = <int>[18,32,12,24];
-  final sales = <Map<String,dynamic>>[
-    {'name':'बिक्री #1042','detail':'आज • 10:42 AM','amount':2450.0},
-    {'name':'बिक्री #1041','detail':'आज • 09:18 AM','amount':780.0},
-    {'name':'बिक्री #1040','detail':'कल','amount':1320.0}];
-  final khata = <Map<String,dynamic>>[
-    {'name':'Ramesh Kumar','detail':'उधार • 12 Nov','amount':1250.0},
-    {'name':'Sita General Store','detail':'भुगतान • 10 Nov','amount':-800.0},
-    {'name':'Mohan Lal','detail':'उधार • 09 Nov','amount':640.0}];
-
-  void message(String s) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s)));
-  Future<void> addRecord(String title, String label, void Function(String,double) save) async {
-    final name = TextEditingController(), amount = TextEditingController();
-    await showModalBottomSheet<void>(context:context, isScrollControlled:true,
-      shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),
-      builder:(ctx)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(ctx).viewInsets.bottom),
-        child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text(title,style:const TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:navy)),
-          const SizedBox(height:16),TextField(controller:name,decoration:InputDecoration(labelText:label)),
-          const SizedBox(height:12),TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'राशि / मात्रा')),
-          const SizedBox(height:18),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){
-            final n=double.tryParse(amount.text.trim());
-            if(name.text.trim().isEmpty || n==null || n<=0){message('नाम और सही संख्या भरें');return;}
-            save(name.text.trim(),n);Navigator.pop(ctx);
-          },child:const Text('सेव करें')))
-        ])));
-  }
-  void newSale()=>addRecord('नई बिक्री','ग्राहक / विवरण',(n,v){setState((){sales.insert(0,{'name':n,'detail':'अभी • नई बिक्री','amount':v});cash+=v;});message('बिक्री डेमो में सेव हुई');});
-  void newKhata()=>addRecord('खाता एंट्री','ग्राहक का नाम',(n,v){setState(()=>khata.insert(0,{'name':n,'detail':'उधार • अभी','amount':v}));message('खाता डेमो में सेव हुआ');});
-  void newProduct()=>addRecord('नया प्रोडक्ट','प्रोडक्ट का नाम',(n,v){setState((){products.add(n);stock.add(v.round());});message('प्रोडक्ट डेमो में जुड़ा');});
-  void newExpense()=>addRecord('नया खर्च','खर्च का विवरण',(n,v){setState(()=>expenses+=v);message('खर्च डेमो में सेव हुआ');});
-
-  @override Widget build(BuildContext context) {
-    final pages=<Widget>[
-      Dashboard(cash:cash,expenses:expenses,sales:sales,khata:khata,onSale:newSale,onExpense:newExpense,onKhata:newKhata),
-      ProductScreen(products:products,stock:stock), SalesScreen(sales:sales), KhataScreen(entries:khata), const ProfileScreen()];
-    return Scaffold(
-      appBar:AppBar(title:Row(children:[
-        Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.account_balance_wallet,color:orange)),
-        const SizedBox(width:10),const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text('भारत साथी',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),
-          Text('आपका कारोबार, आपका हिसाब',style:TextStyle(fontSize:10,color:Colors.black54))])]),
-        actions:[IconButton(onPressed:()=>message('नोटिफिकेशन अगला चरण है'),icon:const Icon(Icons.notifications_none))]),
-      body:SafeArea(child:pages[tab]),
-      floatingActionButton:tab==1?FloatingActionButton.extended(onPressed:newProduct,icon:const Icon(Icons.add),label:const Text('प्रोडक्ट')):
-        tab==2?FloatingActionButton.extended(onPressed:newSale,icon:const Icon(Icons.add),label:const Text('बिक्री')):
-        tab==3?FloatingActionButton.extended(onPressed:newKhata,icon:const Icon(Icons.add),label:const Text('एंट्री')):null,
-      bottomNavigationBar:NavigationBar(selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:const[
-        NavigationDestination(icon:Icon(Icons.grid_view_rounded),label:'होम'),
-        NavigationDestination(icon:Icon(Icons.inventory_2_outlined),label:'स्टॉक'),
-        NavigationDestination(icon:Icon(Icons.receipt_long_outlined),label:'बिक्री'),
-        NavigationDestination(icon:Icon(Icons.menu_book),label:'खाता'),
-        NavigationDestination(icon:Icon(Icons.person_outline),label:'प्रोफाइल')]));
-  }
-}
-
-class Dashboard extends StatelessWidget {
- final double cash,expenses; final List<Map<String,dynamic>> sales,khata; final VoidCallback onSale,onExpense,onKhata;
+class Dashboard extends StatelessWidget{
+ final double cash,expenses;final List<Record> sales,khata;final VoidCallback onSale,onExpense,onKhata;
  const Dashboard({super.key,required this.cash,required this.expenses,required this.sales,required this.khata,required this.onSale,required this.onExpense,required this.onKhata});
- @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
-  Container(padding:const EdgeInsets.all(19),decoration:BoxDecoration(gradient:const LinearGradient(colors:[navy,Color(0xFF29466F)]),borderRadius:BorderRadius.circular(22)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-   Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('GOOD AFTERNOON',style:TextStyle(color:Colors.white70,fontSize:10,letterSpacing:1.3)),Container(padding:const EdgeInsets.symmetric(horizontal:9,vertical:5),decoration:BoxDecoration(color:Colors.white24,borderRadius:BorderRadius.circular(20)),child:const Text('RETAILER DEMO',style:TextStyle(color:Colors.white,fontSize:9,fontWeight:FontWeight.bold)))]),
-   const SizedBox(height:15),const Text('आज का कारोबार',style:TextStyle(color:Colors.white70)),Text('₹'+(cash+expenses).toStringAsFixed(0),style:const TextStyle(color:Colors.white,fontSize:30,fontWeight:FontWeight.w900)),
-   const SizedBox(height:18),Row(children:[Expanded(child:_metric('बिक्री','₹'+_salesTotal(sales),Icons.trending_up)),Container(width:1,height:38,color:Colors.white24),Expanded(child:_metric('खर्च','₹'+expenses.toStringAsFixed(0),Icons.payments_outlined))]) ])),
-  const SizedBox(height:20),const Text('त्वरित काम',style:TextStyle(fontSize:17,fontWeight:FontWeight.w800,color:navy)),const SizedBox(height:10),
-  Row(children:[Expanded(child:_quick('नई बिक्री',Icons.point_of_sale,orange,onSale)),const SizedBox(width:9),Expanded(child:_quick('खर्च जोड़ें',Icons.add_card,green,onExpense)),const SizedBox(width:9),Expanded(child:_quick('खाता एंट्री',Icons.menu_book,navy,onKhata))]),
-  const SizedBox(height:20),const Text('बिजनेस सारांश',style:TextStyle(fontSize:17,fontWeight:FontWeight.w800,color:navy)),const SizedBox(height:10),
-  Row(children:[Expanded(child:_stat('कैश / बैंक','₹'+cash.toStringAsFixed(0),Icons.account_balance_wallet,green)),const SizedBox(width:9),Expanded(child:_stat('कुल खर्च','₹'+expenses.toStringAsFixed(0),Icons.receipt,red))]),
-  const SizedBox(height:9),Row(children:[Expanded(child:_stat('कुल खाता',khata.length.toString()+' एंट्री',Icons.people,navy)),const SizedBox(width:9),Expanded(child:_stat('बिक्री बिल',sales.length.toString()+' बिल',Icons.shopping_bag,orange))]),
-  const SizedBox(height:20),const Text('हाल की बिक्री',style:TextStyle(fontSize:17,fontWeight:FontWeight.w800,color:navy)),
-  ...sales.take(3).map((e)=>_row(e['name'],e['detail'],'₹'+(e['amount'] as double).toStringAsFixed(0),Icons.receipt_long,green)),
-  const SizedBox(height:18),const Text('Bharat Saathi • सरल हिसाब, बेहतर कारोबार',textAlign:TextAlign.center,style:TextStyle(color:Colors.black45,fontSize:11))]);
+ @override Widget build(BuildContext context){
+ final total=sales.fold<double>(0,(s,e)=>s+e.amount),due=khata.fold<double>(0,(s,e)=>s+e.amount);
+ return ListView(padding:const EdgeInsets.fromLTRB(17,8,17,28),children:[
+ Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('नमस्ते 👋',style:TextStyle(color:muted,fontSize:12)),SizedBox(height:3),Text('आपका बिजनेस डैशबोर्ड',style:TextStyle(color:navy,fontSize:20,fontWeight:FontWeight.w900))]),Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:7),decoration:BoxDecoration(color:const Color(0xFFFFF2D9),borderRadius:BorderRadius.circular(20)),child:const Text('● DEMO',style:TextStyle(color:Color(0xFF9A6515),fontSize:9,fontWeight:FontWeight.w900)))]),
+ const SizedBox(height:17),
+ Container(padding:const EdgeInsets.all(19),decoration:BoxDecoration(gradient:const LinearGradient(colors:[navy,blue],begin:Alignment.topLeft,end:Alignment.bottomRight),borderRadius:BorderRadius.circular(23),boxShadow:[BoxShadow(color:navy.withOpacity(.15),blurRadius:16,offset:const Offset(0,8))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+ Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('कुल कैश / बैंक बैलेंस',style:TextStyle(color:Colors.white70,fontSize:12)),Container(padding:const EdgeInsets.all(8),decoration:BoxDecoration(color:Colors.white12,borderRadius:BorderRadius.circular(11)),child:const Icon(Icons.account_balance_wallet_outlined,color:gold))]),
+ const SizedBox(height:7),Text('₹${money(cash)}',style:const TextStyle(color:Colors.white,fontSize:30,fontWeight:FontWeight.w900)),
+ const SizedBox(height:16),Container(height:1,color:Colors.white24),const SizedBox(height:13),
+ Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[mini('बिक्री दर्ज','₹${money(total)}',Icons.trending_up),mini('ग्राहक खाते','${khata.length} ग्राहक',Icons.people_outline),mini('स्टेटस','सक्रिय',Icons.check_circle_outline)])
+ ])),
+ const SizedBox(height:13),Row(children:[Expanded(child:metric('कुल बिक्री','₹${money(total)}',Icons.trending_up,green)),const SizedBox(width:10),Expanded(child:metric('कुल खर्च','₹${money(expenses)}',Icons.payments_outlined,red))]),
+ const SizedBox(height:10),Row(children:[Expanded(child:metric('ग्राहक बकाया','₹${money(due)}',Icons.people_alt_outlined,const Color(0xFF875BB5))),const SizedBox(width:10),Expanded(child:metric('स्टॉक आइटम','${4}',Icons.inventory_2_outlined,const Color(0xFF247D9B)))]),
+ const SizedBox(height:22),section('त्वरित काम','रोज़ के काम आसान बनाएं'),const SizedBox(height:11),
+ Row(children:[Expanded(child:quick('नई बिक्री',Icons.point_of_sale,const Color(0xFFFFF0D7),const Color(0xFFB87510),onSale)),const SizedBox(width:9),Expanded(child:quick('खर्च जोड़ें',Icons.add_card,const Color(0xFFE3F4EC),green,onExpense)),const SizedBox(width:9),Expanded(child:quick('खाता एंट्री',Icons.menu_book,const Color(0xFFECE8F8),const Color(0xFF7653A8),onKhata))]),
+ const SizedBox(height:22),section('साप्ताहिक बिक्री','पिछले 7 दिनों का डेमो ट्रेंड'),const SizedBox(height:11),const Chart(),
+ const SizedBox(height:22),section('हाल की बिक्री','नवीनतम बिल और भुगतान'),...sales.take(3).map(activity),
+ const SizedBox(height:15),const Center(child:Text('भारत साथी • सरल हिसाब, बेहतर कारोबार',style:TextStyle(color:muted,fontSize:10)))
+ ]);
+ }
 }
-String _salesTotal(List<Map<String,dynamic>> rows)=>rows.fold<double>(0,(p,e)=>p+(e['amount'] as double)).toStringAsFixed(0);
-Widget _metric(String label,String value,IconData icon)=>Row(children:[Icon(icon,color:orange),const SizedBox(width:8),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:const TextStyle(color:Colors.white70,fontSize:11)),Text(value,style:const TextStyle(color:Colors.white,fontSize:16,fontWeight:FontWeight.bold))])]);
-Widget _quick(String label,IconData icon,Color color,VoidCallback action)=>InkWell(onTap:action,borderRadius:BorderRadius.circular(15),child:Container(padding:const EdgeInsets.symmetric(vertical:15,horizontal:4),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Column(children:[CircleAvatar(backgroundColor:color.withOpacity(.12),child:Icon(icon,color:color)),const SizedBox(height:8),Text(label,style:const TextStyle(fontSize:11,fontWeight:FontWeight.w700),textAlign:TextAlign.center)])));
-Widget _stat(String label,String value,IconData icon,Color color)=>Container(padding:const EdgeInsets.all(12),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[CircleAvatar(radius:17,backgroundColor:color.withOpacity(.1),child:Icon(icon,color:color,size:18)),const SizedBox(width:8),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:const TextStyle(fontSize:10,color:Colors.black54)),Text(value,style:const TextStyle(fontWeight:FontWeight.w800,color:navy,fontSize:14),overflow:TextOverflow.ellipsis)]))]));
-Widget _row(String title,String subtitle,String amount,IconData icon,Color color)=>Container(margin:const EdgeInsets.only(top:8),padding:const EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[CircleAvatar(backgroundColor:color.withOpacity(.1),child:Icon(icon,color:color,size:19)),const SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontWeight:FontWeight.w700,fontSize:13)),Text(subtitle,style:const TextStyle(color:Colors.black54,fontSize:10))])),Text(amount,style:TextStyle(color:color,fontWeight:FontWeight.w800))]));
-Widget _heading(String title,String subtitle)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontSize:23,fontWeight:FontWeight.w900,color:navy)),Text(subtitle,style:const TextStyle(color:Colors.black54,fontSize:12))]);
-class ProductScreen extends StatelessWidget{final List<String> products;final List<int> stock;const ProductScreen({super.key,required this.products,required this.stock});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[_heading('प्रोडक्ट और स्टॉक','सामान और उपलब्ध मात्रा'),const SizedBox(height:12),...List.generate(products.length,(i)=>_row(products[i],'SKU-'+(1001+i).toString(),' '+stock[i].toString()+' यूनिट',Icons.inventory_2,stock[i]<15?red:green)),const SizedBox(height:70)]);}
-class SalesScreen extends StatelessWidget{final List<Map<String,dynamic>> sales;const SalesScreen({super.key,required this.sales});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[_heading('बिक्री और बिल','बिक्री का रिकॉर्ड'),const SizedBox(height:12),...sales.map((e)=>_row(e['name'],e['detail'],'₹'+(e['amount'] as double).toStringAsFixed(0),Icons.receipt_long,green)),const SizedBox(height:70)]);}
-class KhataScreen extends StatelessWidget{final List<Map<String,dynamic>> entries;const KhataScreen({super.key,required this.entries});@override Widget build(BuildContext context){final due=entries.fold<double>(0,(p,e)=>p+(e['amount'] as double));return ListView(padding:const EdgeInsets.all(16),children:[_heading('ग्राहक खाता','उधार और भुगतान का हिसाब'),const SizedBox(height:12),Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('कुल बकाया (डेमो)',style:TextStyle(color:Colors.white70)),Text('₹'+due.toStringAsFixed(0),style:const TextStyle(color:Colors.white,fontSize:28,fontWeight:FontWeight.w900))])),...entries.map((e)=>_row(e['name'],e['detail'],(e['amount'] as double)<0?'- ₹'+(e['amount'] as double).abs().toStringAsFixed(0):'+ ₹'+(e['amount'] as double).toStringAsFixed(0),Icons.person,(e['amount'] as double)<0?green:red)),const SizedBox(height:70)]);}}
-class ProfileScreen extends StatelessWidget{const ProfileScreen({super.key});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[_heading('प्रोफाइल और सेटिंग','Bharat Saathi अकाउंट'),const SizedBox(height:20),const CircleAvatar(radius:35,backgroundColor:navy,child:Icon(Icons.storefront,color:orange,size:32)),const SizedBox(height:10),const Center(child:Text('मेरा रिटेल स्टोर',style:TextStyle(fontWeight:FontWeight.w800,fontSize:18))),const Center(child:Text('डेमो अकाउंट • अभी लॉगिन नहीं',style:TextStyle(color:Colors.black54,fontSize:12))),const SizedBox(height:20),_row('अकाउंट और सुरक्षा','लॉगिन सेटअप अगला चरण','›',Icons.lock_outline,navy),_row('डेटा बैकअप','क्लाउड सिंक कनेक्शन बाकी','›',Icons.cloud_upload_outlined,green),_row('भाषा','हिन्दी','›',Icons.language,navy),_row('सहायता','सपोर्ट और संपर्क','›',Icons.help_outline,navy),const SizedBox(height:20),const Text('Version 0.1.0 • Prototype',textAlign:TextAlign.center,style:TextStyle(color:Colors.black45,fontSize:11))]);}
+class Chart extends StatelessWidget{const Chart({super.key});@override Widget build(BuildContext context){const values=[.42,.68,.50,.88,.62,1.0,.76],days=['सोम','मंगल','बुध','गुरु','शुक्र','शनि','रवि'];return Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18)),child:Column(children:[Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('₹24,860',style:TextStyle(color:navy,fontSize:20,fontWeight:FontWeight.w900)),Container(padding:const EdgeInsets.symmetric(horizontal:9,vertical:5),decoration:BoxDecoration(color:const Color(0xFFE8F5EE),borderRadius:BorderRadius.circular(20)),child:const Text('+12.8%',style:TextStyle(color:green,fontSize:10,fontWeight:FontWeight.w800)))]),const SizedBox(height:16),SizedBox(height:90,child:Row(crossAxisAlignment:CrossAxisAlignment.end,children:List.generate(7,(i)=>Expanded(child:Padding(padding:const EdgeInsets.symmetric(horizontal:5),child:Column(mainAxisAlignment:MainAxisAlignment.end,children:[Expanded(child:Align(alignment:Alignment.bottomCenter,child:Container(width:19,height:70*values[i],decoration:BoxDecoration(color:i==5?gold:const Color(0xFFDCE5EF),borderRadius:BorderRadius.circular(7))))),const SizedBox(height:7),Text(days[i],style:const TextStyle(fontSize:9,color:muted))])))))]));}}
+Widget mini(String a,String b,IconData i)=>Row(children:[Icon(i,color:gold,size:14),const SizedBox(width:4),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:Colors.white60,fontSize:9)),Text(b,style:const TextStyle(color:Colors.white,fontSize:10,fontWeight:FontWeight.w800))])]);
+Widget metric(String a,String b,IconData i,Color c)=>Container(padding:const EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Expanded(child:Text(a,style:const TextStyle(color:muted,fontSize:10))),Icon(i,color:c,size:18)]),const SizedBox(height:7),FittedBox(alignment:Alignment.centerLeft,child:Text(b,style:const TextStyle(color:navy,fontSize:18,fontWeight:FontWeight.w900)))]));
+Widget section(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontSize:16,fontWeight:FontWeight.w900)),Text(b,style:const TextStyle(color:muted,fontSize:10))]);
+Widget quick(String a,IconData i,Color bgc,Color fg,VoidCallback f)=>InkWell(onTap:f,borderRadius:BorderRadius.circular(16),child:Container(padding:const EdgeInsets.symmetric(vertical:14,horizontal:3),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16)),child:Column(children:[Container(width:42,height:42,decoration:BoxDecoration(color:bgc,borderRadius:BorderRadius.circular(13)),child:Icon(i,color:fg)),const SizedBox(height:8),Text(a,style:const TextStyle(color:navy,fontSize:10,fontWeight:FontWeight.w800))])));
+Widget activity(Record r)=>Container(margin:const EdgeInsets.only(top:7),padding:const EdgeInsets.all(12),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[CircleAvatar(backgroundColor:const Color(0xFFEAF0F6),child:Icon(r.icon,color:blue,size:18)),const SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(r.name,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(r.detail,style:const TextStyle(color:muted,fontSize:10))])),Text('₹${money(r.amount)}',style:const TextStyle(color:green,fontWeight:FontWeight.w900,fontSize:12))]));
+class ProductPage extends StatelessWidget{final List<Item> items;const ProductPage({super.key,required this.items});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('प्रोडक्ट और स्टॉक','इन्वेंट्री का पूरा कंट्रोल'),const SizedBox(height:14),Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Text('कुल प्रोडक्ट: ${items.length}     •     कम स्टॉक: ${items.where((e)=>e.qty<15).length}',style:const TextStyle(color:navy,fontWeight:FontWeight.w800))),...items.map((p)=>Container(margin:const EdgeInsets.only(top:9),padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(15)),child:Row(children:[const Icon(Icons.inventory_2_outlined,color:blue,size:25),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(p.name,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(p.detail,style:const TextStyle(color:muted,fontSize:10)),Text('₹${money(p.price)} बिक्री मूल्य',style:const TextStyle(color:muted,fontSize:10))])),Column(children:[Text('${p.qty}',style:TextStyle(color:p.qty<15?red:green,fontWeight:FontWeight.w900,fontSize:17)),const Text('यूनिट',style:TextStyle(color:muted,fontSize:9))])])))]);}
+class SalesPage extends StatelessWidget{final List<Record> items;const SalesPage({super.key,required this.items});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('बिक्री और बिल','आपकी बिक्री का रिकॉर्ड'),const SizedBox(height:15),...items.map(activity)]);}
+class KhataPage extends StatelessWidget{final List<Record> items;const KhataPage({super.key,required this.items});@override Widget build(BuildContext context){final due=items.fold<double>(0,(s,e)=>s+e.amount);return ListView(padding:const EdgeInsets.all(17),children:[heading('ग्राहक खाता','उधार और भुगतान का हिसाब'),const SizedBox(height:15),Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('कुल बकाया • डेमो डेटा',style:TextStyle(color:Colors.white70,fontSize:11)),Text('₹${money(due)}',style:const TextStyle(color:Colors.white,fontSize:27,fontWeight:FontWeight.w900))])),...items.map((e)=>Container(margin:const EdgeInsets.only(top:8),padding:const EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[CircleAvatar(backgroundColor:const Color(0xFFEAF0F6),child:Text(e.name[0],style:const TextStyle(color:navy,fontWeight:FontWeight.w800))),const SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(e.name,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(e.detail,style:const TextStyle(color:muted,fontSize:10))])),Text('${e.amount<0?'−':'+'} ₹${money(e.amount.abs())}',style:TextStyle(color:e.amount<0?green:red,fontWeight:FontWeight.w900,fontSize:12))]))]);}}
+class ProfilePage extends StatelessWidget{const ProfilePage({super.key});@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(17),children:[heading('प्रोफाइल और सेटिंग','अपने अकाउंट को मैनेज करें'),const SizedBox(height:18),Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18)),child:const Column(children:[CircleAvatar(radius:34,backgroundColor:navy,child:Icon(Icons.storefront,color:gold,size:31)),SizedBox(height:10),Text('मेरा रिटेल स्टोर',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:17)),Text('डेमो अकाउंट • लॉगिन सेटअप बाकी',style:TextStyle(color:muted,fontSize:10))])),setting(Icons.lock_outline,'अकाउंट और सुरक्षा','लॉगिन और प्रोफाइल सेटिंग'),setting(Icons.cloud_upload_outlined,'डेटा बैकअप','क्लाउड सिंक अगला चरण'),setting(Icons.language,'भाषा','हिन्दी'),setting(Icons.help_outline,'सहायता केंद्र','सपोर्ट और संपर्क')]);}
+Widget heading(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),Text(b,style:const TextStyle(color:muted,fontSize:11))]);
+Widget setting(IconData i,String a,String b)=>Container(margin:const EdgeInsets.only(top:9),padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14)),child:Row(children:[Icon(i,color:blue),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(b,style:const TextStyle(color:muted,fontSize:10))])),const Icon(Icons.chevron_right,color:muted)]));
+String money(num n){final s=n.round().toString();if(s.length<=3)return s;var h=s.substring(0,s.length-3);final t=s.substring(s.length-3);final g=<String>[];while(h.length>2){g.insert(0,h.substring(h.length-2));h=h.substring(0,h.length-2);}if(h.isNotEmpty)g.insert(0,h);return '${g.join(',')},${t}';}
