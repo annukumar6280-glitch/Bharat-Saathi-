@@ -151,6 +151,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('₹10 First Successful Referral Reward'), findsOneWidget);
     expect(find.textContaining('Level 2'), findsNothing);
+    expect(find.textContaining('Level 3'), findsNothing);
     expect(find.textContaining('Lifetime'), findsNothing);
     expect(find.textContaining('₹299'), findsNothing);
   });
