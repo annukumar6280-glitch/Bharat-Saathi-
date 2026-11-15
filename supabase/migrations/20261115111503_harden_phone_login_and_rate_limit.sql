@@ -10,7 +10,7 @@ AS $$
     WHEN length(regexp_replace(coalesce(p_value, ''), '[^0-9]', '', 'g')) = 12
       AND left(regexp_replace(coalesce(p_value, ''), '[^0-9]', '', 'g'), 2) = '91'
       THEN right(regexp_replace(coalesce(p_value, ''), '[^0-9]', '', 'g'), 10)
-    WHEN length(regexp_replace(coalesce(p_value, ''), '[^0-9]', '', 'g'), '[^0-9]', '', 'g')) = 11
+    WHEN length(regexp_replace(coalesce(p_value, ''), '[^0-9]', '', 'g')) = 11
       AND left(regexp_replace(coalesce(p_value, ''), '[^0-9]', '', 'g'), 1) = '0'
       THEN right(regexp_replace(coalesce(p_value, ''), '[^0-9]', '', 'g'), 10)
     WHEN length(regexp_replace(coalesce(p_value, ''), '[^0-9]', '', 'g')) = 10
