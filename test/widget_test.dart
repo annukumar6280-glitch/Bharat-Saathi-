@@ -67,6 +67,20 @@ void main() {
   });
   tearDown(() { SharedPreferencesAsyncPlatform.instance = null; bannerAdsEnabled = true; });
 
+  test('Local snapshots are isolated by signed-in user ID', () async {
+    await LocalStore.write('account-a', '{"cash":100}');
+    await LocalStore.write('account-b', '{"cash":250}');
+    expect(await LocalStore.read('account-a'), '{"cash":100}');
+    expect(await LocalStore.read('account-b'), '{"cash":250}');
+  });
+
+  test('Legacy local snapshot is assigned only once to the first account', () async {
+    await LocalStore.migrateLegacyForUser('first-account', '{"cash":75}');
+    await LocalStore.migrateLegacyForUser('second-account', '{"cash":999}');
+    expect(await LocalStore.read('first-account'), '{"cash":75}');
+    expect(await LocalStore.read('second-account'), isNull);
+  });
+
   testWidgets('Home shows the four requested service icons and no inventory navigation', (tester) async {
     await pumpApp(tester);
     expect(find.text('आपका खाता'), findsOneWidget);
