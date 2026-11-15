@@ -92,6 +92,7 @@ class LocalStore {
     }
     await txn.insert('app_state',{'user_id':userId,'payload':legacyPayload,'updated_at':legacyUpdatedAt??DateTime.now().toUtc().toIso8601String()},conflictAlgorithm:ConflictAlgorithm.abort);
    }
+   if(oldTable.isNotEmpty)await txn.execute('DROP TABLE legacy_app_state');
    await txn.insert('app_meta',{'key':'legacy_data_assigned','value':'1'},conflictAlgorithm:ConflictAlgorithm.replace);
    await txn.delete('app_meta',where:'key = ?',whereArgs:['legacy_declined_$userId']);
    return true;
