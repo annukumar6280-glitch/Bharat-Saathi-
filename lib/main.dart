@@ -153,7 +153,7 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
  bool _cloudSyncBusy=false;
  int tab=0;double cash=0,expenses=0,personalBudget=0;String personalBudgetName='व्यक्तिगत खर्च सीमा';bool loaded=false,english=false,darkMode=false;
  final _prefs=SharedPreferencesAsync();
- String get _localUserId=>widget.supabaseAvailable?(Supabase.instance.client.auth.currentUser?.id??'local'):'local';
+ late final String _localUserId;
  final products=<Item>[];
  final sales=<Record>[];
  final expensesList=<Record>[];
@@ -164,7 +164,7 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
  final supplierLedger=<Record>[];
  final salesReturns=<Record>[];
  final stockAdjustments=<Record>[];final serviceTransactions=<Record>[];
- @override void initState(){super.initState();WidgetsBinding.instance.addObserver(this);homeTabRequest.addListener(_returnToHomeTab);_autoSyncRetry=Timer.periodic(const Duration(seconds:60),(_)=>_syncCloudNow());_restore();}
+ @override void initState(){super.initState();_localUserId=widget.supabaseAvailable?(Supabase.instance.client.auth.currentUser?.id??'local'):'local';WidgetsBinding.instance.addObserver(this);homeTabRequest.addListener(_returnToHomeTab);_autoSyncRetry=Timer.periodic(const Duration(seconds:60),(_)=>_syncCloudNow());_restore();}
   void _returnToHomeTab(){if(mounted&&tab!=0)setState(()=>tab=0);}
   @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed)_syncCloudNow();}
   @override void dispose(){WidgetsBinding.instance.removeObserver(this);homeTabRequest.removeListener(_returnToHomeTab);_autoSyncDebounce?.cancel();_autoSyncRetry?.cancel();super.dispose();}
