@@ -250,6 +250,7 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
    final legacyDeclined=await LocalStore.wasLegacyDeclinedForUser(userId);
    final hasLegacy=await LocalStore.hasUnassignedLegacyData(legacyPrefs);
    if(hasLegacy&&!legacyDeclined){
+    if(!mounted)return;
     final importLegacy=await showDialog<bool>(context:context,barrierDismissible:false,builder:(dialogContext)=>AlertDialog(
      title:const Text('पुराने डेटा की पहचान'),
      content:const Text('इस फोन में पिछले संस्करण के रिकॉर्ड मिले हैं। उन्हें केवल उसी अकाउंट में जोड़ें जो पहले इस फोन पर इस्तेमाल होता था। अगर यह दूसरा अकाउंट है, तो “अभी नहीं” चुनें। पुराना डेटा किसी दूसरे अकाउंट में अपने-आप नहीं जाएगा।'),
