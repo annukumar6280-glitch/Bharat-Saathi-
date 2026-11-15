@@ -50,7 +50,9 @@ void main() {
     await tester.pump();
     expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
     expect(find.text('अकाउंट बनाएं'), findsOneWidget);
-    await tester.tap(find.text('लॉगिन करें'));
+    // Select the first outlined button (Login) by widget type; this avoids
+    // depending on the button's localized text finder in the wrapped layout.
+    await tester.tap(find.byType(OutlinedButton).first);
     await tester.pumpAndSettle();
     expect(find.byType(Checkbox), findsNothing);
     expect(find.text('मोबाइल नंबर से लॉगिन करें'), findsOneWidget);
