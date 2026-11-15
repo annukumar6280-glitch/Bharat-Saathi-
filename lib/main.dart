@@ -51,6 +51,26 @@ class LocalStore {
   });
   return _db!;
  }
+ static Future<bool> hasUnassignedLegacyData(String? preferencesLegacy)async{
+  final db=await database;
+  final marker=await db.query('app_meta',columns:['value'],where:'key = ?',whereArgs:['legacy_data_assigned'],limit:1);
+  if(marker.isNotEmpty)return false;
+  final oldTable=await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_app_state'");
+  if(oldTable.isNotEmpty){
+   final rows=await db.query('legacy_app_state',columns:['payload'],where:'id = ?',whereArgs:[1],limit:1);
+   if(rows.isNotEmpty&&rows.first['payload']!=null)return true;
+  }
+  return preferencesLegacy!=null;
+ }
+ static Future<bool> wasLegacyDeclinedForUser(String userId)async{
+  final db=await database;
+  final rows=await db.query('app_meta',columns:['value'],where:'key = ?',whereArgs:['legacy_declined_$userId'],limit:1);
+  return rows.isNotEmpty;
+ }
+ static Future<void> declineLegacyForUser(String userId)async{
+  final db=await database;
+  await db.insert('app_meta',{'key':'legacy_declined_$userId','value':'1'},conflictAlgorithm:ConflictAlgorithm.replace);
+ }
  static Future<void> migrateLegacyForUser(String userId,String? preferencesLegacy)async{
   final db=await database;
   await db.transaction((txn)async{
@@ -68,6 +88,7 @@ class LocalStore {
     await txn.insert('app_state',{'user_id':userId,'payload':legacyPayload,'updated_at':legacyUpdatedAt??DateTime.now().toUtc().toIso8601String()},conflictAlgorithm:ConflictAlgorithm.ignore);
    }
    await txn.insert('app_meta',{'key':'legacy_data_assigned','value':'1'},conflictAlgorithm:ConflictAlgorithm.replace);
+   await txn.delete('app_meta',where:'key = ?',whereArgs:['legacy_declined_$userId']);
   });
  }
  static Future<String?> read(String userId)async{
@@ -226,8 +247,28 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
   try{
    final userId=_localUserId;
    final legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
-   await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
-   if(legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
+   final legacyDeclined=await LocalStore.wasLegacyDeclinedForUser(userId);
+   final hasLegacy=await LocalStore.hasUnassignedLegacyData(legacyPrefs);
+   if(hasLegacy&&!legacyDeclined){
+    final importLegacy=await showDialog<bool>(context:context,barrierDismissible:false,builder:(dialogContext)=>AlertDialog(
+     title:const Text('पुराने डेटा की पहचान'),
+     content:const Text('इस फोन में पिछले संस्करण के रिकॉर्ड मिले हैं। उन्हें केवल उसी अकाउंट में जोड़ें जो पहले इस फोन पर इस्तेमाल होता था। अगर यह दूसरा अकाउंट है, तो “अभी नहीं” चुनें। पुराना डेटा किसी दूसरे अकाउंट में अपने-आप नहीं जाएगा।'),
+     actions:[
+      TextButton(onPressed:()=>Navigator.pop(dialogContext,false),child:const Text('अभी नहीं')),
+      FilledButton(onPressed:()=>Navigator.pop(dialogContext,true),child:const Text('इसी अकाउंट में जोड़ें')),
+     ],
+    ))??false;
+    if(!mounted)return;
+    if(importLegacy){
+     await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
+     if(legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
+    }else{
+     await LocalStore.declineLegacyForUser(userId);
+    }
+   }else if(!legacyDeclined){
+    await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
+    if(legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
+   }
    var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
    if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
    if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));products.addAll((d['products'] as List? ?? []).map((e)=>Item.fromJson(Map<String,dynamic>.from(e as Map))));sales.addAll((d['sales'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));purchases.addAll((d['purchases'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));supplierLedger.addAll((d['supplierLedger'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));salesReturns.addAll((d['salesReturns'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));stockAdjustments.addAll((d['stockAdjustments'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));}
