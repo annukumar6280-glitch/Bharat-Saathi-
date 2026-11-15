@@ -246,6 +246,7 @@ final serviceTransactions=<Record>[];
   if(mounted)setState(()=>loaded=false);
   cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';
   expensesList.clear();khata.clear();personalTransactions.clear();serviceTransactions.clear();
+  var shouldSanitizeSnapshot=false;
   try{
    final userId=_localUserId;
    final legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
@@ -283,10 +284,10 @@ final serviceTransactions=<Record>[];
    }
    var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
    if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
-   if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));}
+   if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));shouldSanitizeSnapshot=true;}
   }catch(_){}
   if(mounted)setState(()=>loaded=true);
-  if(syncCloud)_scheduleCloudSync();
+  if(shouldSanitizeSnapshot){await _persist();}else if(syncCloud){_scheduleCloudSync();}
  }
  Future<void> _persist()async{try{await LocalStore.write(_localUserId,jsonEncode({'cash':cash,'expenses':expenses,'personalBudget':personalBudget,'personalBudgetName':personalBudgetName,'expensesList':expensesList.map((e)=>e.toJson()).toList(),'khata':khata.map((e)=>e.toJson()).toList(),'personalTransactions':personalTransactions.map((e)=>e.toJson()).toList(),'personalKhata':personalKhata.map((e)=>e.toJson()).toList(),'language':english?'en':'hi','darkMode':darkMode,'serviceTransactions':serviceTransactions.map((e)=>e.toJson()).toList()}));_scheduleCloudSync();}catch(_){if(mounted)msg('डेटा इस डिवाइस पर डेटाबेस में सेव नहीं हो पाया');}}
  void msg(String s)=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s),behavior:SnackBarBehavior.floating));
