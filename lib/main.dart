@@ -254,15 +254,16 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
      title:const Text('पुराने डेटा की पहचान'),
      content:const Text('इस फोन में पिछले संस्करण के रिकॉर्ड मिले हैं। उन्हें केवल उसी अकाउंट में जोड़ें जो पहले इस फोन पर इस्तेमाल होता था। अगर यह दूसरा अकाउंट है, तो “अभी नहीं” चुनें। पुराना डेटा किसी दूसरे अकाउंट में अपने-आप नहीं जाएगा।'),
      actions:[
-      TextButton(onPressed:()=>Navigator.pop(dialogContext,false),child:const Text('अभी नहीं')),
+      TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('अभी नहीं')),
+      TextButton(onPressed:()=>Navigator.pop(dialogContext,false),child:const Text('इस अकाउंट में नहीं जोड़ें')),
       FilledButton(onPressed:()=>Navigator.pop(dialogContext,true),child:const Text('इसी अकाउंट में जोड़ें')),
      ],
-    ))??false;
+    ));
     if(!mounted)return;
-    if(importLegacy){
+    if(importLegacy==true){
      await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
      if(legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
-    }else{
+    }else if(importLegacy==false){
      await LocalStore.declineLegacyForUser(userId);
     }
    }else if(!legacyDeclined){
