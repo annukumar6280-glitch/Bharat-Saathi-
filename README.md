@@ -4,19 +4,17 @@ Bharat Saathi is a Flutter Android app for personal finance and small-retailer o
 
 ## Current app implementation
 
-- Hindi-first retailer dashboard with a muted slate background.
-- Product list, sale entry, expense entry, customer khata and customer payment entries.
-- Retailer purchase entry supports cash and supplier-credit purchases, supplier balances and supplier payments; purchases are included in supplier history and CSV exports.
-- Sales returns validate sold quantity, restore inventory and record cash refunds or customer-credit adjustments.
-- Manual stock additions are recorded in stock-adjustment history.
-- Reports can be filtered by date range and shared as a CSV file.
-- Separate Personal Finance tab for income, expenses, net balance and a user-defined spending limit.
-- Transactional on-device SQLite persistence, with one-time import of existing SharedPreferences records.
-- Expense history alongside sales.
-- Local business summary with copyable CSV export for sales, expenses, customer khata, personal finance and stock.
-- Provider-dependent recharge, BBPS, challan, UPI and transfer screens explicitly marked Coming Soon.
-- Empty first-run state: no seeded sample customers, fake invoices, chart totals or fictional cash balance.
-- Android debug APK is built by GitHub Actions; analyzer, widget test and APK build are part of CI.
+- Hindi-first dashboard and account shell.
+- Five main navigation areas: Dashboard, Khata, Expenses, History and Profile.
+- Shop and personal khata, linked khata requests and linked-account entries.
+- Business expense recording and expense history.
+- Service category screens for recharge, bill payment and challan; provider-dependent transactions remain marked Coming Soon.
+- History lists successful service transactions only.
+- Profile settings include language/theme controls and cloud snapshot restore.
+- Transactional on-device SQLite persistence with one-time import of older SharedPreferences records.
+- Google Mobile Ads SDK is included with Google's test ad identifiers in the development build.
+- The current navigation does not expose stock, product, purchase or sales-management screens. Legacy product/stock/sales fields remain in the data model for compatibility with older snapshots and may still appear in legacy exports; they are not current user-facing features.
+- GitHub Actions runs Flutter analysis, widget tests and an Android debug APK build.
 
 ## Data and production status
 
