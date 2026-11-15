@@ -8,7 +8,7 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 
 Future<void> pumpApp(WidgetTester tester) async {
   await tester.pumpWidget(const BharatSaathiApp());
-  await tester.runAsync(() async { await Future<void>.delayed(const Duration(seconds: 2)); });
+  await tester.runAsync(() async { await Future<void>.delayed(const Duration(seconds: 5)); });
   await tester.pump();
 }
 
