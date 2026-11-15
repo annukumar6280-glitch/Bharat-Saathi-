@@ -502,10 +502,11 @@ class _AuthPageState extends State<AuthPage>{
  final email=TextEditingController(),password=TextEditingController(),fullName=TextEditingController(),phone=TextEditingController();bool signUp=false,busy=false,showPassword=false;String? notice;bool errorNotice=false;
  SupabaseClient get client=>Supabase.instance.client;
  void message(String text,{bool error=false}){if(!mounted)return;setState((){notice=text;errorNotice=error;});}
- Future<void> _ensureProfileAndAccounts()async{
+ Future<void> _ensureProfileAndAccounts({String? nameOverride,String? mobileOverride})async{
  final user=client.auth.currentUser;if(user==null)throw const AuthException('लॉगिन सत्र उपलब्ध नहीं है');
- final name=fullName.text.trim().isNotEmpty?fullName.text.trim():(user.email??'Bharat Saathi').split('@').first;
- final mobile=_normalizeIndianMobile(phone.text.trim().isNotEmpty?phone.text.trim():(user.userMetadata?['phone'] as String? ?? ''));
+ final enteredName=nameOverride?.trim()??'';
+ final name=enteredName.isNotEmpty?enteredName:(user.email??'Bharat Saathi').split('@').first;
+ final mobile=_normalizeIndianMobile(mobileOverride??(user.userMetadata?['phone'] as String? ?? ''));
   await client.from('profiles').upsert({'id':user.id,'full_name':name,'phone':mobile,'preferred_language':'hi'});
  final existing=await client.from('accounts').select('id,account_type').eq('created_by',user.id);
  final types=<String>{for(final row in existing)(row['account_type'] as String)};
@@ -520,6 +521,7 @@ class _AuthPageState extends State<AuthPage>{
  if(!widget.supabaseAvailable){message('लॉगिन सेवा उपलब्ध नहीं है। इंटरनेट कनेक्शन जाँचें।',error:true);return;}
  final mobile=_normalizeIndianMobile(phone.text.trim());
  final mail=email.text.trim();
+ final enteredName=fullName.text.trim();
  final validMobile=RegExp(r'^[6-9][0-9]{9}$').hasMatch(mobile);
  if(password.text.length<8||!validMobile||(signUp&&(!mail.contains('@')||fullName.text.trim().isEmpty))){
   message(signUp?'नाम, सही ईमेल, 10 अंकों का मोबाइल और कम-से-कम 8 अक्षर का पासवर्ड भरें।':'10 अंकों का सही मोबाइल नंबर और कम-से-कम 8 अक्षर का पासवर्ड भरें।',error:true);return;
@@ -530,11 +532,11 @@ class _AuthPageState extends State<AuthPage>{
   if(signUp){
    final response=await client.auth.signUp(
     email:mail,password:password.text,
-    data:{'full_name':fullName.text.trim(),'phone':mobile},
+    data:{'full_name':enteredName,'phone':mobile},
     options:SignUpOptions(emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html')
    );
    if(response.session==null){message('रजिस्ट्रेशन अनुरोध स्वीकार हुआ। ईमेल पर भेजे गए लिंक से सत्यापन पूरा करें। फिर मोबाइल नंबर और पासवर्ड से लॉगिन करें।');}
-   else{await _ensureProfileAndAccounts();returnToHome=true;}
+   else{await _ensureProfileAndAccounts(nameOverride:enteredName,mobileOverride:mobile);returnToHome=true;}
   }else{
    final response=await client.functions.invoke('phone-password-login',body:{'phone':mobile,'password':password.text});
    final payload=response.data;
@@ -543,7 +545,7 @@ class _AuthPageState extends State<AuthPage>{
     throw AuthException(serverMessage??'मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।');
    }
    await client.auth.setSession(payload['refresh_token'] as String);
-   await _ensureProfileAndAccounts();
+   await _ensureProfileAndAccounts(mobileOverride:mobile);
    returnToHome=true;
   }
  }on AuthException catch(e){message(e.message,error:true);}
