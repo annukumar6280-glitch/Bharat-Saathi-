@@ -151,7 +151,7 @@ class _AuthGateState extends State<AuthGate>{
  @override void dispose(){_authSubscription?.cancel();super.dispose();}
  @override Widget build(BuildContext context){
   if(!widget.supabaseAvailable)return const AuthPage(supabaseAvailable:false);
-  return _signedIn?RetailerHome(key:ValueKey(Supabase.instance.client.auth.currentUser?.id),supabaseAvailable:widget.supabaseAvailable):AuthPage(supabaseAvailable:widget.supabaseAvailable);
+  return _signedIn?RetailerHome(key:ValueKey(widget.supabaseAvailable?Supabase.instance.client.auth.currentUser?.id:'local'),supabaseAvailable:widget.supabaseAvailable):AuthPage(supabaseAvailable:widget.supabaseAvailable);
  }
 }
 class Item{String name,detail;int qty;double price;Item(this.name,this.detail,this.qty,this.price);Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'qty':qty,'price':price};factory Item.fromJson(Map<String,dynamic> j)=>Item(j['name'] as String,j['detail'] as String,(j['qty'] as num).toInt(),(j['price'] as num).toDouble());}
