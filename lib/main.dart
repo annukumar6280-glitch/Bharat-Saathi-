@@ -49,6 +49,12 @@ class LocalStore {
   final rows=await db.query('app_state',columns:['payload'],where:'id = ?',whereArgs:[1],limit:1);
   return rows.isEmpty?null:rows.first['payload'] as String;
  }
+ static Future<DateTime?> readUpdatedAt()async{
+  final db=await database;
+  final rows=await db.query('app_state',columns:['updated_at'],where:'id = ?',whereArgs:[1],limit:1);
+  if(rows.isEmpty)return null;
+  return DateTime.tryParse(rows.first['updated_at'] as String);
+ }
  static Future<void> clear()async{final db=await database;await db.delete('app_state');}
  static Future<void> write(String payload)async{
   final db=await database;
@@ -115,7 +121,10 @@ class _AuthGateState extends State<AuthGate>{
 class Item{String name,detail;int qty;double price;Item(this.name,this.detail,this.qty,this.price);Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'qty':qty,'price':price};factory Item.fromJson(Map<String,dynamic> j)=>Item(j['name'] as String,j['detail'] as String,(j['qty'] as num).toInt(),(j['price'] as num).toDouble());}
 class Record{String name,detail;double amount;IconData icon;DateTime? createdAt;Record(this.name,this.detail,this.amount,this.icon,[DateTime? timestamp]):createdAt=timestamp??DateTime.now();Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint,'createdAt':createdAt?.toIso8601String()};factory Record.fromJson(Map<String,dynamic> j){final timestamp=j['createdAt'] is String?DateTime.tryParse(j['createdAt'] as String):null;return Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long,timestamp)..createdAt=timestamp;}}
 class RetailerHome extends StatefulWidget{final bool supabaseAvailable;const RetailerHome({super.key,this.supabaseAvailable=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
-class _RetailerHomeState extends State<RetailerHome>{
+class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver{
+ Timer? _autoSyncDebounce;
+ Timer? _autoSyncRetry;
+ bool _cloudSyncBusy=false;
  int tab=0;double cash=0,expenses=0,personalBudget=0;String personalBudgetName='व्यक्तिगत खर्च सीमा';bool loaded=false,english=false,darkMode=false;
  final _prefs=SharedPreferencesAsync();
  final products=<Item>[];
@@ -128,11 +137,65 @@ class _RetailerHomeState extends State<RetailerHome>{
  final supplierLedger=<Record>[];
  final salesReturns=<Record>[];
  final stockAdjustments=<Record>[];final serviceTransactions=<Record>[];
- @override void initState(){super.initState();homeTabRequest.addListener(_returnToHomeTab);_restore();}
+ @override void initState(){super.initState();WidgetsBinding.instance.addObserver(this);homeTabRequest.addListener(_returnToHomeTab);_autoSyncRetry=Timer.periodic(const Duration(seconds:60),(_)=>_syncCloudNow());_restore();}
   void _returnToHomeTab(){if(mounted&&tab!=0)setState(()=>tab=0);}
-  @override void dispose(){homeTabRequest.removeListener(_returnToHomeTab);super.dispose();}
- Future<void> _restore()async{if(mounted)setState(()=>loaded=false);cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';products.clear();sales.clear();expensesList.clear();khata.clear();personalTransactions.clear();purchases.clear();supplierLedger.clear();salesReturns.clear();stockAdjustments.clear();serviceTransactions.clear();try{var raw=await LocalStore.read().timeout(const Duration(seconds:2));if(raw==null){raw=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));if(raw!=null){await LocalStore.write(raw);}}if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));products.addAll((d['products'] as List? ?? []).map((e)=>Item.fromJson(Map<String,dynamic>.from(e as Map))));sales.addAll((d['sales'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));purchases.addAll((d['purchases'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));supplierLedger.addAll((d['supplierLedger'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));salesReturns.addAll((d['salesReturns'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));stockAdjustments.addAll((d['stockAdjustments'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));}}catch(_){}if(mounted)setState(()=>loaded=true);}
- Future<void> _persist()async{try{await LocalStore.write(jsonEncode({'cash':cash,'expenses':expenses,'personalBudget':personalBudget,'personalBudgetName':personalBudgetName,'products':products.map((e)=>e.toJson()).toList(),'sales':sales.map((e)=>e.toJson()).toList(),'expensesList':expensesList.map((e)=>e.toJson()).toList(),'khata':khata.map((e)=>e.toJson()).toList(),'personalTransactions':personalTransactions.map((e)=>e.toJson()).toList(),'personalKhata':personalKhata.map((e)=>e.toJson()).toList(),'language':english?'en':'hi','darkMode':darkMode,'serviceTransactions':serviceTransactions.map((e)=>e.toJson()).toList(),'purchases':purchases.map((e)=>e.toJson()).toList(),'supplierLedger':supplierLedger.map((e)=>e.toJson()).toList(),'salesReturns':salesReturns.map((e)=>e.toJson()).toList(),'stockAdjustments':stockAdjustments.map((e)=>e.toJson()).toList()}));}catch(_){if(mounted)msg('डेटा इस डिवाइस पर डेटाबेस में सेव नहीं हो पाया');}}
+  @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed)_syncCloudNow();}
+  @override void dispose(){WidgetsBinding.instance.removeObserver(this);homeTabRequest.removeListener(_returnToHomeTab);_autoSyncDebounce?.cancel();_autoSyncRetry?.cancel();super.dispose();}
+  void _scheduleCloudSync(){if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)return;_autoSyncDebounce?.cancel();_autoSyncDebounce=Timer(const Duration(seconds:3),_syncCloudNow);}
+  Future<void> _uploadCloudSnapshot(User user,String raw,DateTime localUpdatedAt)async{
+   final decoded=jsonDecode(raw);
+   if(decoded is! Map<String,dynamic>)throw const FormatException('स्थानीय रिकॉर्ड का प्रारूप सही नहीं है।');
+   await Supabase.instance.client.from('user_backups').upsert({'user_id':user.id,'payload':decoded,'schema_version':1,'updated_at':localUpdatedAt.toUtc().toIso8601String()});
+  }
+  Future<String?> _reconcileCloudSnapshot(String? raw)async{
+   final user=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
+   if(user==null)return raw;
+   final client=Supabase.instance.client;
+   final row=await client.from('user_backups').select('payload,schema_version,updated_at').eq('user_id',user.id).maybeSingle();
+   if(row==null){if(raw!=null){final localAt=await LocalStore.readUpdatedAt();if(localAt!=null)await _uploadCloudSnapshot(user,raw,localAt);}return raw;}
+   if((row['schema_version'] as num?)?.toInt()!=1)return raw;
+   final remoteAt=DateTime.tryParse(row['updated_at'] as String? ?? '');
+   final localAt=await LocalStore.readUpdatedAt();
+   if(raw==null||(remoteAt!=null&&(localAt==null||remoteAt.isAfter(localAt)))){
+    raw=jsonEncode(row['payload']);
+    await LocalStore.write(raw);
+    return raw;
+   }
+   if(localAt!=null&&(remoteAt==null||localAt.isAfter(remoteAt)))await _uploadCloudSnapshot(user,raw,localAt);
+   return raw;
+  }
+  Future<void> _syncCloudNow()async{
+   if(_cloudSyncBusy||!mounted||!widget.supabaseAvailable)return;
+   final user=Supabase.instance.client.auth.currentUser;if(user==null)return;
+   _cloudSyncBusy=true;
+   try{
+    final before=await LocalStore.read();
+    if(before==null){_cloudSyncBusy=false;return;}
+    final beforeAt=await LocalStore.readUpdatedAt();
+    final resolved=await _reconcileCloudSnapshot(before);
+    if(resolved!=before){await _restore(syncCloud:false);}
+    else{
+     final afterAt=await LocalStore.readUpdatedAt();
+     if(afterAt!=null&&beforeAt!=null&&afterAt.isAfter(beforeAt))_scheduleCloudSync();
+    }
+   }catch(_){
+    // Keep the local copy. The periodic and foreground retry will try again.
+   }finally{_cloudSyncBusy=false;}
+  }
+ Future<void> _restore({bool syncCloud=true})async{
+  if(mounted)setState(()=>loaded=false);
+  cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';
+  products.clear();sales.clear();expensesList.clear();khata.clear();personalTransactions.clear();purchases.clear();supplierLedger.clear();salesReturns.clear();stockAdjustments.clear();serviceTransactions.clear();
+  try{
+   var raw=await LocalStore.read().timeout(const Duration(seconds:2));
+   if(raw==null){raw=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));if(raw!=null)await LocalStore.write(raw);}
+   if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
+   if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));products.addAll((d['products'] as List? ?? []).map((e)=>Item.fromJson(Map<String,dynamic>.from(e as Map))));sales.addAll((d['sales'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));purchases.addAll((d['purchases'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));supplierLedger.addAll((d['supplierLedger'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));salesReturns.addAll((d['salesReturns'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));stockAdjustments.addAll((d['stockAdjustments'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));}
+  }catch(_){}
+  if(mounted)setState(()=>loaded=true);
+  if(syncCloud)_scheduleCloudSync();
+ }
+ Future<void> _persist()async{try{await LocalStore.write(jsonEncode({'cash':cash,'expenses':expenses,'personalBudget':personalBudget,'personalBudgetName':personalBudgetName,'products':products.map((e)=>e.toJson()).toList(),'sales':sales.map((e)=>e.toJson()).toList(),'expensesList':expensesList.map((e)=>e.toJson()).toList(),'khata':khata.map((e)=>e.toJson()).toList(),'personalTransactions':personalTransactions.map((e)=>e.toJson()).toList(),'personalKhata':personalKhata.map((e)=>e.toJson()).toList(),'language':english?'en':'hi','darkMode':darkMode,'serviceTransactions':serviceTransactions.map((e)=>e.toJson()).toList(),'purchases':purchases.map((e)=>e.toJson()).toList(),'supplierLedger':supplierLedger.map((e)=>e.toJson()).toList(),'salesReturns':salesReturns.map((e)=>e.toJson()).toList(),'stockAdjustments':stockAdjustments.map((e)=>e.toJson()).toList()}));_scheduleCloudSync();}catch(_){if(mounted)msg('डेटा इस डिवाइस पर डेटाबेस में सेव नहीं हो पाया');}}
  void msg(String s)=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s),behavior:SnackBarBehavior.floating));
  Future<void> form(String title,String label,String valueLabel,void Function(String,double) save)async{
  final n=TextEditingController(),v=TextEditingController();
@@ -607,7 +670,7 @@ class _AuthPageState extends State<AuthPage>{
  const SizedBox(height:18),
  if(!widget.supabaseAvailable)Text('अकाउंट सेवा से कनेक्शन उपलब्ध नहीं है। इंटरनेट कनेक्शन जाँचें।',style:TextStyle(color:red)),
  if(user!=null)...[
- Text('लॉगिन सफल',style:TextStyle(color:green,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:6),Text(user.email??'',style:TextStyle(color:navy)),SizedBox(height:12),Text('आपके ऐप के रिकॉर्ड अभी इस फोन में सेव होते हैं। वे अपने-आप क्लाउड से सिंक नहीं होते। क्लाउड में सुरक्षित रखने के लिए प्रोफाइल में “डेटा बैकअप” खोलें और “अभी बैकअप सेव करें” चुनें।',style:TextStyle(color:muted,fontSize:12)),SizedBox(height:18),FilledButton(onPressed:busy?null:signOut,child:Text(busy?'कृपया प्रतीक्षा करें':'लॉगआउट करें'))
+ Text('लॉगिन सफल',style:TextStyle(color:green,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:6),Text(user.email??'',style:TextStyle(color:navy)),SizedBox(height:12),Text('आपके रिकॉर्ड पहले इस फोन में सुरक्षित सेव होते हैं। इंटरनेट उपलब्ध होने पर वे अपने-आप क्लाउड से सिंक होते हैं और दूसरे फोन पर लॉगिन करने पर वापस आ सकते हैं। इंटरनेट न होने पर सिंक बाद में दोबारा होगा।',style:TextStyle(color:muted,fontSize:12)),SizedBox(height:18),FilledButton(onPressed:busy?null:signOut,child:Text(busy?'कृपया प्रतीक्षा करें':'लॉगआउट करें'))
  ]else...[
  if(signUp)TextField(controller:fullName,decoration:const InputDecoration(labelText:'पूरा नाम',prefixIcon:Icon(Icons.person_outline))),
  if(signUp)const SizedBox(height:10),
@@ -672,7 +735,7 @@ class _CloudBackupPageState extends State<CloudBackupPage>{
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
  return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:const Text('डेटा बैकअप')),body:ListView(padding:const EdgeInsets.all(20),children:[
- Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपके रिकॉर्ड का सुरक्षित बैकअप',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:7),Text('यह मैनुअल स्नैपशॉट है। अपने अकाउंट से किसी दूसरे डिवाइस पर रिकॉर्ड वापस ला सकते हैं। यह लाइव सिंक नहीं है।',style:TextStyle(color:Colors.white70,fontSize:12))])),
+ Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपके रिकॉर्ड का सुरक्षित बैकअप',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:7),Text('रिकॉर्ड अपने-आप क्लाउड से सिंक होते हैं। नीचे दिए विकल्प से आप चाहें तो तुरंत मैन्युअल बैकअप या रीस्टोर भी कर सकते हैं।',style:TextStyle(color:Colors.white70,fontSize:12))])),
  const SizedBox(height:18),
  if(!widget.supabaseAvailable)Text('Supabase कनेक्शन उपलब्ध नहीं है।',style:TextStyle(color:red))
  else if(user==null)...[Text('क्लाउड बैकअप के लिए पहले लॉगिन करें।',style:TextStyle(color:navy,fontWeight:FontWeight.w700)),SizedBox(height:10),FilledButton(onPressed:busy?null:_login,child:Text('लॉगिन करें'))]
