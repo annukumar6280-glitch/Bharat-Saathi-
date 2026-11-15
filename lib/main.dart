@@ -55,6 +55,7 @@ class LocalStore {
  }
 }
 final ValueNotifier<bool> appDarkMode=ValueNotifier<bool>(false);
+final ValueNotifier<int> homeTabRequest=ValueNotifier<int>(0);
 bool get darkModeEnabled=>appDarkMode.value;
 Color get navy=>darkModeEnabled?Color(0xFFE5EEFF):Color(0xFF14233B);
 Color get blue=>darkModeEnabled?Color(0xFF8FB8F0):Color(0xFF29496D);
@@ -87,7 +88,9 @@ class _RetailerHomeState extends State<RetailerHome>{
  final supplierLedger=<Record>[];
  final salesReturns=<Record>[];
  final stockAdjustments=<Record>[];final serviceTransactions=<Record>[];
- @override void initState(){super.initState();_restore();}
+ @override void initState(){super.initState();homeTabRequest.addListener(_returnToHomeTab);_restore();}
+  void _returnToHomeTab(){if(mounted&&tab!=0)setState(()=>tab=0);}
+  @override void dispose(){homeTabRequest.removeListener(_returnToHomeTab);super.dispose();}
  Future<void> _restore()async{if(mounted)setState(()=>loaded=false);cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';products.clear();sales.clear();expensesList.clear();khata.clear();personalTransactions.clear();purchases.clear();supplierLedger.clear();salesReturns.clear();stockAdjustments.clear();serviceTransactions.clear();try{var raw=await LocalStore.read().timeout(const Duration(seconds:2));if(raw==null){raw=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));if(raw!=null){await LocalStore.write(raw);}}if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));products.addAll((d['products'] as List? ?? []).map((e)=>Item.fromJson(Map<String,dynamic>.from(e as Map))));sales.addAll((d['sales'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));purchases.addAll((d['purchases'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));supplierLedger.addAll((d['supplierLedger'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));salesReturns.addAll((d['salesReturns'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));stockAdjustments.addAll((d['stockAdjustments'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));}}catch(_){}if(mounted)setState(()=>loaded=true);}
  Future<void> _persist()async{try{await LocalStore.write(jsonEncode({'cash':cash,'expenses':expenses,'personalBudget':personalBudget,'personalBudgetName':personalBudgetName,'products':products.map((e)=>e.toJson()).toList(),'sales':sales.map((e)=>e.toJson()).toList(),'expensesList':expensesList.map((e)=>e.toJson()).toList(),'khata':khata.map((e)=>e.toJson()).toList(),'personalTransactions':personalTransactions.map((e)=>e.toJson()).toList(),'personalKhata':personalKhata.map((e)=>e.toJson()).toList(),'language':english?'en':'hi','darkMode':darkMode,'serviceTransactions':serviceTransactions.map((e)=>e.toJson()).toList(),'purchases':purchases.map((e)=>e.toJson()).toList(),'supplierLedger':supplierLedger.map((e)=>e.toJson()).toList(),'salesReturns':salesReturns.map((e)=>e.toJson()).toList(),'stockAdjustments':stockAdjustments.map((e)=>e.toJson()).toList()}));}catch(_){if(mounted)msg('डेटा इस डिवाइस पर डेटाबेस में सेव नहीं हो पाया');}}
  void msg(String s)=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s),behavior:SnackBarBehavior.floating));
@@ -478,18 +481,20 @@ class _AuthPageState extends State<AuthPage>{
  final mail=email.text.trim();
  if(!mail.contains('@')||password.text.length<8||(signUp&&(fullName.text.trim().isEmpty||phone.text.replaceAll(RegExp(r'[^0-9]'),'').length!=10))){message('नाम, सही ईमेल, 10 अंकों का मोबाइल और कम-से-कम 8 अक्षर का पासवर्ड भरें।',error:true);return;}
  setState(()=>busy=true);
+ var returnToHome=false;
  try{
  if(signUp){
  final response=await client.auth.signUp(email:mail,password:password.text,data:{'full_name':fullName.text.trim(),'phone':phone.text.trim()},options:SignUpOptions(emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'));
  if(response.session==null){message('रजिस्ट्रेशन अनुरोध स्वीकार हुआ। ईमेल सत्यापन पूरा करके फिर लॉगिन करें।');}
- else{await _ensureProfileAndAccounts();message('अकाउंट बन गया। व्यक्तिगत और रिटेलर खाते तैयार हैं।');}
+ else{await _ensureProfileAndAccounts();returnToHome=true;}
  }else{
  await client.auth.signInWithPassword(email:mail,password:password.text);
  await _ensureProfileAndAccounts();
- message('लॉगिन सफल। व्यक्तिगत और रिटेलर खाते तैयार हैं।');
+ returnToHome=true;
  }
  }on AuthException catch(e){message(e.message,error:true);}on PostgrestException catch(e){message('डेटाबेस सेटअप त्रुटि: ${e.message}',error:true);}catch(e){message('कनेक्शन या अकाउंट सेटअप पूरा नहीं हुआ। दोबारा प्रयास करें।',error:true);}
  if(mounted)setState(()=>busy=false);
+ if(returnToHome&&mounted){homeTabRequest.value=homeTabRequest.value+1;Navigator.of(context).popUntil((route)=>route.isFirst);}
  }
  Future<void> resetPassword()async{
  if(!widget.supabaseAvailable){message('Supabase कनेक्शन उपलब्ध नहीं है।',error:true);return;}
