@@ -74,6 +74,30 @@ void main() {
     expect(await LocalStore.read('account-b'), '{"cash":250}');
   });
 
+  test('Retired inventory fields are stripped from every local snapshot', () async {
+    await LocalStore.write('account-a', '{"cash":100,"products":[{"name":"old"}],"sales":[{"amount":20}],"purchases":[{"amount":10}],"supplierLedger":[],"salesReturns":[],"stockAdjustments":[]}');
+    final db = await LocalStore.database;
+    await db.execute('CREATE TABLE legacy_app_state (id INTEGER PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
+    await db.insert('legacy_app_state', {
+      'id': 1,
+      'payload': '{"cash":75,"products":[{"name":"legacy"}],"sales":[]}',
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+
+    final preferences = await LocalStore.sanitizeLegacyInventoryData(
+      '{"cash":50,"products":[{"name":"prefs"}],"purchases":[]}',
+    );
+
+    final account = jsonDecode((await LocalStore.read('account-a'))!) as Map<String, dynamic>;
+    final legacyRows = await db.query('legacy_app_state', columns: ['payload']);
+    final legacy = jsonDecode(legacyRows.single['payload'] as String) as Map<String, dynamic>;
+    final prefs = jsonDecode(preferences!) as Map<String, dynamic>;
+
+    expect(account, {'cash': 100});
+    expect(legacy, {'cash': 75});
+    expect(prefs, {'cash': 50});
+  });
+
   test('Empty legacy preference is not treated as an old snapshot', () async {
     expect(await LocalStore.hasUnassignedLegacyData(''), isFalse);
     expect(await LocalStore.migrateLegacyForUser('account-a', ''), isTrue);
