@@ -58,7 +58,7 @@ class LocalStore {
   final oldTable=await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_app_state'");
   if(oldTable.isNotEmpty){
    final rows=await db.query('legacy_app_state',columns:['payload'],where:'id = ?',whereArgs:[1],limit:1);
-   if(rows.isNotEmpty&&rows.first['payload']!=null)return true;
+   if(rows.isNotEmpty&&rows.first['payload'] is String&&(rows.first['payload'] as String).isNotEmpty)return true;
   }
   return preferencesLegacy!=null&&preferencesLegacy.isNotEmpty;
  }
@@ -81,7 +81,7 @@ class LocalStore {
    final oldTable=await txn.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_app_state'");
    if(oldTable.isNotEmpty){
     final rows=await txn.query('legacy_app_state',columns:['payload','updated_at'],where:'id = ?',whereArgs:[1],limit:1);
-    if(rows.isNotEmpty){legacyPayload=rows.first['payload'] as String?;legacyUpdatedAt=rows.first['updated_at'] as String?;}
+    if(rows.isNotEmpty){final oldPayload=rows.first['payload'] as String?;if(oldPayload!=null&&oldPayload.isNotEmpty)legacyPayload=oldPayload;legacyUpdatedAt=rows.first['updated_at'] as String?;}
    }
    legacyPayload??=(preferencesLegacy!=null&&preferencesLegacy.isNotEmpty?preferencesLegacy:null);
    if(legacyPayload!=null){
