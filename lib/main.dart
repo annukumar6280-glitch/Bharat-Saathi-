@@ -271,7 +271,8 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
     if(importLegacy==true){
      final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
      if(migrated&&legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
-     if(!migrated&&mounted){
+     if(!migrated){
+      if(!mounted)return;
       await showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
        title:const Text('पुराना डेटा अभी नहीं जोड़ा गया'),
        content:const Text('इस अकाउंट में पहले से रिकॉर्ड हैं। उन्हें सुरक्षित रखने के लिए पुराने रिकॉर्ड से बदला नहीं गया। पुराना डेटा अलग रखा गया है; दूसरे सही अकाउंट से लॉगिन करके उसे जोड़ सकते हैं।'),
