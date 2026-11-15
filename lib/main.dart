@@ -99,6 +99,8 @@ class _AuthGateState extends State<AuthGate>{
    _signedIn=Supabase.instance.client.auth.currentSession!=null;
    _authSubscription=Supabase.instance.client.auth.onAuthStateChange.listen((state){
     if(mounted)setState(()=>_signedIn=state.session!=null);
+   },onError:(Object error,StackTrace stackTrace){
+    if(mounted&&Supabase.instance.client.auth.currentSession==null)setState(()=>_signedIn=false);
    });
   }
  }
