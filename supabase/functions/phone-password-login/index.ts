@@ -50,23 +50,36 @@ Deno.serve(async (req: Request) => {
       Authorization: "Bearer " + serviceKey,
       "Content-Type": "application/json",
     };
-
     const sourceIp = req.headers.get("cf-connecting-ip")
       ?? req.headers.get("x-real-ip")
       ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
       ?? "unknown";
-    const rateResponse = await fetch(
-      new URL("/rest/v1/rpc/consume_phone_login_rate_limit", supabaseUrl),
+
+    async function recordFailedAttempt(): Promise<boolean> {
+      const response = await fetch(
+        new URL("/rest/v1/rpc/consume_phone_login_rate_limit", supabaseUrl),
+        {
+          method: "POST",
+          headers: serviceHeaders,
+          body: JSON.stringify({ p_phone: phone, p_ip: sourceIp }),
+        },
+      );
+      if (!response.ok) throw new Error("Rate-limit service unavailable");
+      return await response.json() === true;
+    }
+
+    const lockoutResponse = await fetch(
+      new URL("/rest/v1/rpc/is_phone_login_rate_limited", supabaseUrl),
       {
         method: "POST",
         headers: serviceHeaders,
         body: JSON.stringify({ p_phone: phone, p_ip: sourceIp }),
       },
     );
-    if (!rateResponse.ok) {
+    if (!lockoutResponse.ok) {
       return json(req, { error: "लॉगिन सेवा अभी उपलब्ध नहीं है।" }, 503);
     }
-    if (await rateResponse.json() !== true) {
+    if (await lockoutResponse.json() === true) {
       return json(req, { error: "बहुत बार गलत लॉगिन प्रयास हुए हैं। सुरक्षा के लिए 15 मिनट बाद दोबारा प्रयास करें।" }, 429);
     }
 
@@ -84,17 +97,25 @@ Deno.serve(async (req: Request) => {
     const matches = await lookupResponse.json();
     if (!Array.isArray(matches) || matches.length !== 1
       || typeof matches[0]?.user_email !== "string" || !matches[0].user_email) {
+      const allowed = await recordFailedAttempt();
+      if (!allowed) {
+        return json(req, { error: "बहुत बार गलत लॉगिन प्रयास हुए हैं। सुरक्षा के लिए 15 मिनट बाद दोबारा प्रयास करें।" }, 429);
+      }
       return json(req, { error: "मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।" }, 401);
     }
 
     // Supabase Auth verifies the password and email-confirmation state.
-    // The email is only passed server-to-server and is never returned to the app.
+    // The account email is only passed server-to-server and is never returned to the app.
     const authResponse = await fetch(new URL("/auth/v1/token?grant_type=password", supabaseUrl), {
       method: "POST",
       headers: { apikey: publicKey, "Content-Type": "application/json" },
       body: JSON.stringify({ email: matches[0].user_email, password }),
     });
     if (!authResponse.ok) {
+      const allowed = await recordFailedAttempt();
+      if (!allowed) {
+        return json(req, { error: "बहुत बार गलत लॉगिन प्रयास हुए हैं। सुरक्षा के लिए 15 मिनट बाद दोबारा प्रयास करें।" }, 429);
+      }
       return json(req, { error: "मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।" }, 401);
     }
     const authPayload = await authResponse.json();
