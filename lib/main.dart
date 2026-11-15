@@ -711,14 +711,6 @@ class _CloudBackupPageState extends State<CloudBackupPage>{
  bool busy=false;String? notice;bool noticeError=false;SupabaseClient get client=>Supabase.instance.client;
  void showMessage(String text,{bool error=false}){if(mounted)setState((){notice=text;noticeError=error;});}
  Future<void> _login()async{await Navigator.push<void>(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:widget.supabaseAvailable)));if(mounted)setState(()=>notice=null);}
- Future<void> backup()async{
- if(!widget.supabaseAvailable){showMessage('Supabase कनेक्शन उपलब्ध नहीं है।',error:true);return;}
- final user=client.auth.currentUser;if(user==null){showMessage('पहले लॉगिन करें।',error:true);return;}
- setState(()=>busy=true);
- try{final raw=await LocalStore.read();if(raw==null){showMessage('अभी इस डिवाइस पर बैकअप करने के लिए कोई रिकॉर्ड नहीं है।');}else{final payload=jsonDecode(raw);if(payload is! Map<String,dynamic>){showMessage('स्थानीय डेटा का प्रारूप सही नहीं है।',error:true);}else{await client.from('user_backups').upsert({'user_id':user.id,'payload':payload,'schema_version':1,'updated_at':DateTime.now().toUtc().toIso8601String()});showMessage('क्लाउड बैकअप सफलतापूर्वक सेव हुआ।');}}}
- on PostgrestException catch(e){showMessage('क्लाउड बैकअप त्रुटि: ${e.message}',error:true);}catch(_){showMessage('बैकअप पूरा नहीं हुआ। इंटरनेट और लॉगिन जाँचें।',error:true);}
- if(mounted)setState(()=>busy=false);
- }
  Future<void> restore()async{
  if(!widget.supabaseAvailable){showMessage('Supabase कनेक्शन उपलब्ध नहीं है।',error:true);return;}
  final user=client.auth.currentUser;if(user==null){showMessage('पहले लॉगिन करें।',error:true);return;}
@@ -729,7 +721,7 @@ class _CloudBackupPageState extends State<CloudBackupPage>{
  else if((row['schema_version'] as num?)?.toInt()!=1){showMessage('यह बैकअप इस ऐप संस्करण के अनुकूल नहीं है।',error:true);}
  else{
  if(!mounted)return;
- final confirmed=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(title:const Text('क्लाउड बैकअप रीस्टोर करें?'),content:const Text('यह इस फोन के मौजूदा स्थानीय रिकॉर्ड को क्लाउड बैकअप से बदल देगा। पहले स्थानीय बैकअप कर लें।'),actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('रीस्टोर करें'))]));
+ final confirmed=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(title:const Text('क्लाउड बैकअप रीस्टोर करें?'),content:const Text('यह इस फोन के मौजूदा स्थानीय रिकॉर्ड को क्लाउड बैकअप से बदल देगा। रीस्टोर करने के बाद इस फोन के पुराने स्थानीय रिकॉर्ड वापस नहीं मिलेंगे।'),actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('रीस्टोर करें'))]));
  if(confirmed==true){await LocalStore.write(jsonEncode(row['payload']));await widget.onRestore();showMessage('क्लाउड बैकअप इस डिवाइस पर रीस्टोर हो गया।');}
  }
  }on PostgrestException catch(e){showMessage('रीस्टोर त्रुटि: ${e.message}',error:true);}catch(_){showMessage('रीस्टोर पूरा नहीं हुआ। इंटरनेट और लॉगिन जाँचें।',error:true);}
@@ -738,11 +730,11 @@ class _CloudBackupPageState extends State<CloudBackupPage>{
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
  return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:const Text('डेटा बैकअप')),body:ListView(padding:const EdgeInsets.all(20),children:[
- Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपके रिकॉर्ड का सुरक्षित बैकअप',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:7),Text('रिकॉर्ड अपने-आप क्लाउड से सिंक होते हैं। नीचे दिए विकल्प से आप चाहें तो तुरंत मैन्युअल बैकअप या रीस्टोर भी कर सकते हैं।',style:TextStyle(color:Colors.white70,fontSize:12))])),
+ Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपके रिकॉर्ड का सुरक्षित बैकअप',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:7),Text('लॉगिन रहने पर आपके रिकॉर्ड अपने-आप क्लाउड में सुरक्षित होते रहते हैं। इंटरनेट न होने पर रिकॉर्ड फोन में सुरक्षित रहते हैं और कनेक्शन लौटने पर सिंक फिर शुरू होता है। जरूरत पड़ने पर आप क्लाउड से रिकॉर्ड रीस्टोर कर सकते हैं।',style:TextStyle(color:Colors.white70,fontSize:12))])),
  const SizedBox(height:18),
  if(!widget.supabaseAvailable)Text('Supabase कनेक्शन उपलब्ध नहीं है।',style:TextStyle(color:red))
  else if(user==null)...[Text('क्लाउड बैकअप के लिए पहले लॉगिन करें।',style:TextStyle(color:navy,fontWeight:FontWeight.w700)),SizedBox(height:10),FilledButton(onPressed:busy?null:_login,child:Text('लॉगिन करें'))]
- else ...[Text('लॉगिन अकाउंट: ${user.email??'ईमेल उपलब्ध नहीं'}',style:TextStyle(color:navy,fontWeight:FontWeight.w700)),SizedBox(height:14),FilledButton.icon(onPressed:busy?null:backup,icon:Icon(Icons.cloud_upload_outlined),label:Text('अभी बैकअप सेव करें')),SizedBox(height:10),OutlinedButton.icon(onPressed:busy?null:restore,icon:Icon(Icons.cloud_download_outlined),label:Text('क्लाउड बैकअप रीस्टोर करें'))],
+ else ...[Text('लॉगिन अकाउंट: ${user.email??'ईमेल उपलब्ध नहीं'}',style:TextStyle(color:navy,fontWeight:FontWeight.w700)),SizedBox(height:14),OutlinedButton.icon(onPressed:busy?null:restore,icon:Icon(Icons.cloud_download_outlined),label:Text('क्लाउड बैकअप रीस्टोर करें'))],
  if(busy)const Padding(padding:EdgeInsets.all(18),child:Center(child:CircularProgressIndicator())),
  if(notice!=null)Padding(padding:EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:noticeError?red:green,fontSize:12,fontWeight:FontWeight.w700)))
  ]));
@@ -841,7 +833,7 @@ class ProfilePage extends StatelessWidget{
    if(admin)setting(Icons.admin_panel_settings_outlined,english?'Admin Commission Settings':'एडमिन कमीशन सेटिंग',english?'Configure service and referral rates':'सर्विस और रेफरल कमीशन की दरें सेट करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const AdminCommissionPage()))),
    setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),
-   setting(Icons.cloud_upload_outlined,english?'Data backup':'डेटा बैकअप',english?'Manual cloud backup':'मैनुअल क्लाउड बैकअप',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),
+   setting(Icons.cloud_sync,english?'Automatic cloud sync':'ऑटोमैटिक क्लाउड सिंक',english?'Records sync automatically; restore from cloud':'मैनुअल क्लाउड बैकअप',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),
   ]);
  }
 }
