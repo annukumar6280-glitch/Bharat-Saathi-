@@ -78,7 +78,7 @@ void main() {
   test('Retired inventory fields are stripped from every local snapshot', () async {
     await LocalStore.write('account-a', '{"cash":100,"products":[{"name":"old"}],"sales":[{"amount":20}],"purchases":[{"amount":10}],"supplierLedger":[],"salesReturns":[],"stockAdjustments":[]}');
     final db = await LocalStore.database;
-    await db.execute('CREATE TABLE legacy_app_state (id INTEGER PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE IF NOT EXISTS legacy_app_state (id INTEGER PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
     await db.insert('legacy_app_state', {
       'id': 1,
       'payload': '{"cash":75,"products":[{"name":"legacy"}],"sales":[]}',
