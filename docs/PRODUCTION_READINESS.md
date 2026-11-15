@@ -59,7 +59,7 @@ Last reviewed: 15 November 2026. This document describes the current source in `
 - GitHub Actions runs Flutter dependency installation, `flutter analyze`, widget tests and an Android debug APK build.
 - CI target API check sets and verifies Android API 36.
 - A passing debug APK build is not a signed release APK, Play Console approval, live-provider certification or proof of end-to-end operation on physical devices.
-- Before production: test registration, email verification, login, account switching on one device, offline sync retry, restore on a second device, data export, linked khata access control and account-deletion requests on real Android devices.
+- Before production: test registration, email verification, login, account switching on one device, offline sync retry, restore on a second device, linked khata access control and account-deletion requests on real Android devices.
 - Local SQLite snapshot is not encrypted at the application layer; assess whether to implement database encryption before handling sensitive production financial records.
 
 ## Known release gates
