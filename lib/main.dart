@@ -60,7 +60,7 @@ class LocalStore {
    final rows=await db.query('legacy_app_state',columns:['payload'],where:'id = ?',whereArgs:[1],limit:1);
    if(rows.isNotEmpty&&rows.first['payload']!=null)return true;
   }
-  return preferencesLegacy!=null;
+  return preferencesLegacy!=null&&preferencesLegacy.isNotEmpty;
  }
  static Future<bool> wasLegacyDeclinedForUser(String userId)async{
   final db=await database;
@@ -83,7 +83,7 @@ class LocalStore {
     final rows=await txn.query('legacy_app_state',columns:['payload','updated_at'],where:'id = ?',whereArgs:[1],limit:1);
     if(rows.isNotEmpty){legacyPayload=rows.first['payload'] as String?;legacyUpdatedAt=rows.first['updated_at'] as String?;}
    }
-   legacyPayload??=preferencesLegacy;
+   legacyPayload??=(preferencesLegacy!=null&&preferencesLegacy.isNotEmpty?preferencesLegacy:null);
    if(legacyPayload!=null){
     final existing=await txn.query('app_state',columns:['user_id'],where:'user_id = ?',whereArgs:[userId],limit:1);
     if(existing.isNotEmpty){
