@@ -35,7 +35,8 @@ Last reviewed: 15 November 2026. This document describes the current source in `
 
 - Supabase Auth verifies the password and email-confirmation state.
 - Phone login now resolves the mobile number in the database rather than scanning only the first 1,000 Auth users.
-- Phone login has persistent rate limits: 8 attempts per phone per 15-minute window and 40 attempts per source IP per 15-minute window.
+- Phone login has persistent failed-attempt rate limits: 8 failures per phone per 15-minute window and 40 failures per source IP per 15-minute window. Successful logins do not consume this failure budget.
+- The registered mobile number is not currently verified by SMS OTP. It is a user-provided lookup identifier, not proof of phone ownership. Configure an approved SMS provider and verify phone ownership before treating mobile numbers as verified identity for public registration or linked-khata discovery.
 - The service-role key is used only by the Supabase Edge Function and must never be placed in the APK.
 - Supabase Auth leaked-password protection still needs to be enabled in the Supabase Dashboard's Auth password security settings before production release.
 - Configure production SMTP and verify email confirmation/password reset delivery before release.
