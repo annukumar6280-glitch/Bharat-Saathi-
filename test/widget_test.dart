@@ -74,11 +74,15 @@ void main() {
     expect(await LocalStore.read('account-b'), '{"cash":250}');
   });
 
-  test('Legacy local snapshot is assigned only once to the first account', () async {
-    await LocalStore.migrateLegacyForUser('first-account', '{"cash":75}');
-    await LocalStore.migrateLegacyForUser('second-account', '{"cash":999}');
-    expect(await LocalStore.read('first-account'), '{"cash":75}');
-    expect(await LocalStore.read('second-account'), isNull);
+  test('Legacy local snapshot requires explicit account confirmation', () async {
+    await LocalStore.declineLegacyForUser('account-a');
+    expect(await LocalStore.wasLegacyDeclinedForUser('account-a'), isTrue);
+    expect(await LocalStore.wasLegacyDeclinedForUser('account-b'), isFalse);
+    expect(await LocalStore.hasUnassignedLegacyData('{"cash":75}'), isTrue);
+    await LocalStore.migrateLegacyForUser('account-b', '{"cash":75}');
+    expect(await LocalStore.read('account-a'), isNull);
+    expect(await LocalStore.read('account-b'), '{"cash":75}');
+    expect(await LocalStore.hasUnassignedLegacyData('{"cash":75}'), isFalse);
   });
 
   testWidgets('Home shows the four requested service icons and no inventory navigation', (tester) async {
