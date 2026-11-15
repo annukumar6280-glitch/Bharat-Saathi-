@@ -2,7 +2,7 @@
 CREATE OR REPLACE FUNCTION public.is_phone_login_rate_limited(p_phone text, p_ip text)
 RETURNS boolean
 LANGUAGE plpgsql
-VOLATILE
+STABLE
 SECURITY DEFINER
 SET search_path = pg_catalog, private, extensions
 AS $$
