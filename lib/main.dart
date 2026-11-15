@@ -562,14 +562,13 @@ class _AuthPageState extends State<AuthPage>{
 }
  Future<void> resendVerification()async{
  if(!widget.supabaseAvailable){message('Supabase कनेक्शन उपलब्ध नहीं है।',error:true);return;}
- final resendEmail=TextEditingController(text:email.text.trim());
  final confirmed=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(
   title:const Text('वेरिफिकेशन लिंक दोबारा भेजें'),
-  content:TextField(controller:resendEmail,keyboardType:TextInputType.emailAddress,autocorrect:false,decoration:const InputDecoration(labelText:'रजिस्ट्रेशन वाला ईमेल')),
+  content:TextField(controller:email,keyboardType:TextInputType.emailAddress,autocorrect:false,decoration:const InputDecoration(labelText:'रजिस्ट्रेशन वाला ईमेल')),
   actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('लिंक भेजें'))]
  ));
- if(confirmed!=true){resendEmail.dispose();return;}
- final mail=resendEmail.text.trim();resendEmail.dispose();
+ if(confirmed!=true)return;
+ final mail=email.text.trim();
  if(!mail.contains('@')){message('रजिस्ट्रेशन वाला सही ईमेल भरें।',error:true);return;}
  setState(()=>busy=true);
  try{
