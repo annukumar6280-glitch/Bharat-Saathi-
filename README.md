@@ -22,7 +22,7 @@ The current retailer and personal-finance records are stored locally on the devi
 
 When a user is signed in, Bharat Saathi automatically synchronizes the latest account-specific local snapshot to that user's Supabase cloud-backup record. Changes are queued with a short debounce; sync is retried periodically while the app is running and when it resumes. If the device is offline, records remain stored locally and are synchronized when connectivity returns and the app gets an opportunity to run. Background sync is not guaranteed while the app is fully closed. The current implementation is account-scoped snapshot synchronization, not row-by-row synchronization to a normalized accounting ledger or a conflict-safe multi-device ledger. The cloud snapshot can be restored on another device by signing in to the same account; restore replaces that device's current local snapshot after confirmation.
 
-Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, products, purchases, sales, stock movements and a stock summary view. The Flutter client initializes Supabase, supports email-confirmed registration and mobile-number/password login, and provisions account memberships. Phone login uses a database-side account lookup (not a first-1,000-users scan) and persistent per-phone/per-IP attempt throttling. Email confirmation depends on the project's Auth email settings and production SMTP configuration. Never place a Supabase secret/service-role key in the mobile app; only the publishable key is included.
+Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, linked khata, user backups and referral/commission records. Legacy products, purchases, sales and stock tables remain in the database for compatibility but are not exposed in the current app navigation. The Flutter client initializes Supabase, supports email-confirmed registration and mobile-number/password login, and provisions account memberships. Phone login uses a database-side account lookup (not a first-1,000-users scan) and persistent per-phone/per-IP failed-attempt throttling. Email confirmation depends on the project's Auth email settings and production SMTP configuration. Never place a Supabase secret/service-role key in the mobile app; only the publishable key is included.
 
 ## Provider-dependent services
 
@@ -48,9 +48,9 @@ GitHub Actions workflow: `.github/workflows/flutter-android.yml`
 
 ## Next implementation priorities
 
-1. Normalize SQLite into transaction, inventory and audit tables; add PDF export with embedded Hindi fonts.
-2. Implement Supabase Auth onboarding and connect account-scoped tables/RPCs using a publishable key.
-3. Extend personal finance with categories, recurring bills, family accounts, monthly budgets and reports.
-4. Finish retailer workflows: full customer/supplier profiles, invoice numbering and printable tax invoices, purchase/sales returns and stock adjustment reversal.
-5. Test automatic cloud snapshot sync/restore, account isolation, offline retry behavior, audit trail and signed release builds. Enable Supabase leaked-password protection before production.
-6. Integrate external services only after credentials and provider certification are available.
+1. Strengthen and test account-scoped automatic cloud snapshot sync/restore, account switching, offline retry behavior and recovery from interrupted writes.
+2. Complete Auth hardening: enable leaked-password protection where the Supabase plan supports it, configure production SMTP, verify password recovery and document an MFA strategy.
+3. Move from whole-snapshot backup toward a normalized, conflict-aware server-side transaction ledger with audit history before relying on multi-device financial workflows.
+4. Improve current khata and expense workflows, account statements and Hindi PDF export.
+5. Complete signed Android release configuration, real-device testing and Play Store declarations.
+6. Integrate recharge, BBPS, UPI or other external services only after approved providers, credentials, webhook verification, reconciliation and compliance checks are available.
