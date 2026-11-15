@@ -1,64 +1,72 @@
-# Bharat Saathi – Production Readiness
+# Bharat Saathi — Current implementation and release readiness
 
-This file is the source of truth for what is implemented, what is local-only, and what is blocked on external credentials or approvals.
+Last reviewed: 15 November 2026. This document describes the current source in `main`; always verify the exact release APK before publishing.
 
-## Working in the current Flutter prototype
+## Current Android app features
 
-- Hindi retailer dashboard and six-tab navigation: Home, Personal, Stock, Sales, Khata and Profile.
-- Personal ledger: income, expense, net total and a user-configured spending cap.
-- Retailer ledger: products, stock count, sales, expenses and customer receivables.
-- Sales select an existing product and quantity, validate available stock, and deduct inventory.
-- Sales distinguish cash/bank payment from customer credit. Credit sales create a khata receivable; recorded customer payments reduce receivables and add to recorded cash flow.
-- Retailer purchase entry records supplier, product, quantity and unit cost. Cash purchases reduce cash; credit purchases increase supplier payable. Supplier payments reduce payable and cash.
-- Sales returns validate the customer's recorded sold quantity, restore stock, and record either a cash refund or a customer-credit adjustment.
-- Manual stock increases are recorded in a stock-adjustment history.
-- Records persist in a transactional SQLite app-state table. Existing SharedPreferences JSON is imported into SQLite when no database snapshot exists.
-- First launch contains no fabricated customer, invoice, stock or balance data.
-- Provider-dependent service tiles display Coming Soon.
-- Local reports summarize sales, business expenses, customer khata, personal income/expenses and estimated stock value. CSV rows can be copied to the clipboard for use in a spreadsheet.
+- Account registration with name, email, 10-digit mobile number and password; email confirmation is required.
+- Login using the registered mobile number and password.
+- Profile and account settings, Hindi/English language selection and dark theme.
+- Personal finance income/expense records, net balance and user-defined spending limit.
+- Retailer workflows: products and stock, stock additions, purchases, supplier balances/payments, sales, customer khata/payments, sales returns, expenses and stock-adjustment history.
+- Reports with date filtering and CSV export.
+- Linked khata, referral code/history and commission list/settings screens.
+- Recharge, BBPS, challan, UPI payment/transfer, wallet/payout and other provider-dependent transactions remain marked Coming Soon; no real provider transaction should be simulated.
+- Google Mobile Ads SDK is present with Google's test App ID and test banner ad unit ID in the development build.
 
-## Reports and export limitation
+## Local storage and account separation
 
-The reports page operates on the current device snapshot, supports date-range filtering, and shares CSV files. New financial records store a timestamp; older records without a timestamp are excluded from a date-filtered report. PDF statements are not available yet. CSV export does not imply cloud synchronization.
+- App data is stored first in a transactional SQLite snapshot on the device.
+- The current implementation keys each local snapshot by the authenticated Supabase user ID. Different accounts on the same phone read and write separate local rows.
+- Upgrade migration from the previous single-row local database preserves the legacy snapshot and assigns it once to the first account that signs in after the upgrade. The user should sign in first with the account that previously used that device.
+- SQLite is stored in the app's private device storage. App-level SQLCipher/database encryption is not implemented; do not describe the local database as encrypted at rest.
+- Existing SharedPreferences data is imported once during the same legacy migration.
 
-## Important data limitation
+## Automatic cloud snapshot synchronization
 
-SQLite currently stores the full app state as one transactional JSON snapshot. It is more resilient than the previous key-value-only write but is not yet a normalized accounting ledger, is not encrypted as a financial vault, has no automatic cloud backup, and does not synchronize between devices. Do not use it as the final ledger for real business transactions. Before production, normalize the schema, add audit history, encryption strategy and conflict-safe Supabase sync.
+- When a user is signed in, the app automatically synchronizes the account's local snapshot to that user's `user_backups` row in Supabase.
+- Changes are queued with a short debounce. Sync retries periodically while the app is running and when it resumes.
+- Offline records remain local and are retried when connectivity returns and the app gets an opportunity to run. Android background sync is not guaranteed while the app is fully terminated.
+- Restore downloads the signed-in user's snapshot and replaces that device's local snapshot after confirmation.
+- This is account-scoped JSON snapshot backup, not row-by-row synchronization to normalized financial tables and not a conflict-safe multi-device ledger. Keep this limitation visible until a proper transaction-level sync engine exists.
 
-## Supabase backend already present
+## Authentication and login hardening
 
-Project is active in Mumbai. Existing database migrations cover:
-- Profiles, accounts and account membership.
-- Financial categories, financial transactions and budgets.
-- Parties and khata entries.
-- Products, stock movements, purchases, purchase items, sales, sale items and stock summary.
-- Database routines for receiving purchases, completing sales and adjusting inventory.
+- Supabase Auth verifies the password and email-confirmation state.
+- Phone login now resolves the mobile number in the database rather than scanning only the first 1,000 Auth users.
+- Phone login has persistent rate limits: 8 attempts per phone per 15-minute window and 40 attempts per source IP per 15-minute window.
+- The service-role key is used only by the Supabase Edge Function and must never be placed in the APK.
+- Supabase Auth leaked-password protection still needs to be enabled in the Supabase Dashboard's Auth password security settings before production release.
+- Configure production SMTP and verify email confirmation/password reset delivery before release.
 
-The Flutter client initializes Supabase with the project's public publishable key and supports email/password sign-up/sign-in. On successful authentication it upserts the user's profile and provisions personal and retailer accounts with owner memberships using RLS-protected inserts. Local finance and retailer records are not yet synchronized to normalized ledger tables. A manual JSON snapshot backup/restore is available; restore replaces the current device snapshot after confirmation. Email confirmation depends on Supabase Auth settings and production SMTP configuration. SMS OTP remains Coming Soon. A service-role/secret key must never be embedded in the APK.
+## Privacy and account deletion
 
-## Coming Soon – external provider dependencies
+- The in-app and hosted Privacy Policy must match the exact release APK and SDK configuration.
+- The current app does not have an in-app account-deletion button. Users request deletion through the external Account Deletion Request page/WhatsApp support; support verifies ownership before processing.
+- Local copies on other devices are not remotely erased by account deletion.
+- The Google Mobile Ads test identifiers must be replaced with approved production identifiers before monetization/release, followed by a Data Safety re-review.
 
-Keep these disabled until credentials, contracts, callback/webhook validation, reconciliation and compliance approval are complete:
-- Mobile, DTH and FASTag recharge.
-- BBPS bill payments.
-- Traffic challan payments.
-- UPI collect, payout, wallet and money transfer.
-- SMS/WhatsApp OTP and transactional messaging.
-- Subscription payments, platform commissions and settlement.
+## Database and security
 
-Never simulate a successful external transaction or fabricate balances, commissions, provider references or transaction history.
+- Supabase public tables have RLS enabled; each table's policies and every SECURITY DEFINER function must continue to be reviewed after migrations.
+- The cloud-backup table is scoped to the authenticated user.
+- Provider-dependent money movement, recharge and bill-payment functionality must remain disabled until authorized providers, credentials, webhooks, reconciliation and compliance checks are in place.
+- Never put a Supabase service-role/secret key in client code.
 
-## Remaining product work
+## CI and release status
 
-1. Normalize the SQLite snapshot into transaction, inventory and audit tables with schema migrations.
-2. Extend the current Supabase email auth/account provisioning with account switching, session lifecycle handling, password recovery and verified email delivery.
-3. Sync personal finance, budgets, parties, khata, products, purchases, sales and stock movements through RLS-protected tables/RPCs.
-4. Add full customer/supplier profiles and contacts, invoice numbering/printable tax invoices, stock adjustment reversals and tax fields.
-5. Add live sync from local records to normalized tables with conflict handling; add categories, recurring bills/reminders, family accounts, date filters, reports and CSV/PDF export.
-6. Add backup/restore, account deletion/export flows, privacy policy, terms, support and accessibility review.
-7. Complete security advisor review, API exposure verification, end-to-end tests and Android release signing.
-8. Integrate external services only after provider credentials and approvals are supplied.
+- GitHub Actions runs Flutter dependency installation, `flutter analyze`, widget tests and an Android debug APK build.
+- CI target API check sets and verifies Android API 36.
+- A passing debug APK build is not a signed release APK, Play Console approval, live-provider certification or proof of end-to-end operation on physical devices.
+- Before production: test registration, email verification, login, account switching on one device, offline sync retry, restore on a second device, data export, linked khata access control and account-deletion requests on real Android devices.
+- Local SQLite snapshot is not encrypted at the application layer; assess whether to implement database encryption before handling sensitive production financial records.
 
-## CI validation
+## Known release gates
 
-GitHub Actions runs Flutter analysis, widget tests and Android debug APK build. A passing debug build is not equivalent to a signed Play Store release or provider certification.
+1. Enable leaked-password protection in Supabase Auth.
+2. Verify production SMTP, recovery emails and account ownership/deletion workflow.
+3. Run real-device multi-account isolation and cross-device restore tests.
+4. Validate all RLS policies and SECURITY DEFINER function permissions with the Supabase Security Advisor.
+5. Replace Google test ad identifiers only when production ad configuration and consent/disclosure requirements are ready.
+6. Produce and test a signed Android release bundle/APK and complete Play Console declarations.
+7. Do not claim that external payment/recharge services are live until real providers and compliance are completed.
