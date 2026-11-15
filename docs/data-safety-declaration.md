@@ -7,7 +7,7 @@ Internal preparation note only. Re-check the exact release APK, all included SDK
 - **Personal info — Name:** entered during registration and stored in the Supabase profiles table.
 - **Personal info — Email address:** processed by Supabase Auth for registration, email confirmation, login and password recovery.
 - **Personal info — Phone number:** entered during registration, associated with the user profile, and used for phone/password login lookup and linked-khata features. The current app does not verify phone ownership by SMS OTP.
-- **Financial info — Other financial info:** personal and shop records may include income, expenses, budgets, khata balances, credit/payment entries and transaction notes. Linked-khata entries and referral/commission records are stored in Supabase when those features are used.
+- **Financial info — Other financial info:** current personal and shop records may include income, expenses, budgets, khata balances, credit/payment entries and transaction notes. Linked-khata entries and referral/commission records are stored in Supabase when those features are used. An unassigned local snapshot from an older app version may temporarily contain retired product/stock/purchase/sales fields if the user defers migration; when a legacy snapshot is imported into the current account, the app removes those retired fields before saving the current snapshot or synchronizing it to Supabase.
 - **App activity / app interactions:** Google Mobile Ads SDK may collect ad interactions.
 - **App info and performance / diagnostics:** Google Mobile Ads SDK may collect diagnostics.
 - **Device or other IDs:** Google Mobile Ads SDK may collect advertising ID, app-set ID and other device/account identifiers.
