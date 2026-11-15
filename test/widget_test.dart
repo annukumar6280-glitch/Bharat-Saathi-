@@ -36,6 +36,26 @@ void main() {
     expect(find.text('मोबाइल नंबर (10 अंक)'), findsOneWidget);
   });
 
+  testWidgets('Registration shows legal consent links and compact login/register switch', (tester) async {
+    await tester.pumpWidget(const BharatSaathiApp(requireAuth: true, supabaseAvailable: false));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('रजिस्टर करें'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Checkbox), findsOneWidget);
+    expect(find.text('Privacy Policy'), findsOneWidget);
+    expect(find.text('Terms & Conditions'), findsOneWidget);
+    final checkbox = tester.widget<Checkbox>(find.byType(Checkbox));
+    expect(checkbox.value, isFalse);
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    expect(find.text('अकाउंट बनाएं'), findsOneWidget);
+    await tester.tap(find.text('लॉगिन करें'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.text('मोबाइल नंबर से लॉगिन करें'), findsOneWidget);
+  });
+
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
