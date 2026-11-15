@@ -599,29 +599,6 @@ class _AuthPageState extends State<AuthPage>{
  if(mounted)setState(()=>busy=false);
 }
  Future<void> signOut()async{setState(()=>busy=true);try{await client.auth.signOut();if(mounted)Navigator.of(context).popUntil((route)=>route.isFirst);}catch(_){message('लॉगआउट पूरा नहीं हुआ।',error:true);}if(mounted)setState(()=>busy=false);}
- Future<void> deleteAccount()async{
-  final confirmed=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(
-   title:const Text('अकाउंट हमेशा के लिए डिलीट करें?'),
-   content:const Text('आपका लॉगिन अकाउंट, क्लाउड बैकअप और अकाउंट से जुड़े सर्वर रिकॉर्ड डिलीट होंगे। इस डिवाइस के Bharat Saathi रिकॉर्ड भी मिट जाएंगे। यह कार्रवाई वापस नहीं हो सकती।'),
-   actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,true),style:FilledButton.styleFrom(backgroundColor:red),child:const Text('डिलीट करें'))],
-  ));
-  if(confirmed!=true)return;
-  setState(()=>busy=true);
-  try{
-   final response=await client.functions.invoke('delete-account');
-   if(response.status!=200)throw Exception('डिलीशन सर्वर ने अनुरोध पूरा नहीं किया।');
-   await client.auth.signOut(scope:SignOutScope.local);
-   await LocalStore.clear();
-   final prefs=await SharedPreferences.getInstance();
-   await prefs.remove('bharat_saathi_store_v1');
-   if(!mounted)return;
-   Navigator.of(context).pop();
-   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('अकाउंट और इस डिवाइस के ऐप रिकॉर्ड डिलीट हो गए।')));
-  }catch(e){
-   message('अकाउंट डिलीट नहीं हो पाया। कृपया दोबारा प्रयास करें।',error:true);
-   if(mounted)setState(()=>busy=false);
-  }
- }
  @override void dispose(){email.dispose();password.dispose();fullName.dispose();phone.dispose();super.dispose();}
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
@@ -630,7 +607,7 @@ class _AuthPageState extends State<AuthPage>{
  const SizedBox(height:18),
  if(!widget.supabaseAvailable)Text('अकाउंट सेवा से कनेक्शन उपलब्ध नहीं है। इंटरनेट कनेक्शन जाँचें।',style:TextStyle(color:red)),
  if(user!=null)...[
- Text('लॉगिन सक्रिय',style:TextStyle(color:green,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:6),Text(user.email??'',style:TextStyle(color:navy)),SizedBox(height:12),Text('आपके लिए व्यक्तिगत और रिटेलर खाते डेटाबेस में तैयार किए जाते हैं। मौजूदा ऑफलाइन रिकॉर्ड अभी क्लाउड से सिंक नहीं होते।',style:TextStyle(color:muted,fontSize:12)),SizedBox(height:18),FilledButton(onPressed:busy?null:signOut,child:Text(busy?'कृपया प्रतीक्षा करें':'लॉगआउट करें')),SizedBox(height:10),OutlinedButton.icon(onPressed:busy?null:deleteAccount,icon:Icon(Icons.delete_forever_outlined,color:red),label:Text('अकाउंट डिलीट करें',style:TextStyle(color:red)))
+ Text('लॉगिन सफल',style:TextStyle(color:green,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:6),Text(user.email??'',style:TextStyle(color:navy)),SizedBox(height:12),Text('आपके ऐप के रिकॉर्ड अभी इस फोन में सेव होते हैं। वे अपने-आप क्लाउड से सिंक नहीं होते। क्लाउड में सुरक्षित रखने के लिए प्रोफाइल में “डेटा बैकअप” खोलें और “अभी बैकअप सेव करें” चुनें।',style:TextStyle(color:muted,fontSize:12)),SizedBox(height:18),FilledButton(onPressed:busy?null:signOut,child:Text(busy?'कृपया प्रतीक्षा करें':'लॉगआउट करें'))
  ]else...[
  if(signUp)TextField(controller:fullName,decoration:const InputDecoration(labelText:'पूरा नाम',prefixIcon:Icon(Icons.person_outline))),
  if(signUp)const SizedBox(height:10),
