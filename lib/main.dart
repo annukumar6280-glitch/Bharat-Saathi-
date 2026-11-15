@@ -39,27 +39,53 @@ class LocalStore {
  static Future<Database> get database async {
   if(_db!=null)return _db!;
   final root=await getDatabasesPath();
-  _db=await openDatabase(p.join(root,'bharat_saathi.db'),version:1,onCreate:(db,version)async{
-   await db.execute('CREATE TABLE app_state (id INTEGER PRIMARY KEY CHECK (id = 1), payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
+  _db=await openDatabase(p.join(root,'bharat_saathi.db'),version:2,onCreate:(db,version)async{
+   await db.execute('CREATE TABLE app_state (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
+   await db.execute('CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+  },onUpgrade:(db,oldVersion,newVersion)async{
+   if(oldVersion<2){
+    await db.execute('ALTER TABLE app_state RENAME TO legacy_app_state');
+    await db.execute('CREATE TABLE app_state (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
+    await db.execute('CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+   }
   });
   return _db!;
  }
- static Future<String?> read()async{
+ static Future<void> migrateLegacyForUser(String userId,String? preferencesLegacy)async{
   final db=await database;
-  final rows=await db.query('app_state',columns:['payload'],where:'id = ?',whereArgs:[1],limit:1);
+  await db.transaction((txn)async{
+   final marker=await txn.query('app_meta',columns:['value'],where:'key = ?',whereArgs:['legacy_data_assigned'],limit:1);
+   if(marker.isNotEmpty)return;
+   String? legacyPayload;
+   String? legacyUpdatedAt;
+   final oldTable=await txn.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_app_state'");
+   if(oldTable.isNotEmpty){
+    final rows=await txn.query('legacy_app_state',columns:['payload','updated_at'],where:'id = ?',whereArgs:[1],limit:1);
+    if(rows.isNotEmpty){legacyPayload=rows.first['payload'] as String?;legacyUpdatedAt=rows.first['updated_at'] as String?;}
+   }
+   legacyPayload??=preferencesLegacy;
+   if(legacyPayload!=null){
+    await txn.insert('app_state',{'user_id':userId,'payload':legacyPayload,'updated_at':legacyUpdatedAt??DateTime.now().toUtc().toIso8601String()},conflictAlgorithm:ConflictAlgorithm.ignore);
+   }
+   await txn.insert('app_meta',{'key':'legacy_data_assigned','value':'1'},conflictAlgorithm:ConflictAlgorithm.replace);
+  });
+ }
+ static Future<String?> read(String userId)async{
+  final db=await database;
+  final rows=await db.query('app_state',columns:['payload'],where:'user_id = ?',whereArgs:[userId],limit:1);
   return rows.isEmpty?null:rows.first['payload'] as String;
  }
- static Future<DateTime?> readUpdatedAt()async{
+ static Future<DateTime?> readUpdatedAt(String userId)async{
   final db=await database;
-  final rows=await db.query('app_state',columns:['updated_at'],where:'id = ?',whereArgs:[1],limit:1);
+  final rows=await db.query('app_state',columns:['updated_at'],where:'user_id = ?',whereArgs:[userId],limit:1);
   if(rows.isEmpty)return null;
   return DateTime.tryParse(rows.first['updated_at'] as String);
  }
- static Future<void> clear()async{final db=await database;await db.delete('app_state');}
- static Future<void> write(String payload)async{
+ static Future<void> clear(String userId)async{final db=await database;await db.delete('app_state',where:'user_id = ?',whereArgs:[userId]);}
+ static Future<void> write(String userId,String payload)async{
   final db=await database;
   await db.transaction((txn)async{
-   await txn.insert('app_state',{'id':1,'payload':payload,'updated_at':DateTime.now().toUtc().toIso8601String()},conflictAlgorithm:ConflictAlgorithm.replace);
+   await txn.insert('app_state',{'user_id':userId,'payload':payload,'updated_at':DateTime.now().toUtc().toIso8601String()},conflictAlgorithm:ConflictAlgorithm.replace);
   });
  }
 }
@@ -115,7 +141,7 @@ class _AuthGateState extends State<AuthGate>{
  @override void dispose(){_authSubscription?.cancel();super.dispose();}
  @override Widget build(BuildContext context){
   if(!widget.supabaseAvailable)return const AuthPage(supabaseAvailable:false);
-  return _signedIn?RetailerHome(supabaseAvailable:widget.supabaseAvailable):AuthPage(supabaseAvailable:widget.supabaseAvailable);
+  return _signedIn?RetailerHome(key:ValueKey(Supabase.instance.client.auth.currentUser?.id),supabaseAvailable:widget.supabaseAvailable):AuthPage(supabaseAvailable:widget.supabaseAvailable);
  }
 }
 class Item{String name,detail;int qty;double price;Item(this.name,this.detail,this.qty,this.price);Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'qty':qty,'price':price};factory Item.fromJson(Map<String,dynamic> j)=>Item(j['name'] as String,j['detail'] as String,(j['qty'] as num).toInt(),(j['price'] as num).toDouble());}
@@ -152,13 +178,13 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
    if(user==null)return raw;
    final client=Supabase.instance.client;
    final row=await client.from('user_backups').select('payload,schema_version,updated_at').eq('user_id',user.id).maybeSingle();
-   if(row==null){if(raw!=null){final localAt=await LocalStore.readUpdatedAt();if(localAt!=null)await _uploadCloudSnapshot(user,raw,localAt);}return raw;}
+   if(row==null){if(raw!=null){final localAt=await LocalStore.readUpdatedAt(user.id);if(localAt!=null)await _uploadCloudSnapshot(user,raw,localAt);}return raw;}
    if((row['schema_version'] as num?)?.toInt()!=1)return raw;
    final remoteAt=DateTime.tryParse(row['updated_at'] as String? ?? '');
-   final localAt=await LocalStore.readUpdatedAt();
+   final localAt=await LocalStore.readUpdatedAt(user.id);
    if(raw==null||(remoteAt!=null&&(localAt==null||remoteAt.isAfter(localAt)))){
     raw=jsonEncode(row['payload']);
-    await LocalStore.write(raw);
+    await LocalStore.write(user.id,raw);
     return raw;
    }
    if(localAt!=null&&(remoteAt==null||localAt.isAfter(remoteAt)))await _uploadCloudSnapshot(user,raw,localAt);
@@ -169,13 +195,13 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
    final user=Supabase.instance.client.auth.currentUser;if(user==null)return;
    _cloudSyncBusy=true;
    try{
-    final before=await LocalStore.read();
+    final before=await LocalStore.read(user.id);
     if(before==null){_cloudSyncBusy=false;return;}
-    final beforeAt=await LocalStore.readUpdatedAt();
+    final beforeAt=await LocalStore.readUpdatedAt(user.id);
     final resolved=await _reconcileCloudSnapshot(before);
     if(resolved!=before){await _restore(syncCloud:false);}
     else{
-     final afterAt=await LocalStore.readUpdatedAt();
+     final afterAt=await LocalStore.readUpdatedAt(user.id);
      if(afterAt!=null&&beforeAt!=null&&afterAt.isAfter(beforeAt))_scheduleCloudSync();
     }
    }catch(_){
@@ -187,15 +213,18 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
   cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';
   products.clear();sales.clear();expensesList.clear();khata.clear();personalTransactions.clear();purchases.clear();supplierLedger.clear();salesReturns.clear();stockAdjustments.clear();serviceTransactions.clear();
   try{
-   var raw=await LocalStore.read().timeout(const Duration(seconds:2));
-   if(raw==null){raw=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));if(raw!=null)await LocalStore.write(raw);}
+   final userId=_localUserId;
+   final legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
+   await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
+   if(legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
+   var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
    if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
    if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));products.addAll((d['products'] as List? ?? []).map((e)=>Item.fromJson(Map<String,dynamic>.from(e as Map))));sales.addAll((d['sales'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));purchases.addAll((d['purchases'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));supplierLedger.addAll((d['supplierLedger'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));salesReturns.addAll((d['salesReturns'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));stockAdjustments.addAll((d['stockAdjustments'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));}
   }catch(_){}
   if(mounted)setState(()=>loaded=true);
   if(syncCloud)_scheduleCloudSync();
  }
- Future<void> _persist()async{try{await LocalStore.write(jsonEncode({'cash':cash,'expenses':expenses,'personalBudget':personalBudget,'personalBudgetName':personalBudgetName,'products':products.map((e)=>e.toJson()).toList(),'sales':sales.map((e)=>e.toJson()).toList(),'expensesList':expensesList.map((e)=>e.toJson()).toList(),'khata':khata.map((e)=>e.toJson()).toList(),'personalTransactions':personalTransactions.map((e)=>e.toJson()).toList(),'personalKhata':personalKhata.map((e)=>e.toJson()).toList(),'language':english?'en':'hi','darkMode':darkMode,'serviceTransactions':serviceTransactions.map((e)=>e.toJson()).toList(),'purchases':purchases.map((e)=>e.toJson()).toList(),'supplierLedger':supplierLedger.map((e)=>e.toJson()).toList(),'salesReturns':salesReturns.map((e)=>e.toJson()).toList(),'stockAdjustments':stockAdjustments.map((e)=>e.toJson()).toList()}));_scheduleCloudSync();}catch(_){if(mounted)msg('डेटा इस डिवाइस पर डेटाबेस में सेव नहीं हो पाया');}}
+ Future<void> _persist()async{try{await LocalStore.write(_localUserId,jsonEncode({'cash':cash,'expenses':expenses,'personalBudget':personalBudget,'personalBudgetName':personalBudgetName,'products':products.map((e)=>e.toJson()).toList(),'sales':sales.map((e)=>e.toJson()).toList(),'expensesList':expensesList.map((e)=>e.toJson()).toList(),'khata':khata.map((e)=>e.toJson()).toList(),'personalTransactions':personalTransactions.map((e)=>e.toJson()).toList(),'personalKhata':personalKhata.map((e)=>e.toJson()).toList(),'language':english?'en':'hi','darkMode':darkMode,'serviceTransactions':serviceTransactions.map((e)=>e.toJson()).toList(),'purchases':purchases.map((e)=>e.toJson()).toList(),'supplierLedger':supplierLedger.map((e)=>e.toJson()).toList(),'salesReturns':salesReturns.map((e)=>e.toJson()).toList(),'stockAdjustments':stockAdjustments.map((e)=>e.toJson()).toList()}));_scheduleCloudSync();}catch(_){if(mounted)msg('डेटा इस डिवाइस पर डेटाबेस में सेव नहीं हो पाया');}}
  void msg(String s)=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s),behavior:SnackBarBehavior.floating));
  Future<void> form(String title,String label,String valueLabel,void Function(String,double) save)async{
  final n=TextEditingController(),v=TextEditingController();
@@ -722,7 +751,7 @@ class _CloudBackupPageState extends State<CloudBackupPage>{
  else{
  if(!mounted)return;
  final confirmed=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(title:const Text('क्लाउड बैकअप रीस्टोर करें?'),content:const Text('यह इस फोन के मौजूदा स्थानीय रिकॉर्ड को क्लाउड बैकअप से बदल देगा। रीस्टोर करने के बाद इस फोन के पुराने स्थानीय रिकॉर्ड वापस नहीं मिलेंगे।'),actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('रीस्टोर करें'))]));
- if(confirmed==true){await LocalStore.write(jsonEncode(row['payload']));await widget.onRestore();showMessage('क्लाउड बैकअप इस डिवाइस पर रीस्टोर हो गया।');}
+ if(confirmed==true){await LocalStore.write(user.id,jsonEncode(row['payload']));await widget.onRestore();showMessage('क्लाउड बैकअप इस डिवाइस पर रीस्टोर हो गया।');}
  }
  }on PostgrestException catch(e){showMessage('रीस्टोर त्रुटि: ${e.message}',error:true);}catch(_){showMessage('रीस्टोर पूरा नहीं हुआ। इंटरनेट और लॉगिन जाँचें।',error:true);}
  if(mounted)setState(()=>busy=false);
