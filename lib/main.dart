@@ -182,7 +182,6 @@ class _AuthGateState extends State<AuthGate>{
   return _signedIn?RetailerHome(key:ValueKey(widget.supabaseAvailable?Supabase.instance.client.auth.currentUser?.id:'local'),supabaseAvailable:widget.supabaseAvailable):AuthPage(supabaseAvailable:widget.supabaseAvailable);
  }
 }
-class Item{String name,detail;int qty;double price;Item(this.name,this.detail,this.qty,this.price);Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'qty':qty,'price':price};factory Item.fromJson(Map<String,dynamic> j)=>Item(j['name'] as String,j['detail'] as String,(j['qty'] as num).toInt(),(j['price'] as num).toDouble());}
 class Record{String name,detail;double amount;IconData icon;DateTime? createdAt;Record(this.name,this.detail,this.amount,this.icon,[DateTime? timestamp]):createdAt=timestamp??DateTime.now();Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint,'createdAt':createdAt?.toIso8601String()};factory Record.fromJson(Map<String,dynamic> j){final timestamp=j['createdAt'] is String?DateTime.tryParse(j['createdAt'] as String):null;return Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long,timestamp)..createdAt=timestamp;}}
 class RetailerHome extends StatefulWidget{final bool supabaseAvailable;const RetailerHome({super.key,this.supabaseAvailable=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
 class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver{
@@ -192,16 +191,12 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
  int tab=0;double cash=0,expenses=0,personalBudget=0;String personalBudgetName='व्यक्तिगत खर्च सीमा';bool loaded=false,english=false,darkMode=false;
  final _prefs=SharedPreferencesAsync();
  late final String _localUserId;
- final products=<Item>[];
- final sales=<Record>[];
+
  final expensesList=<Record>[];
  final personalTransactions=<Record>[];
  final personalKhata=<Record>[];
  final khata=<Record>[];
- final purchases=<Record>[];
- final supplierLedger=<Record>[];
- final salesReturns=<Record>[];
- final stockAdjustments=<Record>[];final serviceTransactions=<Record>[];
+final serviceTransactions=<Record>[];
  @override void initState(){super.initState();_localUserId=widget.supabaseAvailable?(Supabase.instance.client.auth.currentUser?.id??'local'):'local';WidgetsBinding.instance.addObserver(this);homeTabRequest.addListener(_returnToHomeTab);_autoSyncRetry=Timer.periodic(const Duration(seconds:60),(_)=>_syncCloudNow());_restore();}
   void _returnToHomeTab(){if(mounted&&tab!=0)setState(()=>tab=0);}
   @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed)_syncCloudNow();}
@@ -250,7 +245,7 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
  Future<void> _restore({bool syncCloud=true})async{
   if(mounted)setState(()=>loaded=false);
   cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';
-  products.clear();sales.clear();expensesList.clear();khata.clear();personalTransactions.clear();purchases.clear();supplierLedger.clear();salesReturns.clear();stockAdjustments.clear();serviceTransactions.clear();
+  expensesList.clear();khata.clear();personalTransactions.clear();serviceTransactions.clear();
   try{
    final userId=_localUserId;
    final legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
@@ -288,12 +283,12 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
    }
    var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
    if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
-   if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));products.addAll((d['products'] as List? ?? []).map((e)=>Item.fromJson(Map<String,dynamic>.from(e as Map))));sales.addAll((d['sales'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));purchases.addAll((d['purchases'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));supplierLedger.addAll((d['supplierLedger'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));salesReturns.addAll((d['salesReturns'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));stockAdjustments.addAll((d['stockAdjustments'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));}
+   if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));}
   }catch(_){}
   if(mounted)setState(()=>loaded=true);
   if(syncCloud)_scheduleCloudSync();
  }
- Future<void> _persist()async{try{await LocalStore.write(_localUserId,jsonEncode({'cash':cash,'expenses':expenses,'personalBudget':personalBudget,'personalBudgetName':personalBudgetName,'products':products.map((e)=>e.toJson()).toList(),'sales':sales.map((e)=>e.toJson()).toList(),'expensesList':expensesList.map((e)=>e.toJson()).toList(),'khata':khata.map((e)=>e.toJson()).toList(),'personalTransactions':personalTransactions.map((e)=>e.toJson()).toList(),'personalKhata':personalKhata.map((e)=>e.toJson()).toList(),'language':english?'en':'hi','darkMode':darkMode,'serviceTransactions':serviceTransactions.map((e)=>e.toJson()).toList(),'purchases':purchases.map((e)=>e.toJson()).toList(),'supplierLedger':supplierLedger.map((e)=>e.toJson()).toList(),'salesReturns':salesReturns.map((e)=>e.toJson()).toList(),'stockAdjustments':stockAdjustments.map((e)=>e.toJson()).toList()}));_scheduleCloudSync();}catch(_){if(mounted)msg('डेटा इस डिवाइस पर डेटाबेस में सेव नहीं हो पाया');}}
+ Future<void> _persist()async{try{await LocalStore.write(_localUserId,jsonEncode({'cash':cash,'expenses':expenses,'personalBudget':personalBudget,'personalBudgetName':personalBudgetName,'expensesList':expensesList.map((e)=>e.toJson()).toList(),'khata':khata.map((e)=>e.toJson()).toList(),'personalTransactions':personalTransactions.map((e)=>e.toJson()).toList(),'personalKhata':personalKhata.map((e)=>e.toJson()).toList(),'language':english?'en':'hi','darkMode':darkMode,'serviceTransactions':serviceTransactions.map((e)=>e.toJson()).toList()}));_scheduleCloudSync();}catch(_){if(mounted)msg('डेटा इस डिवाइस पर डेटाबेस में सेव नहीं हो पाया');}}
  void msg(String s)=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s),behavior:SnackBarBehavior.floating));
  Future<void> form(String title,String label,String valueLabel,void Function(String,double) save)async{
  final n=TextEditingController(),v=TextEditingController();
@@ -304,22 +299,6 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
  SizedBox(height:18),SizedBox(width:double.infinity,child:FilledButton(style:FilledButton.styleFrom(backgroundColor:navy,padding:EdgeInsets.all(15)),onPressed:(){final a=double.tryParse(v.text);if(n.text.trim().isEmpty||a==null||a<=0){msg('सही जानकारी भरें');return;}save(n.text.trim(),a);Navigator.pop(c);},child:Text('सेव करें')))
  ])));
  }
- Future<void> sale()async{
- if(products.isEmpty){msg('बिक्री से पहले स्टॉक टैब में प्रोडक्ट जोड़ें');return;}
- final customer=TextEditingController(text:'Walk-in Customer');
- final quantity=TextEditingController(text:'1');
- Item selected=products.first;String paymentMode='नकद';
- await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(sheetContext)=>StatefulBuilder(builder:(context,refresh)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(context).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- Text('नई बिक्री / बिल',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:15),
- TextField(controller:customer,decoration:const InputDecoration(labelText:'ग्राहक का नाम')),
- const SizedBox(height:10),
- DropdownButtonFormField<Item>(initialValue:selected,decoration:const InputDecoration(labelText:'प्रोडक्ट'),items:products.map((p)=>DropdownMenuItem<Item>(value:p,child:Text('${p.name} • स्टॉक ${p.qty}'))).toList(),onChanged:(p){if(p!=null)refresh(()=>selected=p);}),
- const SizedBox(height:10),TextField(controller:quantity,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'मात्रा')),
- const SizedBox(height:10),DropdownButtonFormField<String>(initialValue:paymentMode,decoration:const InputDecoration(labelText:'भुगतान प्रकार'),items:const[DropdownMenuItem(value:'नकद',child:Text('नकद / बैंक भुगतान')),DropdownMenuItem(value:'उधार',child:Text('ग्राहक उधार'))],onChanged:(v){if(v!=null)refresh(()=>paymentMode=v);}),
- SizedBox(height:12),Align(alignment:Alignment.centerLeft,child:Text('बिक्री मूल्य: ₹${money(selected.price)} प्रति यूनिट',style:TextStyle(color:muted,fontSize:12))),
- const SizedBox(height:16),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){final q=int.tryParse(quantity.text);if(customer.text.trim().isEmpty||q==null||q<1){msg('ग्राहक और सही मात्रा भरें');return;}if(q>selected.qty){msg('उपलब्ध स्टॉक से अधिक मात्रा नहीं बेच सकते');return;}if(selected.price<=0){msg('इस प्रोडक्ट का बिक्री मूल्य पहले सेट करें');return;}final total=selected.price*q;setState((){selected.qty-=q;sales.insert(0,Record(customer.text.trim(),'${selected.name} × $q • $paymentMode',total,Icons.receipt_long));if(paymentMode=='नकद'){cash+=total;}else{khata.insert(0,Record(customer.text.trim(),'बिक्री उधार • अभी',total,Icons.person));}});_persist();Navigator.pop(sheetContext);msg('बिक्री सेव हुई और स्टॉक अपडेट हुआ');},child:const Text('बिक्री सेव करें')))
- ]))));
-}
  Future<void> expense()=>form('खर्च दर्ज करें','खर्च का विवरण','खर्च राशि (₹)',(n,a){setState((){expenses+=a;cash-=a;expensesList.insert(0,Record(n,'खर्च • अभी',a,Icons.payments_outlined));});_persist();msg('खर्च इस डिवाइस पर सेव हुआ');});
  Future<void> entry([bool payment=false])=>form(payment?'भुगतान दर्ज करें':'खाता एंट्री','ग्राहक का नाम',payment?'भुगतान राशि (₹)':'उधार राशि (₹)',(n,a){final outstanding=khata.where((e)=>e.name.toLowerCase()==n.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);if(payment&&(outstanding<=0||a>outstanding)){msg(outstanding<=0?'इस ग्राहक का बकाया उपलब्ध नहीं है':'भुगतान बकाया राशि से अधिक नहीं हो सकता');return;}setState((){khata.insert(0,Record(n,payment?'भुगतान • अभी':'उधार • अभी',payment?-a:a,payment?Icons.payments_outlined:Icons.person));if(payment)cash+=a;});_persist();msg('खाता रिकॉर्ड इस डिवाइस पर सेव हुआ');});
 
@@ -332,63 +311,6 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
 
  void setPersonalBudget()=>form('खर्च सीमा सेट करें','सीमा का नाम','अधिकतम राशि (₹)',(n,a){setState((){personalBudget=a;personalBudgetName=n;});_persist();msg('खर्च सीमा सेव हुई');});
  void personalEntry(bool income)=>form(income?'व्यक्तिगत आय दर्ज करें':'व्यक्तिगत खर्च दर्ज करें',income?'आय का स्रोत':'खर्च का विवरण',income?'आय राशि (₹)':'खर्च राशि (₹)',(n,a){setState(()=>personalTransactions.insert(0,Record(n,income?'आय • अभी':'खर्च • अभी',income?a:-a,income?Icons.trending_up:Icons.payments_outlined)));_persist();msg('व्यक्तिगत रिकॉर्ड इस डिवाइस पर सेव हुआ');});
- void restock(Item item)=>form('स्टॉक जोड़ें','प्रोडक्ट का नाम','जोड़ने की मात्रा',(n,a){setState((){final q=a.round();item.qty+=q;stockAdjustments.insert(0,Record(item.name,'मैनुअल स्टॉक वृद्धि • $q यूनिट',q.toDouble(),Icons.add_box_outlined));});_persist();msg('स्टॉक अपडेट हुआ');});
-
- Future<void> purchase()async{
- if(products.isEmpty){msg('खरीद दर्ज करने से पहले स्टॉक में प्रोडक्ट जोड़ें');return;}
- final supplier=TextEditingController(),quantity=TextEditingController(text:'1'),cost=TextEditingController(text:products.first.price.toStringAsFixed(2));
- Item selected=products.first;String paymentMode='नकद';
- await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(sheetContext)=>StatefulBuilder(builder:(context,refresh)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(context).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- Text('नई खरीद / स्टॉक प्राप्ति',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:15),
- TextField(controller:supplier,decoration:const InputDecoration(labelText:'सप्लायर / विक्रेता का नाम')),
- const SizedBox(height:10),DropdownButtonFormField<Item>(initialValue:selected,decoration:const InputDecoration(labelText:'प्रोडक्ट'),items:products.map((p)=>DropdownMenuItem<Item>(value:p,child:Text(p.name))).toList(),onChanged:(p){if(p!=null)refresh(()=>selected=p);}),
- const SizedBox(height:10),TextField(controller:quantity,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'प्राप्त मात्रा (यूनिट)')),
- const SizedBox(height:10),TextField(controller:cost,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'प्रति यूनिट खरीद लागत (₹)')),
- const SizedBox(height:10),DropdownButtonFormField<String>(initialValue:paymentMode,decoration:const InputDecoration(labelText:'भुगतान प्रकार'),items:const[DropdownMenuItem(value:'नकद',child:Text('भुगतान कर दिया')),DropdownMenuItem(value:'उधार',child:Text('सप्लायर से उधार'))],onChanged:(v){if(v!=null)refresh(()=>paymentMode=v);}),
- const SizedBox(height:16),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){final q=int.tryParse(quantity.text);final unitCost=double.tryParse(cost.text);if(supplier.text.trim().isEmpty||q==null||q<1||unitCost==null||unitCost<=0){msg('सप्लायर, मात्रा और सही खरीद लागत भरें');return;}final total=q*unitCost;setState((){selected.qty+=q;purchases.insert(0,Record(supplier.text.trim(),'${selected.name} × $q • खरीद लागत ₹${money(unitCost)} प्रति यूनिट • $paymentMode',total,Icons.shopping_cart_outlined));if(paymentMode=='नकद'){cash-=total;}else{supplierLedger.insert(0,Record(supplier.text.trim(),'खरीद बकाया',total,Icons.storefront));}});_persist();Navigator.pop(sheetContext);msg('खरीद दर्ज हुई और स्टॉक बढ़ गया');},child:const Text('खरीद सेव करें')))
- ]))));
-}
- Future<void> salesReturn()async{
- if(products.isEmpty||sales.isEmpty){msg('बिक्री वापसी के लिए पहले बिक्री रिकॉर्ड होना चाहिए');return;}
- final customer=TextEditingController();final quantity=TextEditingController(text:'1');Item selected=products.first;String refundMode='नकद वापसी';
- await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(c)=>StatefulBuilder(builder:(context,refresh)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(context).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- Text('बिक्री वापसी / रिफंड',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:14),
- TextField(controller:customer,decoration:const InputDecoration(labelText:'ग्राहक का नाम')),
- const SizedBox(height:10),DropdownButtonFormField<Item>(initialValue:selected,decoration:const InputDecoration(labelText:'वापस आया प्रोडक्ट'),items:products.map((p)=>DropdownMenuItem<Item>(value:p,child:Text(p.name))).toList(),onChanged:(v){if(v!=null)refresh(()=>selected=v);}),
- const SizedBox(height:10),TextField(controller:quantity,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'वापसी मात्रा')),
- const SizedBox(height:10),DropdownButtonFormField<String>(initialValue:refundMode,decoration:const InputDecoration(labelText:'रिफंड का तरीका'),items:const[DropdownMenuItem(value:'नकद वापसी',child:Text('नकद / बैंक रिफंड')),DropdownMenuItem(value:'उधार समायोजन',child:Text('ग्राहक बकाया में समायोजन'))],onChanged:(v){if(v!=null)refresh(()=>refundMode=v);}),
- const SizedBox(height:15),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){
- final q=int.tryParse(quantity.text);final client=customer.text.trim();if(client.isEmpty||q==null||q<1){msg('ग्राहक और सही मात्रा भरें');return;}
- final matching=sales.where((e)=>e.name.toLowerCase()==client.toLowerCase()&&e.detail.startsWith('${selected.name} × ')).toList();int soldQty=0;double soldValue=0;
- for(final e in matching){final match=RegExp(r'×\s*(\d+)').firstMatch(e.detail);if(match!=null){soldQty+=int.parse(match.group(1)!);soldValue+=e.amount;}}
- int returnedQty=0;for(final e in salesReturns.where((e)=>e.name.toLowerCase()==client.toLowerCase()&&e.detail.startsWith('${selected.name} × '))){final match=RegExp(r'×\s*(\d+)').firstMatch(e.detail);if(match!=null)returnedQty+=int.parse(match.group(1)!);}
- if(soldQty==0||q>soldQty-returnedQty){msg('इस ग्राहक की उपलब्ध बिक्री मात्रा से अधिक वापसी दर्ज नहीं हो सकती');return;}
- final refund=(soldValue/soldQty)*q;
- if(refundMode=='उधार समायोजन'){final due=khata.where((e)=>e.name.toLowerCase()==client.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);if(due<refund){msg('ग्राहक का बकाया रिफंड समायोजन के लिए पर्याप्त नहीं है');return;}}
- setState((){selected.qty+=q;salesReturns.insert(0,Record(client,'${selected.name} × $q • $refundMode',refund,Icons.assignment_return));if(refundMode=='नकद वापसी'){cash-=refund;}else{khata.insert(0,Record(client,'बिक्री वापसी समायोजन',-refund,Icons.assignment_return));}});
- _persist();Navigator.pop(c);msg('बिक्री वापसी दर्ज हुई और स्टॉक वापस जुड़ गया');
- },child:const Text('वापसी सेव करें')))
- ]))));
- }
- Future<void> supplierPayment()async{
- final name=TextEditingController(),amount=TextEditingController();
- await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(c)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(c).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- Text('सप्लायर भुगतान',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:14),
- TextField(controller:name,decoration:const InputDecoration(labelText:'सप्लायर का नाम')),
- const SizedBox(height:10),TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'भुगतान राशि (₹)')),
- const SizedBox(height:15),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){final a=double.tryParse(amount.text);final due=supplierLedger.where((e)=>e.name.toLowerCase()==name.text.trim().toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);if(name.text.trim().isEmpty||a==null||a<=0||a>due){msg(due<=0?'इस सप्लायर का बकाया नहीं मिला':'भुगतान बकाया से अधिक नहीं हो सकता');return;}setState((){supplierLedger.insert(0,Record(name.text.trim(),'सप्लायर भुगतान',-a,Icons.payments_outlined));cash-=a;});_persist();Navigator.pop(c);msg('सप्लायर भुगतान दर्ज हुआ');},child:const Text('भुगतान सेव करें')))
- ])));
- }
- Future<void> product()async{
- final name=TextEditingController(),stock=TextEditingController(text:'0'),price=TextEditingController();
- await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(sheetContext)=>Padding(padding:EdgeInsets.fromLTRB(20,22,20,20+MediaQuery.of(sheetContext).viewInsets.bottom),child:Column(mainAxisSize:MainAxisSize.min,children:[
- Text('नया प्रोडक्ट',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,color:navy)),SizedBox(height:15),
- TextField(controller:name,decoration:const InputDecoration(labelText:'प्रोडक्ट का नाम')),
- const SizedBox(height:10),TextField(controller:stock,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'शुरुआती स्टॉक (यूनिट)')),
- const SizedBox(height:10),TextField(controller:price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'बिक्री मूल्य (₹)')),
- const SizedBox(height:16),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){final q=int.tryParse(stock.text);final p=double.tryParse(price.text);if(name.text.trim().isEmpty||q==null||q<0||p==null||p<=0){msg('नाम, सही स्टॉक और बिक्री मूल्य भरें');return;}setState(()=>products.add(Item(name.text.trim(),'प्रोडक्ट',q,p)));_persist();Navigator.pop(sheetContext);msg('प्रोडक्ट सेव हुआ');},child:const Text('प्रोडक्ट सेव करें')))
- ])));
-}
  @override Widget build(BuildContext context){
  final currentUser=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
  final metadataName=currentUser?.userMetadata?['full_name'];
@@ -398,7 +320,7 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
   KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onCredit:()=>entry(),onPayment:()=>entry(true)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onCredit:()=>personalLoanEntry(),onPayment:()=>personalLoanEntry(true)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
   ExpenseOnlyPage(items:expensesList,onAdd:expense),
   TransactionHistoryPage(items:serviceTransactions,english:english),
-   ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,darkMode:darkMode,onDarkMode:(v){setState(()=>darkMode=v);appDarkMode.value=v;_persist();},onLanguage:(v){setState(()=>english=v);_persist();},sales:sales,expensesList:expensesList,khata:khata,personalTransactions:personalTransactions,products:products,purchases:purchases,supplierLedger:supplierLedger,salesReturns:salesReturns,stockAdjustments:stockAdjustments)
+   ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,darkMode:darkMode,onDarkMode:(v){setState(()=>darkMode=v);appDarkMode.value=v;_persist();},onLanguage:(v){setState(()=>english=v);_persist();},expensesList:expensesList,khata:khata,personalTransactions:personalTransactions)
  ];
  return Scaffold(appBar:AppBar(titleSpacing:17,backgroundColor:appBgColor,foregroundColor:navy,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:Icon(Icons.account_balance_wallet,color:gold)),SizedBox(width:10),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Bharat Saathi':'भारत साथी',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(english?'Smart Khata & Expenses':'स्मार्ट खाता और खर्च',style:TextStyle(fontSize:10,color:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=4),icon:Icon(Icons.person_outline))]),body:SafeArea(child:loaded?Column(children:[if(tab==3)const BannerAdSlot(),Expanded(child:IndexedStack(index:tab,children:pages))]):Center(child:CircularProgressIndicator())),bottomNavigationBar:Column(mainAxisSize:MainAxisSize.min,children:[if(tab==1||tab==2||tab==4)const BannerAdSlot(),NavigationBar(height:68,backgroundColor:surfaceColor,indicatorColor:darkMode?Color(0xFF29496D):Color(0xFFE8EEF6),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:Icon(Icons.receipt_long_outlined),label:english?'History':'इतिहास'),NavigationDestination(icon:Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]) ]));
  }
@@ -601,8 +523,6 @@ class PersonalFinancePage extends StatelessWidget{
  ]);
  }
 }
-class ProductPage extends StatelessWidget{final List<Item> items;final List<Record> purchases,supplierLedger,stockAdjustments;final void Function(Item) onRestock;final VoidCallback onPurchase,onSupplierPayment;const ProductPage({super.key,required this.items,required this.purchases,required this.supplierLedger,required this.stockAdjustments,required this.onRestock,required this.onPurchase,required this.onSupplierPayment});@override Widget build(BuildContext context)=>ListView(padding:EdgeInsets.all(17),children:[heading('प्रोडक्ट और स्टॉक','इन्वेंट्री और खरीद प्रबंधन'),SizedBox(height:12),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:onPurchase,icon:Icon(Icons.add_shopping_cart),label:Text('खरीद दर्ज करें'))),SizedBox(height:8),OutlinedButton.icon(onPressed:onSupplierPayment,icon:Icon(Icons.payments_outlined),label:Text('सप्लायर भुगतान दर्ज करें')),SizedBox(height:12),Container(padding:EdgeInsets.all(14),decoration:BoxDecoration(color:surfaceColor,borderRadius:BorderRadius.circular(15)),child:Text('कुल प्रोडक्ट: ${items.length}     •     कम स्टॉक: ${items.where((e)=>e.qty<15).length}',style:TextStyle(color:navy,fontWeight:FontWeight.w800))),...items.map((p)=>Container(margin:EdgeInsets.only(top:9),padding:EdgeInsets.all(14),decoration:BoxDecoration(color:surfaceColor,borderRadius:BorderRadius.circular(15)),child:Row(children:[Icon(Icons.inventory_2_outlined,color:blue,size:25),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(p.name,style:TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(p.detail,style:TextStyle(color:muted,fontSize:10)),Text('₹${money(p.price)} बिक्री मूल्य',style:TextStyle(color:muted,fontSize:10))])),Column(children:[Text('${p.qty}',style:TextStyle(color:p.qty<15?red:green,fontWeight:FontWeight.w900,fontSize:17)),Text('यूनिट',style:TextStyle(color:muted,fontSize:9)),IconButton(tooltip:'स्टॉक जोड़ें',onPressed:()=>onRestock(p),icon:Icon(Icons.add_circle_outline,color:blue,size:20))])]))),if(purchases.isNotEmpty) ...[SizedBox(height:20),section('सप्लायर हिस्ट्री','सप्लायर के नाम और हाल की खरीद'),...purchases.take(10).map(activity)],if(supplierLedger.isNotEmpty) ...[SizedBox(height:14),section('सप्लायर बकाया हिस्ट्री','खरीद उधार और किए गए भुगतान'),...supplierLedger.take(20).map(activity)],if(stockAdjustments.isNotEmpty) ...[SizedBox(height:14),section('स्टॉक बदलाव हिस्ट्री','मैनुअल स्टॉक वृद्धि'),...stockAdjustments.take(20).map(activity)]]);}
-class SalesPage extends StatelessWidget{final List<Record> items,expenses,returns;final VoidCallback onReturn;const SalesPage({super.key,required this.items,required this.expenses,required this.returns,required this.onReturn});@override Widget build(BuildContext context)=>ListView(padding:EdgeInsets.all(17),children:[heading('बिक्री और खर्च','कारोबार के सभी रिकॉर्ड'),SizedBox(height:12),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:onReturn,icon:Icon(Icons.assignment_return),label:Text('बिक्री वापसी दर्ज करें'))),SizedBox(height:12),section('बिक्री','दर्ज की गई बिक्री'),if(items.isEmpty)Text('अभी कोई बिक्री नहीं।',style:TextStyle(color:muted)) else ...items.map(activity),SizedBox(height:20),section('खर्च','दर्ज किए गए खर्च'),if(expenses.isEmpty)Text('अभी कोई खर्च नहीं।',style:TextStyle(color:muted)) else ...expenses.map(activity),SizedBox(height:20),section('बिक्री वापसी','दर्ज किए गए रिफंड और स्टॉक वापसी'),if(returns.isEmpty)Text('अभी कोई बिक्री वापसी नहीं।',style:TextStyle(color:muted)) else ...returns.map(activity)]); }
 class KhataPage extends StatelessWidget {
   final List<Record> items;final VoidCallback onPayment;
   const KhataPage({super.key, required this.items,required this.onPayment});
@@ -870,7 +790,7 @@ class PrivacyPolicyPage extends StatelessWidget{
  const PrivacyPolicyPage({super.key,this.english=false});
  static const List<List<String>> _hi=[
   ['1. यह नीति किस पर लागू है','यह नीति Bharat Saathi Android ऐप, अकाउंट, लिंक्ड खाता, रेफरल/कमीशन जानकारी और स्वचालित क्लाउड सिंक पर लागू होती है। ऐप इस्तेमाल करने के लिए अकाउंट और लॉगिन आवश्यक है।'],
-  ['2. ऐप में दर्ज और डिवाइस पर सेव डेटा','आप नाम, ईमेल, मोबाइल नंबर और कारोबारी/व्यक्तिगत रिकॉर्ड दर्ज कर सकते हैं। मौजूदा ऐप की मुख्य स्क्रीन डैशबोर्ड, खाता, खर्च, हिस्ट्री और प्रोफाइल हैं। इनमें दुकान/व्यक्तिगत खाता, लिंक्ड खाता, खर्च, सेटिंग और सेवा श्रेणियाँ शामिल हैं। मौजूदा नेविगेशन में स्टॉक या बिक्री प्रबंधन स्क्रीन उपलब्ध नहीं है। पुराने संस्करण से आए उत्पाद/स्टॉक या बिक्री रिकॉर्ड यदि डिवाइस पर मौजूद हों, तो वे पुराने स्थानीय स्नैपशॉट में बने रह सकते हैं। रिकॉर्ड पहले डिवाइस के स्थानीय SQLite डेटाबेस में सेव होते हैं।'],
+  ['2. ऐप में दर्ज और डिवाइस पर सेव डेटा','आप नाम, ईमेल, मोबाइल नंबर और कारोबारी/व्यक्तिगत रिकॉर्ड दर्ज कर सकते हैं। ऐप में व्यक्तिगत और दुकान का खाता, लिंक्ड खाता, खर्च, हिस्ट्री, प्रोफाइल और सेवा श्रेणियाँ उपलब्ध हैं। प्रोडक्ट, खरीद, बिक्री और स्टॉक प्रबंधन की सुविधा ऐप में उपलब्ध नहीं है। रिकॉर्ड पहले डिवाइस के स्थानीय SQLite डेटाबेस में सेव होते हैं।'],
   ['3. अकाउंट और लॉगिन जानकारी','रजिस्ट्रेशन में Supabase Auth ईमेल और पासवर्ड संभालता है। आपका नाम और 10 अंकों का मोबाइल नंबर प्रोफाइल से जुड़ता है। ईमेल कन्फर्म होने के बाद मोबाइल नंबर और पासवर्ड से लॉगिन होता है। मोबाइल नंबर अभी SMS OTP से सत्यापित नहीं होता। लॉगिन से पहले मोबाइल नंबर खोजने की सेवा ईमेल नहीं दिखाती; सफल लॉगिन के बाद अकाउंट ईमेल बैकअप स्क्रीन पर दिख सकता है। पासवर्ड ऐप में पढ़ने योग्य रूप में सेव नहीं होता।'],
   ['4. हर अकाउंट का अलग डेटा और ऑटोमैटिक क्लाउड सिंक','डिवाइस पर स्थानीय रिकॉर्ड लॉगिन किए हुए अकाउंट की अलग पहचान के अंतर्गत रखे जाते हैं। एक ही फोन पर अलग अकाउंट का स्थानीय डेटा अलग रहता है। लॉगिन रहने और इंटरनेट उपलब्ध होने पर ऐप रिकॉर्ड का स्नैपशॉट उसी अकाउंट के Supabase क्लाउड बैकअप में अपने-आप सिंक करता है। बदलाव के बाद सिंक शेड्यूल होता है; ऐप चलते समय समय-समय पर और दोबारा खुलने पर पुनः प्रयास होता है। ऑफलाइन रिकॉर्ड डिवाइस पर रहते हैं। ऐप पूरी तरह बंद रहने पर बैकग्राउंड सिंक की गारंटी नहीं है। उसी अकाउंट से दूसरे डिवाइस पर लॉगिन करके उपलब्ध बैकअप रीस्टोर किया जा सकता है। यह स्नैपशॉट बैकअप है, हर रिकॉर्ड का अलग सर्वर-लेजर सिंक नहीं। एक ही अकाउंट को एक समय पर एक फोन पर इस्तेमाल करें; अलग-अलग फोन पर एक साथ किए गए बदलाव अपने-आप मर्ज नहीं होते। पुराने संस्करण से अपडेट करने पर पुराने स्थानीय स्नैपशॉट को किसी अकाउंट में जोड़ने से पहले ऐप पुष्टि पूछता है। केवल सही पुराने अकाउंट की पुष्टि करने पर और तभी डेटा जोड़ा जाएगा जब उस अकाउंट में पहले से रिकॉर्ड न हों। मौजूदा रिकॉर्ड कभी ओवरराइट नहीं होंगे; इसलिए पहले उसी अकाउंट से लॉगिन करें जो पहले इस फोन पर इस्तेमाल होता था।'],
   ['5. लिंक्ड खाता और रेफरल जानकारी','लिंक्ड खाता इस्तेमाल करने पर संबंधित मोबाइल नंबर, दुकान/प्रदर्शन नाम, जुड़े खातों का संबंध और प्रतिभागियों द्वारा दर्ज उधारी/भुगतान तथा नोट Supabase में प्रोसेस होते हैं। रेफरल/कमीशन सुविधा इस्तेमाल करने पर रेफरल कोड, पात्रता और कमीशन रिकॉर्ड भी प्रोसेस हो सकते हैं। संबंधित जानकारी सुविधा के नियमों के अनुसार दिखाई जाती है।'],
@@ -878,13 +798,13 @@ class PrivacyPolicyPage extends StatelessWidget{
   ['7. डेटा का उपयोग और सेवा प्रदाता','जानकारी का उपयोग अकाउंट लॉगिन, रिकॉर्ड सेव करने, ऑटोमैटिक सिंक/रीस्टोर, लिंक्ड खाता, रेफरल/कमीशन, सुरक्षा और विज्ञापन के लिए होता है। Supabase Auth, डेटाबेस और क्लाउड सेवा देता है। Google Mobile Ads विज्ञापन SDK देता है। हम व्यक्तिगत जानकारी बेचते नहीं हैं। ऐप में Recharge, BBPS, UPI भुगतान/ट्रांसफर और अन्य बाहरी भुगतान सेवाएँ अभी Coming Soon हैं; इन्हें चालू सेवा न समझें।'],
   ['8. सुरक्षा, स्टोरेज और डेटा की अवधि','डिवाइस और सर्वर के बीच संचार HTTPS/TLS से होता है। स्थानीय रिकॉर्ड ऐप के निजी डिवाइस स्टोरेज में रहते हैं; डिवाइस बैकअप चालू होने पर Android सिस्टम बैकअप में भी ऐप का निजी डेटा शामिल हो सकता है, जिसकी गारंटी नहीं है। यह Supabase क्लाउड सिंक से अलग है। ऐप-स्तर पर SQLite डेटाबेस एन्क्रिप्शन अलग से लागू होने की पुष्टि नहीं है। ऐप डेटा साफ करने या ऐप हटाने से स्थानीय कॉपी मिट सकती है। क्लाउड रिकॉर्ड अकाउंट सक्रिय रहने या सेवा देने के लिए आवश्यक अवधि तक रखे जा सकते हैं। किसी ऑनलाइन सेवा में पूर्ण सुरक्षा की गारंटी नहीं दी जा सकती।'],
   ['9. अकाउंट हटाना और आपकी पसंद','ऐप में अभी अकाउंट हटाने का बटन उपलब्ध नहीं है। अकाउंट हटाने के लिए बाहरी अनुरोध पेज https://annukumar6280-glitch.github.io/Bharat-Saathi-/delete-account.html खोलें या सहायता WhatsApp पर संपर्क करें। अकाउंट का स्वामित्व सत्यापित करने के बाद अनुरोध की समीक्षा की जाएगी। दूसरे डिवाइस पर पहले से सेव स्थानीय कॉपी अपने-आप मिटने की गारंटी नहीं है। इंटरनेट न होने पर पहले से लॉगिन सत्र में स्थानीय रिकॉर्ड उपलब्ध हो सकते हैं; नया लॉगिन करने के लिए इंटरनेट आवश्यक है।'],
-  ['10. बच्चों की गोपनीयता','Bharat Saathi सामान्य उत्पादकता और दुकान प्रबंधन ऐप है, बच्चों के लिए बनाया गया ऐप नहीं है। बच्चे की व्यक्तिगत जानकारी दर्ज न करें।'],
+  ['10. बच्चों की गोपनीयता','Bharat Saathi सामान्य उत्पादकता, खाता और खर्च प्रबंधन ऐप है, बच्चों के लिए बनाया गया ऐप नहीं है। बच्चे की व्यक्तिगत जानकारी दर्ज न करें।'],
   ['11. नीति में बदलाव','ऐप की सुविधाओं, SDK या कानूनी आवश्यकताओं में बदलाव होने पर नीति अपडेट की जाएगी। प्रभावी तारीख इस पेज पर दिखाई जाएगी।'],
   ['12. संपर्क','गोपनीयता, डेटा या अकाउंट अनुरोध के लिए Bharat Saathi सहायता WhatsApp 916283398317 पर संपर्क करें। पासवर्ड या OTP कभी साझा न करें।']
  ];
  static const List<List<String>> _en=[
   ['1. Scope','This policy applies to the Bharat Saathi Android app, user accounts, linked khata, referral/commission information and automatic cloud synchronization. An account and sign-in are required to use the app.'],
-  ['2. Information entered and stored on the device','You may provide your name, email address and mobile number, and enter business or personal records. The current app’s main screens are Dashboard, Khata, Expenses, History and Profile. They provide shop/personal khata, linked khata, expense records, settings and service categories. The current navigation does not expose stock or sales-management screens. Product/stock or sales records carried over from an older app version may remain in an existing local snapshot. Records are first saved in the device’s local SQLite database.'],
+  ['2. Information entered and stored on the device','You may provide your name, email address and mobile number, and enter business or personal records. The app provides personal and shop khata, linked khata, expense records, history, profile and service categories. Product, purchase, sales and stock-management features are not available in the app. Records are first saved in the device’s local SQLite database.'],
   ['3. Account and login information','Supabase Auth handles your registration email and password. Your name and 10-digit mobile number are associated with your profile. After email confirmation, you can sign in with your mobile number and password. The phone lookup does not reveal the account email before password verification; after successful login, the account email may be displayed to the signed-in user on the backup screen. The app does not store your password in readable form.'],
   ['4. Account separation and automatic cloud sync','Local records are stored under the identity of the signed-in account, separately from other accounts on the same device. While signed in and connected to the internet, the app automatically synchronizes a snapshot to that account’s Supabase cloud-backup record. Sync is scheduled after changes and retried periodically while the app is running and when it resumes. Offline records remain on the device. Background sync is not guaranteed while the app is fully closed. The latest available snapshot can be restored on another device by signing in to the same account. This is snapshot backup, not row-by-row synchronization to a server-side accounting ledger. Use one device per account at a time; concurrent edits on different devices are not automatically merged. When upgrading from an older version, the app asks which account should receive the previous single local snapshot. It is assigned only after confirmation; sign in first with the account that previously used the phone and confirm only if it is the correct account.'],
   ['5. Linked khata and referral information','If you use linked khata, the app processes relevant mobile numbers, shop/display names, account relationships and credit/payment entries and notes created by participants. If you use referral/commission features, referral codes, eligibility and commission records may also be processed. Information is made available according to each feature’s access rules.'],
@@ -892,7 +812,7 @@ class PrivacyPolicyPage extends StatelessWidget{
   ['7. Uses and service providers','Information is used for account login, local record keeping, automatic sync/restore, linked khata, referral/commission, security and advertising. Supabase provides authentication, database and cloud services. Google provides the mobile advertising SDK. We do not sell personal information. Recharge, BBPS, UPI payments/transfers and other external payment services are currently marked Coming Soon and are not active payment services.'],
   ['8. Security, storage and retention','Data sent between the device and servers uses HTTPS/TLS. Local records are stored in the app’s private device storage. Android system backup may also include app-private data if device backup is enabled; this is controlled by Android/Google settings and is not guaranteed. It is separate from Supabase cloud sync. Separate app-level encryption of the SQLite database has not been implemented. Local data may be erased if you clear app data or uninstall the app. Cloud account data may be retained while your account is active or as needed to provide the service. No online service can guarantee absolute security.'],
   ['9. Account deletion and your choices','The app currently has no in-app account-deletion button. To request deletion, use the external request page at https://annukumar6280-glitch.github.io/Bharat-Saathi-/delete-account.html or contact support through WhatsApp. We review requests after verifying account ownership. Local copies already stored on other devices may not be erased automatically. An existing signed-in session may access local records offline; internet is required for a new sign-in.'],
-  ['10. Children’s privacy','Bharat Saathi is a general productivity and shop-management app and is not designed for children. Do not enter a child’s personal information.'],
+  ['10. Children’s privacy','Bharat Saathi is a general productivity, khata and expense-management app and is not designed for children. Do not enter a child’s personal information.'],
   ['11. Policy changes','We may update this policy when app features, SDKs or legal requirements change. The effective date will be shown on this page.'],
   ['12. Contact','For privacy, data or account requests, contact Bharat Saathi support on WhatsApp: +91 6283398317. Never share your password or OTP.']
  ];
@@ -916,8 +836,8 @@ class PrivacyPolicyPage extends StatelessWidget{
 
 class ProfilePage extends StatelessWidget{
  final bool supabaseAvailable,english,darkMode;final Future<void> Function() onRestore;final ValueChanged<bool> onLanguage,onDarkMode;
- final List<Record> sales,expensesList,khata,personalTransactions;final List<Item> products;final List<Record> purchases,supplierLedger,salesReturns,stockAdjustments;
- const ProfilePage({super.key,required this.supabaseAvailable,required this.onRestore,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products,required this.purchases,required this.supplierLedger,required this.salesReturns,required this.stockAdjustments,required this.english,required this.onLanguage,required this.darkMode,required this.onDarkMode});
+ final List<Record> expensesList,khata,personalTransactions;
+ const ProfilePage({super.key,required this.supabaseAvailable,required this.onRestore,required this.expensesList,required this.khata,required this.personalTransactions,required this.english,required this.onLanguage,required this.darkMode,required this.onDarkMode});
  @override Widget build(BuildContext context){
   final user=supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
   final admin=user!=null&&(user.appMetadata['role']=='admin'||user.appMetadata['role']=='super_admin');
@@ -1064,80 +984,6 @@ class _AdminCommissionPageState extends State<AdminCommissionPage>{
   ...rules.map((r)=>Card(color:surfaceColor,child:ListTile(title:Text(r['service_name'].toString()),subtitle:Text('Self ${r['self_commission_pct']}% • Direct Referral ${r['referral_commission_pct']}% • Company ${r['company_share_pct']}%'),trailing:IconButton(onPressed:()=>_editRule(r),icon:const Icon(Icons.edit_outlined)))))
  ]));
 }
-class ReportsPage extends StatefulWidget{
- final List<Record> sales,expensesList,khata,personalTransactions;
- final List<Item> products;final List<Record> purchases,supplierLedger,salesReturns,stockAdjustments;
- const ReportsPage({super.key,required this.sales,required this.expensesList,required this.khata,required this.personalTransactions,required this.products,required this.purchases,required this.supplierLedger,required this.salesReturns,required this.stockAdjustments});
- @override State<ReportsPage> createState()=>_ReportsPageState();
-}
-class _ReportsPageState extends State<ReportsPage>{
- DateTimeRange? range;
- List<Record> _filter(List<Record> rows)=>range==null?rows:rows.where((e){final d=e.createdAt;if(d==null)return false;final day=DateTime(d.year,d.month,d.day);final from=DateTime(range!.start.year,range!.start.month,range!.start.day);final to=DateTime(range!.end.year,range!.end.month,range!.end.day);return !day.isBefore(from)&&!day.isAfter(to);}).toList();
- List<Record> get sales=>_filter(widget.sales);
- List<Record> get purchases=>_filter(widget.purchases);
- List<Record> get supplierLedger=>_filter(widget.supplierLedger);
- List<Record> get salesReturns=>_filter(widget.salesReturns);
- List<Record> get stockAdjustments=>_filter(widget.stockAdjustments);
- List<Record> get expensesList=>_filter(widget.expensesList);
- List<Record> get khata=>_filter(widget.khata);
- List<Record> get personalTransactions=>_filter(widget.personalTransactions);
- List<Item> get products=>widget.products;
- Future<void> _chooseRange()async{
-  final now=DateTime.now();
-  final selected=await showDateRangePicker(context:context,firstDate:DateTime(2000),lastDate:DateTime(now.year+2),initialDateRange:range??DateTimeRange(start:DateTime(now.year,now.month,1),end:now));
-  if(selected!=null)setState(()=>range=selected);
- }
- double get salesTotal=>sales.fold<double>(0,(s,e)=>s+e.amount);
- double get purchaseTotal=>purchases.fold<double>(0,(s,e)=>s+e.amount);
- double get supplierDue=>supplierLedger.fold<double>(0,(s,e)=>s+e.amount);
- double get expenseTotal=>expensesList.fold<double>(0,(s,e)=>s+e.amount);
- double get dueTotal=>khata.fold<double>(0,(s,e)=>s+e.amount);
- double get personalIncome=>personalTransactions.where((e)=>e.amount>0).fold<double>(0,(s,e)=>s+e.amount);
- double get personalExpense=>-personalTransactions.where((e)=>e.amount<0).fold<double>(0,(s,e)=>s+e.amount);
- String _cell(String value)=>"\"${value.replaceAll('"','""')}\"";
- String _csv(){
- final rows=<List<String>>[['श्रेणी','नाम','विवरण','राशि (INR)','तारीख़ / समय','मात्रा','बिक्री मूल्य']];
- for(final e in sales){rows.add(['बिक्री',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
- for(final e in purchases){rows.add(['खरीद',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
- for(final e in supplierLedger){rows.add(['सप्लायर खाता',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
- for(final e in salesReturns){rows.add(['बिक्री वापसी',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
- for(final e in stockAdjustments){rows.add(['स्टॉक बदलाव',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
- for(final e in expensesList){rows.add(['कारोबारी खर्च',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
- for(final e in khata){rows.add(['ग्राहक खाता',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
- for(final e in personalTransactions){rows.add(['व्यक्तिगत',e.name,e.detail,e.amount.toStringAsFixed(2),e.createdAt?.toLocal().toIso8601String()??'','','']);}
- for(final e in products){rows.add(['स्टॉक',e.name,e.detail,'','','${e.qty}',e.price.toStringAsFixed(2)]);}
- return rows.map((r)=>r.map(_cell).join(',')).join('\r\n');
- }
- Future<void> _export(BuildContext context)async{
- final bytes=Uint8List.fromList(utf8.encode(_csv()));
- try{
- await Share.shareXFiles([XFile.fromData(bytes,mimeType:'text/csv',name:'bharat-saathi-report.csv')],text:'भारत साथी रिपोर्ट');
- }catch(_){
- await Clipboard.setData(ClipboardData(text:_csv()));
- if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('शेयर विंडो उपलब्ध नहीं हुई। CSV क्लिपबोर्ड में कॉपी कर दी गई।')));
- }
- }
- Widget _metric(String title,String value,IconData icon)=>Container(padding:EdgeInsets.all(15),decoration:BoxDecoration(color:surfaceColor,borderRadius:BorderRadius.circular(15)),child:Row(children:[Icon(icon,color:blue),SizedBox(width:12),Expanded(child:Text(title,style:TextStyle(color:muted,fontSize:12))),Text(value,style:TextStyle(color:navy,fontWeight:FontWeight.w900))]));
- @override Widget build(BuildContext context)=>Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:const Text('रिपोर्ट और एक्सपोर्ट')),body:ListView(padding:const EdgeInsets.all(17),children:[
- heading('कारोबार का सारांश','इस डिवाइस पर उपलब्ध रिकॉर्ड का कुल योग'),const SizedBox(height:12),
- OutlinedButton.icon(onPressed:_chooseRange,icon:const Icon(Icons.date_range),label:Text(range==null?'तारीख़ के अनुसार फ़िल्टर करें':'${range!.start.day}/${range!.start.month}/${range!.start.year} – ${range!.end.day}/${range!.end.month}/${range!.end.year}')),
- if(range!=null)Align(alignment:Alignment.centerRight,child:TextButton(onPressed:()=>setState(()=>range=null),child:const Text('फ़िल्टर हटाएँ'))),
- _metric('कुल दर्ज बिक्री','₹${money(salesTotal)}',Icons.trending_up),const SizedBox(height:9),
- _metric('कुल खरीद','₹${money(purchaseTotal)}',Icons.shopping_cart_outlined),const SizedBox(height:9),
- _metric('सप्लायर बकाया','₹${money(supplierDue)}',Icons.storefront),const SizedBox(height:9),
- _metric('बिक्री वापसी','₹${money(salesReturns.fold<double>(0,(sum,e)=>sum+e.amount))}',Icons.assignment_return),const SizedBox(height:9),
- _metric('कारोबारी खर्च','₹${money(expenseTotal)}',Icons.payments_outlined),const SizedBox(height:9),
- _metric('ग्राहक बकाया','₹${money(dueTotal)}',Icons.people_outline),const SizedBox(height:9),
- _metric('व्यक्तिगत आय','₹${money(personalIncome)}',Icons.savings_outlined),const SizedBox(height:9),
- _metric('व्यक्तिगत खर्च','₹${money(personalExpense)}',Icons.shopping_bag_outlined),const SizedBox(height:9),
- _metric('स्टॉक का अनुमानित मूल्य','₹${money(products.fold<double>(0,(s,p)=>s+p.qty*p.price))}',Icons.inventory_2_outlined),
- const SizedBox(height:18),
- FilledButton.icon(onPressed:()=>_export(context),icon:const Icon(Icons.content_copy),label:const Text('CSV रिपोर्ट डाउनलोड / शेयर करें')),
- const SizedBox(height:10),
- Text('नोट: एक्सपोर्ट में अभी उपलब्ध स्थानीय रिकॉर्ड शामिल हैं। पुराने रिकॉर्ड की तारीखें संग्रहीत नहीं हैं, इसलिए तारीख-वार रिपोर्ट और PDF अभी उपलब्ध नहीं हैं। यह रिपोर्ट क्लाउड सिंक का विकल्प नहीं है।',style:TextStyle(color:muted,fontSize:11))
- ]));
-}
-
 Widget heading(String a,String b)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),Text(b,style:TextStyle(color:muted,fontSize:11))]);
 Widget setting(IconData i,String a,String b,[VoidCallback? onTap])=>InkWell(onTap:onTap,borderRadius:BorderRadius.circular(14),child:Container(margin:EdgeInsets.only(top:9),padding:EdgeInsets.all(14),decoration:BoxDecoration(color:surfaceColor,borderRadius:BorderRadius.circular(14)),child:Row(children:[Icon(i,color:blue),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:TextStyle(color:navy,fontWeight:FontWeight.w800,fontSize:12)),Text(b,style:TextStyle(color:muted,fontSize:10))])),Icon(Icons.chevron_right,color:muted)])));
 void openComingSoon(BuildContext context,String feature)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ComingSoonPage(feature:feature)));
