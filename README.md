@@ -20,9 +20,11 @@ Bharat Saathi is a Flutter Android app for personal finance and small-retailer o
 
 ## Data and production status
 
-The current retailer records are stored locally on the device. The reports screen summarizes local records, supports date-range filtering and shares a CSV file; new records include timestamps, while legacy records have blank dates. PDF statements are not yet implemented. They are **not yet synced to Supabase**, are not shared across devices, and are not a production-grade financial ledger. SQLite now stores the local app snapshot transactionally and imports the previous SharedPreferences snapshot on first launch. This is still a local snapshot database, not a normalized accounting ledger or a conflict-safe multi-device sync engine.
+The current retailer and personal-finance records are stored locally on the device first. The reports screen summarizes local records, supports date-range filtering and shares a CSV file; new records include timestamps, while legacy records have blank dates. PDF statements are not yet implemented. SQLite stores the local app snapshot transactionally and imports the previous SharedPreferences snapshot on first launch.
 
-Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, products, purchases, sales, stock movements and a stock summary view. The Flutter client now initializes Supabase and supports email/password authentication and account provisioning. Existing local finance and retailer records are still not live-synchronized to normalized Supabase ledger tables. Cloud backup is a manual snapshot/restore, not real-time sync; restore replaces the current local snapshot after confirmation. Email confirmation depends on the project's Auth email settings and production SMTP configuration. Never place a Supabase secret/service-role key in the mobile app; only the publishable key is included.
+When a user is signed in, Bharat Saathi automatically synchronizes the latest local snapshot to that user's Supabase cloud-backup record. Changes are queued with a short debounce; sync is retried periodically while the app is running and when it resumes. If the device is offline, records remain stored locally and are synchronized when connectivity returns and the app gets an opportunity to run. Background sync is not guaranteed while the app is fully closed. The current implementation is account-scoped snapshot synchronization, not row-by-row synchronization to a normalized accounting ledger or a conflict-safe multi-device ledger. The cloud snapshot can be restored on another device by signing in to the same account; restore replaces that device's current local snapshot after confirmation.
+
+Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, products, purchases, sales, stock movements and a stock summary view. The Flutter client initializes Supabase and supports email/password authentication and account provisioning. Email confirmation depends on the project's Auth email settings and production SMTP configuration. Never place a Supabase secret/service-role key in the mobile app; only the publishable key is included.
 
 ## Provider-dependent services
 
@@ -52,5 +54,5 @@ GitHub Actions workflow: `.github/workflows/flutter-android.yml`
 2. Implement Supabase Auth onboarding and connect account-scoped tables/RPCs using a publishable key.
 3. Extend personal finance with categories, recurring bills, family accounts, monthly budgets and reports.
 4. Finish retailer workflows: full customer/supplier profiles, invoice numbering and printable tax invoices, purchase/sales returns and stock adjustment reversal.
-5. Add tested backup/restore, offline-first sync, audit trail and release signing.
+5. Strengthen and test automatic cloud snapshot sync/restore, offline retry behavior, audit trail and release signing.
 6. Integrate external services only after credentials and provider certification are available.
