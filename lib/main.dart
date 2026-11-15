@@ -71,11 +71,11 @@ class LocalStore {
   final db=await database;
   await db.insert('app_meta',{'key':'legacy_declined_$userId','value':'1'},conflictAlgorithm:ConflictAlgorithm.replace);
  }
- static Future<void> migrateLegacyForUser(String userId,String? preferencesLegacy)async{
+ static Future<bool> migrateLegacyForUser(String userId,String? preferencesLegacy)async{
   final db=await database;
-  await db.transaction((txn)async{
+  return db.transaction((txn)async{
    final marker=await txn.query('app_meta',columns:['value'],where:'key = ?',whereArgs:['legacy_data_assigned'],limit:1);
-   if(marker.isNotEmpty)return;
+   if(marker.isNotEmpty)return true;
    String? legacyPayload;
    String? legacyUpdatedAt;
    final oldTable=await txn.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_app_state'");
@@ -85,10 +85,16 @@ class LocalStore {
    }
    legacyPayload??=preferencesLegacy;
    if(legacyPayload!=null){
-    await txn.insert('app_state',{'user_id':userId,'payload':legacyPayload,'updated_at':legacyUpdatedAt??DateTime.now().toUtc().toIso8601String()},conflictAlgorithm:ConflictAlgorithm.ignore);
+    final existing=await txn.query('app_state',columns:['user_id'],where:'user_id = ?',whereArgs:[userId],limit:1);
+    if(existing.isNotEmpty){
+     await txn.insert('app_meta',{'key':'legacy_declined_$userId','value':'1'},conflictAlgorithm:ConflictAlgorithm.replace);
+     return false;
+    }
+    await txn.insert('app_state',{'user_id':userId,'payload':legacyPayload,'updated_at':legacyUpdatedAt??DateTime.now().toUtc().toIso8601String()},conflictAlgorithm:ConflictAlgorithm.abort);
    }
    await txn.insert('app_meta',{'key':'legacy_data_assigned','value':'1'},conflictAlgorithm:ConflictAlgorithm.replace);
    await txn.delete('app_meta',where:'key = ?',whereArgs:['legacy_declined_$userId']);
+   return true;
   });
  }
  static Future<String?> read(String userId)async{
@@ -262,14 +268,21 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
     ));
     if(!mounted)return;
     if(importLegacy==true){
-     await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
-     if(legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
+     final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
+     if(migrated&&legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
+     if(!migrated&&mounted){
+      await showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
+       title:const Text('पुराना डेटा अभी नहीं जोड़ा गया'),
+       content:const Text('इस अकाउंट में पहले से रिकॉर्ड हैं। उन्हें सुरक्षित रखने के लिए पुराने रिकॉर्ड से बदला नहीं गया। पुराना डेटा अलग रखा गया है; दूसरे सही अकाउंट से लॉगिन करके उसे जोड़ सकते हैं।'),
+       actions:[FilledButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('ठीक है'))],
+      ));
+     }
     }else if(importLegacy==false){
      await LocalStore.declineLegacyForUser(userId);
     }
    }else if(!legacyDeclined){
-    await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
-    if(legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
+    final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
+    if(migrated&&legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
    }
    var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
    if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
