@@ -256,7 +256,7 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
    final legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
    final legacyDeclined=await LocalStore.wasLegacyDeclinedForUser(userId);
    final hasLegacy=await LocalStore.hasUnassignedLegacyData(legacyPrefs);
-   if(hasLegacy&&!legacyDeclined){
+   if(hasLegacy&&!legacyDeclined&&widget.supabaseAvailable){
     if(!mounted)return;
     final importLegacy=await showDialog<bool>(context:context,barrierDismissible:false,builder:(dialogContext)=>AlertDialog(
      title:const Text('पुराने डेटा की पहचान / Legacy data found'),
@@ -282,7 +282,7 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
     }else if(importLegacy==false){
      await LocalStore.declineLegacyForUser(userId);
     }
-   }else if(!legacyDeclined){
+   }else if(!legacyDeclined&&!hasLegacy){
     final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
     if(migrated&&legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
    }
