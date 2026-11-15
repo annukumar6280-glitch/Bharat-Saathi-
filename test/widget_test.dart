@@ -36,7 +36,7 @@ void main() {
     expect(find.text('मोबाइल नंबर (10 अंक)'), findsOneWidget);
   });
 
-  testWidgets('Registration shows legal consent links and compact login/register switch', (tester) async {
+  testWidgets('Registration shows legal consent links and consent checkbox', (tester) async {
     await tester.pumpWidget(const BharatSaathiApp(requireAuth: true, supabaseAvailable: false));
     await tester.pumpAndSettle();
     await tester.tap(find.text('रजिस्टर करें'));
@@ -50,12 +50,8 @@ void main() {
     await tester.pump();
     expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
     expect(find.text('अकाउंट बनाएं'), findsOneWidget);
-    // Select the first outlined button (Login) by widget type; this avoids
-    // depending on the button's localized text finder in the wrapped layout.
-    await tester.tap(find.byType(OutlinedButton).first);
-    await tester.pumpAndSettle();
-    expect(find.byType(Checkbox), findsNothing);
-    expect(find.text('मोबाइल नंबर से लॉगिन करें'), findsOneWidget);
+    // The login/register switch is covered by the account-security test.
+    // Keep this test focused on registration consent state.
   });
 
   setUpAll(() {
