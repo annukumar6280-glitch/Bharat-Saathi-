@@ -47,17 +47,45 @@ Deno.serve(async (req: Request) => {
     });
     if (!profileResponse.ok) return json({ error: "लॉगिन सेवा अभी उपलब्ध नहीं है।" }, 503);
     const profiles = await profileResponse.json();
-    if (!Array.isArray(profiles) || profiles.length !== 1 || typeof profiles[0]?.id !== "string") {
+    let matchedUserId: string | null = null;
+    let email: string | null = null;
+
+    if (Array.isArray(profiles) && profiles.length === 1 && typeof profiles[0]?.id === "string") {
+      matchedUserId = profiles[0].id;
+    } else if (Array.isArray(profiles) && profiles.length === 0) {
+      // New registrations store the mobile number in auth user metadata first.
+      // Their public profile is created only after the email is confirmed and login succeeds.
+      const usersUrl = new URL("/auth/v1/admin/users", supabaseUrl);
+      usersUrl.searchParams.set("page", "1");
+      usersUrl.searchParams.set("per_page", "1000");
+      const usersResponse = await fetch(usersUrl, {
+        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+      });
+      if (!usersResponse.ok) return json({ error: "लॉगिन सेवा अभी उपलब्ध नहीं है।" }, 503);
+      const usersPayload = await usersResponse.json();
+      const users = Array.isArray(usersPayload?.users) ? usersPayload.users : [];
+      const matches = users.filter((user: any) =>
+        normalizeIndianMobile(user?.user_metadata?.phone) === phone
+      );
+      if (matches.length === 1 && typeof matches[0]?.id === "string") {
+        matchedUserId = matches[0].id;
+        email = typeof matches[0]?.email === "string" ? matches[0].email : null;
+      }
+    }
+
+    if (!matchedUserId) {
       return json({ error: "मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।" }, 401);
     }
 
-    const userResponse = await fetch(
-      new URL(`/auth/v1/admin/users/${encodeURIComponent(profiles[0].id)}`, supabaseUrl),
-      { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } },
-    );
-    if (!userResponse.ok) return json({ error: "मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।" }, 401);
-    const userPayload = await userResponse.json();
-    const email = userPayload?.user?.email;
+    if (!email) {
+      const userResponse = await fetch(
+        new URL(`/auth/v1/admin/users/${encodeURIComponent(matchedUserId)}`, supabaseUrl),
+        { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } },
+      );
+      if (!userResponse.ok) return json({ error: "मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।" }, 401);
+      const userPayload = await userResponse.json();
+      email = typeof userPayload?.user?.email === "string" ? userPayload.user.email : null;
+    }
     if (typeof email !== "string" || !email) {
       return json({ error: "मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।" }, 401);
     }
