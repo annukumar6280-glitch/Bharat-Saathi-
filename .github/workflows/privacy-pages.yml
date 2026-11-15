@@ -32,6 +32,7 @@ jobs:
           mkdir -p _site
           cp docs/privacy-policy.html _site/privacy-policy.html
           cp docs/delete-account.html _site/delete-account.html
+          cp docs/email-confirmed.html _site/email-confirmed.html
       - name: Upload policy website
         uses: actions/upload-pages-artifact@v3
         with:
