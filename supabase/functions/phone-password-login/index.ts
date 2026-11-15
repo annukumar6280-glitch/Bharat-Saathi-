@@ -84,7 +84,10 @@ Deno.serve(async (req: Request) => {
       );
       if (!userResponse.ok) return json({ error: "मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।" }, 401);
       const userPayload = await userResponse.json();
-      email = typeof userPayload?.user?.email === "string" ? userPayload.user.email : null;
+      // The raw Auth Admin REST endpoint can return the user object directly;
+// tolerate the SDK-style { user: ... } wrapper as well.
+      const adminUser = userPayload?.user ?? userPayload;
+      email = typeof adminUser?.email === "string" ? adminUser.email : null;
     }
     if (typeof email !== "string" || !email) {
       return json({ error: "मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।" }, 401);
