@@ -74,6 +74,12 @@ void main() {
     expect(await LocalStore.read('account-b'), '{"cash":250}');
   });
 
+  test('Empty legacy preference is not treated as an old snapshot', () async {
+    expect(await LocalStore.hasUnassignedLegacyData(''), isFalse);
+    expect(await LocalStore.migrateLegacyForUser('account-a', ''), isTrue);
+    expect(await LocalStore.read('account-a'), isNull);
+  });
+
   test('Legacy local snapshot requires explicit account confirmation', () async {
     await LocalStore.declineLegacyForUser('account-a');
     expect(await LocalStore.wasLegacyDeclinedForUser('account-a'), isTrue);
