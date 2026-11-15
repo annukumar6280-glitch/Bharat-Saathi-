@@ -684,7 +684,7 @@ class _AuthPageState extends State<AuthPage>{
   Checkbox(value:acceptedLegalTerms,onChanged:busy?null:(value)=>setState(()=>acceptedLegalTerms=value??false),materialTapTargetSize:MaterialTapTargetSize.shrinkWrap,visualDensity:VisualDensity.compact),
   Expanded(child:Padding(padding:const EdgeInsets.only(top:8),child:Wrap(crossAxisAlignment:WrapCrossAlignment.center,children:[
    const Text('मैंने पढ़ लिया है और सहमत हूँ: ',style:TextStyle(fontSize:11)),
-   InkWell(onTap:()=>launchUrl(Uri.parse(privacyPolicyUrl),mode:LaunchMode.externalApplication),child:const Text('Privacy Policy',style:TextStyle(color:Color(0xFF2367B2),fontSize:11,decoration:TextDecoration.underline,fontWeight:FontWeight.w700))),
+   InkWell(onTap:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const PrivacyPolicyPage(english:true))),child:const Text('Privacy Policy',style:TextStyle(color:Color(0xFF2367B2),fontSize:11,decoration:TextDecoration.underline,fontWeight:FontWeight.w700))),
    const Text(' और ',style:TextStyle(fontSize:11)),
    InkWell(onTap:()=>launchUrl(Uri.parse(termsConditionsUrl),mode:LaunchMode.externalApplication),child:const Text('Terms & Conditions',style:TextStyle(color:Color(0xFF2367B2),fontSize:11,decoration:TextDecoration.underline,fontWeight:FontWeight.w700))),
    const Text('।',style:TextStyle(fontSize:11))
@@ -771,6 +771,55 @@ class TransactionHistoryPage extends StatelessWidget{
   ]);
  }
 }
+class PrivacyPolicyPage extends StatelessWidget{
+ final bool english;
+ const PrivacyPolicyPage({super.key,this.english=false});
+ static const List<List<String>> _hi=[
+  ['1. यह नीति किस पर लागू है','यह नीति Bharat Saathi मोबाइल ऐप, अकाउंट, लिंक्ड खाता और स्वचालित क्लाउड सिंक सुविधाओं पर लागू होती है।'],
+  ['2. डिवाइस पर सेव होने वाला डेटा','ऐप में आप ग्राहक/सप्लायर के नाम, बिक्री, खरीद, स्टॉक, खर्च, आय, उधारी, भुगतान, बजट और लेन-देन के नोट दर्ज कर सकते हैं। सामान्य कारोबारी रिकॉर्ड पहले आपके डिवाइस के स्थानीय डेटाबेस में सेव होते हैं।'],
+  ['3. अकाउंट और लॉगिन जानकारी','रजिस्ट्रेशन के समय Supabase Auth आपका ईमेल और पासवर्ड संभालता है। ऐप आपके दिए नाम और 10 अंकों के मोबाइल नंबर को प्रोफाइल से जोड़ता है। ईमेल सत्यापन के बाद मोबाइल नंबर और पासवर्ड से लॉगिन किया जा सकता है। पासवर्ड ऐप में पढ़ने योग्य रूप में सेव नहीं होता।'],
+  ['4. स्वचालित क्लाउड सिंक','लॉगिन रहने पर ऐप आपके स्थानीय रिकॉर्ड पहले डिवाइस में सेव करता है और इंटरनेट उपलब्ध होने पर उनका स्नैपशॉट Supabase क्लाउड बैकअप में अपने-आप सिंक करता है। बदलाव के कुछ सेकंड बाद सिंक शुरू होता है; नेटवर्क न होने पर रिकॉर्ड डिवाइस में सुरक्षित रहते हैं और ऐप दोबारा खुलने या नेटवर्क उपलब्ध होने पर फिर प्रयास करता है। ऐप पूरी तरह बंद रहने पर बैकग्राउंड सिंक की गारंटी नहीं है। क्लाउड डेटा उसी अकाउंट से लॉगिन करके दूसरे डिवाइस पर वापस लाया जा सकता है।'],
+  ['5. लिंक्ड खाता जानकारी','यदि आप लिंक्ड खाता सुविधा इस्तेमाल करते हैं, तो ऐप संबंधित मोबाइल नंबर, दुकान/प्रदर्शन नाम, जुड़े खातों का संबंध और दोनों पक्षों द्वारा दर्ज उधारी/भुगतान तथा नोट प्रोसेस करता है। यह जानकारी Supabase में रखी जाती है और संबंधित जुड़े प्रतिभागियों को सुविधा के नियमों के अनुसार दिखाई जाती है।'],
+  ['6. विज्ञापन और तकनीकी जानकारी','ऐप में Google Mobile Ads SDK के बैनर विज्ञापन शामिल हैं। वर्तमान डेवलपमेंट बिल्ड में Google के टेस्ट विज्ञापन आईडी उपयोग होते हैं। Google का SDK IP पता, विज्ञापन/ऐप पहचानकर्ता, विज्ञापन इंटरैक्शन और डायग्नोस्टिक जानकारी प्रोसेस कर सकता है। वास्तविक जानकारी SDK संस्करण और डिवाइस सेटिंग पर निर्भर करती है।'],
+  ['7. डेटा का उपयोग और सेवा प्रदाता','जानकारी का उपयोग लॉगिन, रिकॉर्ड सेव/सिंक/रीस्टोर, लिंक्ड खाता, सुरक्षा, तकनीकी सहायता और विज्ञापन दिखाने के लिए होता है। Supabase अकाउंट, डेटाबेस और क्लाउड सेवाएँ देता है। Google Mobile Ads विज्ञापन SDK देता है। हम व्यक्तिगत जानकारी बेचते नहीं हैं।'],
+  ['8. सुरक्षा और डेटा की अवधि','डिवाइस और सर्वर के बीच डेटा HTTPS/TLS के जरिए भेजा जाता है। स्थानीय डेटा ऐप का डेटा साफ करने या ऐप हटाने पर मिट सकता है। क्लाउड अकाउंट और संबंधित रिकॉर्ड अकाउंट सक्रिय रहने तक या सेवा देने के लिए आवश्यक अवधि तक रखे जा सकते हैं। किसी भी इंटरनेट सेवा में पूर्ण सुरक्षा की गारंटी नहीं दी जा सकती।'],
+  ['9. अकाउंट हटाना और आपकी पसंद','आप ऑफलाइन रिकॉर्डिंग बिना अकाउंट के कर सकते हैं; अकाउंट, लिंक्ड खाता और क्लाउड सिंक का उपयोग आपकी पसंद पर निर्भर है। अकाउंट हटाने के अनुरोध के लिए ऐप के सहायता केंद्र से संपर्क करें। अकाउंट हटाने पर सर्वर से जुड़े रिकॉर्ड हटाने की प्रक्रिया लागू होगी; दूसरे डिवाइस पर पहले से सेव स्थानीय कॉपी अपने-आप मिटे, इसकी गारंटी नहीं है।'],
+  ['10. बच्चों की गोपनीयता','Bharat Saathi सामान्य उत्पादकता और दुकान प्रबंधन ऐप है, बच्चों के लिए बनाया गया ऐप नहीं है। कृपया बच्चे की व्यक्तिगत जानकारी दर्ज न करें।'],
+  ['11. नीति में बदलाव','ऐप की सुविधाओं, SDK या कानूनी आवश्यकताओं में बदलाव होने पर यह नीति अपडेट की जा सकती है। नई नीति की प्रभावी तारीख इसी पेज पर दी जाएगी।'],
+  ['12. संपर्क','गोपनीयता, डेटा या अकाउंट संबंधी अनुरोध के लिए Bharat Saathi सहायता से WhatsApp पर संपर्क करें: 916283398317। अपना पासवर्ड या OTP कभी साझा न करें।']
+ ];
+ static const List<List<String>> _en=[
+  ['1. Scope','This policy applies to the Bharat Saathi mobile app, accounts, linked khata and automatic cloud-sync features.'],
+  ['2. Data stored on your device','You may enter customer and supplier names, sales, purchases, stock, expenses, income, credit, repayments, budgets and transaction notes. Ordinary business records are first saved in the local database on your device.'],
+  ['3. Account and login information','At registration, Supabase Auth handles your email address and password. The app associates the name and 10-digit mobile number you provide with your profile. After email verification, you can sign in using your mobile number and password. The app does not store your password in readable form.'],
+  ['4. Automatic cloud sync','While you are signed in, the app saves records locally first and automatically syncs a snapshot to your Supabase cloud backup when internet is available. Sync is scheduled shortly after changes. If offline, records remain on your device and sync is retried when the app resumes or while it is running. Background sync is not guaranteed while the app is fully closed. Cloud data can be restored on another device by signing in to the same account.'],
+  ['5. Linked khata information','If you use linked khata, the app processes the relevant mobile number, shop/display names, account relationship, and credit/payment entries and notes created by participants. This information is stored in Supabase and shared with linked participants according to the feature rules.'],
+  ['6. Advertising and diagnostics','The app includes the Google Mobile Ads SDK for banner ads. The current development build uses Google test ad identifiers. Google documentation indicates the SDK may process IP address, advertising or app-set identifiers, ad interactions and diagnostic information. Actual processing depends on SDK version and device settings.'],
+  ['7. Uses and service providers','Information is used for login, saving/syncing/restoring records, linked khata, security, support and displaying ads. Supabase provides authentication, database and cloud services. Google provides the mobile advertising SDK. We do not sell personal information.'],
+  ['8. Security and retention','Data is transmitted to services over HTTPS/TLS. Local data may be erased if you clear app data or uninstall the app. Cloud account and associated records may be retained while your account is active or as needed to provide the service. No internet service can guarantee absolute security.'],
+  ['9. Account deletion and your choices','You may use offline record-keeping without an account; account, linked khata and cloud sync are optional features. To request account deletion, contact Bharat Saathi support through the app. Account deletion is intended to remove associated server-side records; local copies already stored on other devices may not be erased automatically.'],
+  ['10. Children’s privacy','Bharat Saathi is a general productivity and shop-management app and is not designed for children. Do not enter a child’s personal information.'],
+  ['11. Policy changes','We may update this policy when app features, SDKs or legal requirements change. The effective date of the new policy will be shown on this page.'],
+  ['12. Contact','For privacy, data or account requests, contact Bharat Saathi support on WhatsApp: +91 6283398317. Never share your password or OTP.']
+ ];
+ @override Widget build(BuildContext context){
+  final sections=english?_en:_hi;
+  return Scaffold(appBar:AppBar(title:Text(english?'Privacy Policy':'प्राइवेसी पॉलिसी')),body:ListView(padding:const EdgeInsets.fromLTRB(16,8,16,28),children:[
+   Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(16)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text(english?'Bharat Saathi Privacy Policy':'भारत साथी – गोपनीयता नीति',style:const TextStyle(color:Colors.white,fontSize:21,fontWeight:FontWeight.w900)),
+    const SizedBox(height:6),Text(english?'Effective date: 15 November 2026':'प्रभावी तारीख: 15 नवंबर 2026',style:const TextStyle(color:Colors.white70,fontSize:12))
+   ])),
+   const SizedBox(height:8),
+   Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:surfaceColor,borderRadius:BorderRadius.circular(14),border:Border.all(color:borderColor)),child:Text(english?'Summary: Your records are stored locally first. When you are signed in and internet is available, the app automatically syncs a snapshot to your cloud backup.':'सारांश: आपके रिकॉर्ड पहले आपके मोबाइल में सेव होते हैं। लॉगिन और इंटरनेट उपलब्ध होने पर ऐप उनका स्नैपशॉट अपने-आप क्लाउड बैकअप में सिंक करता है।',style:TextStyle(color:navy,fontWeight:FontWeight.w700))),
+   for(final section in sections)Card(color:surfaceColor,margin:const EdgeInsets.only(top:10),child:Padding(padding:const EdgeInsets.all(15),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text(section[0],style:TextStyle(color:navy,fontSize:15,fontWeight:FontWeight.w900)),
+    const SizedBox(height:7),Text(section[1],style:TextStyle(color:muted,fontSize:13,height:1.55))
+   ]))),
+   const SizedBox(height:14),Center(child:Text('© 2026 Bharat Saathi',style:TextStyle(color:muted,fontSize:11)))
+  ]));
+ }
+}
+
 class ProfilePage extends StatelessWidget{
  final bool supabaseAvailable,english,darkMode;final Future<void> Function() onRestore;final ValueChanged<bool> onLanguage,onDarkMode;
  final List<Record> sales,expensesList,khata,personalTransactions;final List<Item> products;final List<Record> purchases,supplierLedger,salesReturns,stockAdjustments;
@@ -781,7 +830,7 @@ class ProfilePage extends StatelessWidget{
   return ListView(padding:const EdgeInsets.all(17),children:[
    heading(english?'Profile & Settings':'प्रोफाइल और सेटिंग',english?'Manage your account':'अपने अकाउंट को मैनेज करें'),
    setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
-   setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>launchUrl(Uri.parse(privacyPolicyUrl),mode:LaunchMode.externalApplication)),
+   setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const PrivacyPolicyPage(english:false)))),
    Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
    SwitchListTile(secondary:Icon(Icons.dark_mode_outlined,color:blue),title:Text(english?'Dark theme':'डार्क थीम',style:TextStyle(color:navy,fontWeight:FontWeight.w800)),subtitle:Text(english?'Professional deep-blue appearance':'ऑन करने पर पूरे ऐप में प्रोफेशनल ब्लू डार्क थीम लागू होगी',style:TextStyle(color:muted,fontSize:11)),value:darkMode,onChanged:onDarkMode,activeThumbColor:blue,contentPadding:EdgeInsets.symmetric(horizontal:14)),
     setting(Icons.percent_rounded,english?'Commission List':'कमीशन लिस्ट',english?'Self and referral commission by service':'हर सर्विस का सेल्फ और रेफरल कमीशन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommissionListPage(supabaseAvailable:supabaseAvailable)))),
