@@ -27,6 +27,15 @@ Future<void> flushStorage(WidgetTester tester) async {
   await tester.pump();
 }
 void main() {
+  testWidgets('Production auth gate shows login before any app page when signed out', (tester) async {
+    await tester.pumpWidget(const BharatSaathiApp(requireAuth: true, supabaseAvailable: false));
+    await tester.pumpAndSettle();
+    expect(find.text('अकाउंट और सुरक्षा'), findsOneWidget);
+    expect(find.text('आपका हिसाब, एक ही जगह'), findsNothing);
+    expect(find.text('बिल पेमेंट'), findsNothing);
+    expect(find.text('मोबाइल नंबर (10 अंक)'), findsOneWidget);
+  });
+
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
