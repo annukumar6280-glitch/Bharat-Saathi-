@@ -560,6 +560,29 @@ class _AuthPageState extends State<AuthPage>{
  if(mounted)setState(()=>busy=false);
  if(returnToHome&&mounted){homeTabRequest.value=homeTabRequest.value+1;Navigator.of(context).popUntil((route)=>route.isFirst);}
 }
+ Future<void> resendVerification()async{
+ if(!widget.supabaseAvailable){message('Supabase कनेक्शन उपलब्ध नहीं है।',error:true);return;}
+ final resendEmail=TextEditingController(text:email.text.trim());
+ final confirmed=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(
+  title:const Text('वेरिफिकेशन लिंक दोबारा भेजें'),
+  content:TextField(controller:resendEmail,keyboardType:TextInputType.emailAddress,autocorrect:false,decoration:const InputDecoration(labelText:'रजिस्ट्रेशन वाला ईमेल')),
+  actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('लिंक भेजें'))]
+ ));
+ if(confirmed!=true){resendEmail.dispose();return;}
+ final mail=resendEmail.text.trim();resendEmail.dispose();
+ if(!mail.contains('@')){message('रजिस्ट्रेशन वाला सही ईमेल भरें।',error:true);return;}
+ setState(()=>busy=true);
+ try{
+  await client.auth.resend(
+   type:OtpType.signup,
+   email:mail,
+   emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'
+  );
+  message('यदि इस ईमेल का रजिस्ट्रेशन अभी कन्फर्म नहीं हुआ है, तो नया लिंक भेजने का अनुरोध सफल हुआ। Inbox और Spam फ़ोल्डर देखें।');
+ }on AuthException catch(e){message(e.message,error:true);}
+ catch(_){message('वेरिफिकेशन ईमेल नहीं भेजा जा सका। ईमेल और Auth/SMTP सेटिंग जाँचें।',error:true);}
+ if(mounted)setState(()=>busy=false);
+}
  Future<void> resetPassword()async{
  if(!widget.supabaseAvailable){message('Supabase कनेक्शन उपलब्ध नहीं है।',error:true);return;}
  final resetEmail=TextEditingController();
@@ -634,6 +657,7 @@ class _AuthPageState extends State<AuthPage>{
   const SizedBox(width:8),
   Expanded(child:OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=true),style:OutlinedButton.styleFrom(minimumSize:const Size(0,34),padding:const EdgeInsets.symmetric(horizontal:8,vertical:6),visualDensity:VisualDensity.compact,side:BorderSide(color:signUp?blue:borderColor,width:signUp?1.5:1)),child:Text('रजिस्टर करें',style:TextStyle(fontSize:12,fontWeight:signUp?FontWeight.w800:FontWeight.w500))))
  ])),
+ if(!signUp)TextButton(onPressed:busy?null:resendVerification,child:const Text('वेरिफिकेशन लिंक दोबारा भेजें')),
  if(!signUp)TextButton(onPressed:busy?null:resetPassword,child:const Text('पासवर्ड भूल गए? ईमेल से रीसेट करें'))
  ],
  if(notice!=null)Padding(padding:EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:errorNotice?red:green,fontSize:12,fontWeight:FontWeight.w700)))
