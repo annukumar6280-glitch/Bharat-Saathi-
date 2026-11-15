@@ -259,12 +259,12 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
    if(hasLegacy&&!legacyDeclined){
     if(!mounted)return;
     final importLegacy=await showDialog<bool>(context:context,barrierDismissible:false,builder:(dialogContext)=>AlertDialog(
-     title:const Text('पुराने डेटा की पहचान'),
-     content:const Text('इस फोन में पिछले संस्करण के रिकॉर्ड मिले हैं। उन्हें केवल उसी अकाउंट में जोड़ें जो पहले इस फोन पर इस्तेमाल होता था। अगर यह दूसरा अकाउंट है, तो “अभी नहीं” चुनें। पुराना डेटा किसी दूसरे अकाउंट में अपने-आप नहीं जाएगा।'),
+     title:const Text('पुराने डेटा की पहचान / Legacy data found'),
+     content:const Text('इस फोन में पिछले संस्करण के रिकॉर्ड मिले हैं। उन्हें केवल उसी अकाउंट में जोड़ें जो पहले इस फोन पर इस्तेमाल होता था। अगर यह दूसरा अकाउंट है, तो “अभी नहीं” चुनें। पुराना डेटा किसी दूसरे अकाउंट में अपने-आप नहीं जाएगा।\n\nLegacy records from an earlier app version were found. Import them only into the account that previously used this phone. Choose “Not now” if this is a different account. The data will not be assigned automatically to another account.'),
      actions:[
-      TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('अभी नहीं')),
-      TextButton(onPressed:()=>Navigator.pop(dialogContext,false),child:const Text('इस अकाउंट में नहीं जोड़ें')),
-      FilledButton(onPressed:()=>Navigator.pop(dialogContext,true),child:const Text('इसी अकाउंट में जोड़ें')),
+      TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('अभी नहीं / Not now')),
+      TextButton(onPressed:()=>Navigator.pop(dialogContext,false),child:const Text('इस अकाउंट में नहीं जोड़ें / Do not add')),
+      FilledButton(onPressed:()=>Navigator.pop(dialogContext,true),child:const Text('इसी अकाउंट में जोड़ें / Add to this account')),
      ],
     ));
     if(!mounted)return;
@@ -274,9 +274,9 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
      if(!migrated){
       if(!mounted)return;
       await showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
-       title:const Text('पुराना डेटा अभी नहीं जोड़ा गया'),
-       content:const Text('इस अकाउंट में पहले से रिकॉर्ड हैं। उन्हें सुरक्षित रखने के लिए पुराने रिकॉर्ड से बदला नहीं गया। पुराना डेटा अलग रखा गया है; दूसरे सही अकाउंट से लॉगिन करके उसे जोड़ सकते हैं।'),
-       actions:[FilledButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('ठीक है'))],
+       title:const Text('पुराना डेटा अभी नहीं जोड़ा गया / Legacy data not imported'),
+       content:const Text('इस अकाउंट में पहले से रिकॉर्ड हैं। उन्हें सुरक्षित रखने के लिए पुराने रिकॉर्ड से बदला नहीं गया। पुराना डेटा अलग रखा गया है; दूसरे सही अकाउंट से लॉगिन करके उसे जोड़ सकते हैं।\n\nThis account already has records. They were not overwritten. The older snapshot remains separate and can be assigned to another correct account.'),
+       actions:[FilledButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('ठीक है / OK'))],
       ));
      }
     }else if(importLegacy==false){
