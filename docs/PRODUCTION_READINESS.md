@@ -8,8 +8,8 @@ Last reviewed: 15 November 2026. This document describes the current source in `
 - Login using the registered mobile number and password.
 - Profile and account settings, Hindi/English language selection and dark theme.
 - Personal finance income/expense records, net balance and user-defined spending limit.
+- Shop and personal khata, linked khata, expense records and service history. Product, purchase, sales and stock-management code has been removed from the Android app.
 - Current navigation: Dashboard, Khata, Expenses, History and Profile. Khata provides shop/personal ledgers and linked khata; Expenses records business expenses; History lists successful service transactions; Profile provides account/settings and cloud-restore access.
-- Stock, product, purchase, sales and return classes remain in the source as legacy/unused implementation pieces, but current navigation and widget tests do not expose stock or sales-management screens. Do not describe these as active user-facing features. Older records may still exist in legacy local snapshots and exports.
 - Reports with date filtering and CSV export.
 - Linked khata, referral code/history and commission list/settings screens.
 - Recharge, BBPS, challan, UPI payment/transfer, wallet/payout and other provider-dependent transactions remain marked Coming Soon; no real provider transaction should be simulated.
