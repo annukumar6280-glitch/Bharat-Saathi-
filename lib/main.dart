@@ -81,7 +81,17 @@ class LocalStore {
   if(rows.isEmpty)return null;
   return DateTime.tryParse(rows.first['updated_at'] as String);
  }
- static Future<void> clear([String? userId])async{final db=await database;if(userId==null){await db.delete('app_state');}else{await db.delete('app_state',where:'user_id = ?',whereArgs:[userId]);}}
+ static Future<void> clear([String? userId])async{
+  final db=await database;
+  if(userId==null){
+   await db.delete('app_state');
+   await db.delete('app_meta');
+   final oldTable=await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_app_state'");
+   if(oldTable.isNotEmpty)await db.delete('legacy_app_state');
+  }else{
+   await db.delete('app_state',where:'user_id = ?',whereArgs:[userId]);
+  }
+ }
  static Future<void> write(String userId,String payload)async{
   final db=await database;
   await db.transaction((txn)async{
