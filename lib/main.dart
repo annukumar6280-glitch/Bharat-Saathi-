@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
@@ -13,7 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 const supabaseUrl='https://nlfdqkkrwthobvwqfepl.supabase.co';
 const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
 const privacyPolicyUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/privacy-policy.html';
-Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready));}
+Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));}
 
 bool bannerAdsEnabled=true;
 const String _bannerAdUnitId='ca-app-pub-3940256099942544/6300978111';
@@ -71,7 +72,42 @@ ThemeData buildAppTheme(bool dark){
  final scheme=ColorScheme.fromSeed(seedColor:dark?const Color(0xFF6FA4E8):const Color(0xFF29496D),brightness:dark?Brightness.dark:Brightness.light).copyWith(primary:dark?const Color(0xFF9CC3FF):const Color(0xFF14233B),secondary:dark?const Color(0xFF64C9C1):const Color(0xFF168C86),surface:dark?const Color(0xFF17263B):const Color(0xFFF8FAFD),onSurface:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B));
  return ThemeData(useMaterial3:true,brightness:dark?Brightness.dark:Brightness.light,scaffoldBackgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF4F6FB),colorScheme:scheme,appBarTheme:AppBarTheme(backgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF4F6FB),foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),elevation:0,centerTitle:false),cardTheme:CardThemeData(color:dark?const Color(0xFF17263B):Colors.white),inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:dark?const Color(0xFF17263B):Colors.white,contentPadding:const EdgeInsets.symmetric(horizontal:14,vertical:14),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFF6FA4E8),width:1.5))),filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:dark?const Color(0xFF315A8A):const Color(0xFF14233B),foregroundColor:Colors.white,minimumSize:const Size(0,48),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),minimumSize:const Size(0,46),side:BorderSide(color:dark?const Color(0xFF526985):const Color(0xFFCCD6E4)),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating));
 }
-class BharatSaathiApp extends StatelessWidget{final bool supabaseAvailable;const BharatSaathiApp({super.key,this.supabaseAvailable=false});@override Widget build(BuildContext context)=>ValueListenableBuilder<bool>(valueListenable:appDarkMode,builder:(context,isDark,_)=>MaterialApp(title:'Bharat Saathi',debugShowCheckedModeBanner:false,theme:buildAppTheme(false),darkTheme:buildAppTheme(true),themeMode:isDark?ThemeMode.dark:ThemeMode.light,home:RetailerHome(supabaseAvailable:supabaseAvailable)));}
+class BharatSaathiApp extends StatelessWidget{
+ final bool supabaseAvailable,requireAuth;
+ const BharatSaathiApp({super.key,this.supabaseAvailable=false,this.requireAuth=false});
+ @override Widget build(BuildContext context)=>ValueListenableBuilder<bool>(
+  valueListenable:appDarkMode,
+  builder:(context,isDark,_)=>MaterialApp(
+   title:'Bharat Saathi',debugShowCheckedModeBanner:false,
+   theme:buildAppTheme(false),darkTheme:buildAppTheme(true),
+   themeMode:isDark?ThemeMode.dark:ThemeMode.light,
+   home:requireAuth?AuthGate(supabaseAvailable:supabaseAvailable):RetailerHome(supabaseAvailable:supabaseAvailable)
+  )
+ );
+}
+class AuthGate extends StatefulWidget{
+ final bool supabaseAvailable;
+ const AuthGate({super.key,required this.supabaseAvailable});
+ @override State<AuthGate> createState()=>_AuthGateState();
+}
+class _AuthGateState extends State<AuthGate>{
+ bool _signedIn=false;
+ StreamSubscription<AuthState>? _authSubscription;
+ @override void initState(){
+  super.initState();
+  if(widget.supabaseAvailable){
+   _signedIn=Supabase.instance.client.auth.currentSession!=null;
+   _authSubscription=Supabase.instance.client.auth.onAuthStateChange.listen((state){
+    if(mounted)setState(()=>_signedIn=state.session!=null);
+   });
+  }
+ }
+ @override void dispose(){_authSubscription?.cancel();super.dispose();}
+ @override Widget build(BuildContext context){
+  if(!widget.supabaseAvailable)return const AuthPage(supabaseAvailable:false);
+  return _signedIn?RetailerHome(supabaseAvailable:widget.supabaseAvailable):AuthPage(supabaseAvailable:widget.supabaseAvailable);
+ }
+}
 class Item{String name,detail;int qty;double price;Item(this.name,this.detail,this.qty,this.price);Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'qty':qty,'price':price};factory Item.fromJson(Map<String,dynamic> j)=>Item(j['name'] as String,j['detail'] as String,(j['qty'] as num).toInt(),(j['price'] as num).toDouble());}
 class Record{String name,detail;double amount;IconData icon;DateTime? createdAt;Record(this.name,this.detail,this.amount,this.icon,[DateTime? timestamp]):createdAt=timestamp??DateTime.now();Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint,'createdAt':createdAt?.toIso8601String()};factory Record.fromJson(Map<String,dynamic> j){final timestamp=j['createdAt'] is String?DateTime.tryParse(j['createdAt'] as String):null;return Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long,timestamp)..createdAt=timestamp;}}
 class RetailerHome extends StatefulWidget{final bool supabaseAvailable;const RetailerHome({super.key,this.supabaseAvailable=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
@@ -457,6 +493,7 @@ class KhataPage extends StatelessWidget {
     );
   }
 }
+String _normalizeIndianMobile(String value){var digits=value.replaceAll(RegExp(r'[^0-9]'),'');if(digits.length==12&&digits.startsWith('91'))digits=digits.substring(2);if(digits.length==11&&digits.startsWith('0'))digits=digits.substring(1);return digits;}
 String _uuidV4(){final random=Random.secure();final bytes=List<int>.generate(16,(_)=>random.nextInt(256));bytes[6]=(bytes[6]&0x0f)|0x40;bytes[8]=(bytes[8]&0x3f)|0x80;final h=bytes.map((b)=>b.toRadixString(16).padLeft(2,'0')).join();return '${h.substring(0,8)}-${h.substring(8,12)}-${h.substring(12,16)}-${h.substring(16,20)}-${h.substring(20)}';}
 class AuthPage extends StatefulWidget{final bool supabaseAvailable;const AuthPage({super.key,required this.supabaseAvailable});@override State<AuthPage> createState()=>_AuthPageState();}
 class _AuthPageState extends State<AuthPage>{
@@ -466,7 +503,8 @@ class _AuthPageState extends State<AuthPage>{
  Future<void> _ensureProfileAndAccounts()async{
  final user=client.auth.currentUser;if(user==null)throw const AuthException('लॉगिन सत्र उपलब्ध नहीं है');
  final name=fullName.text.trim().isNotEmpty?fullName.text.trim():(user.email??'Bharat Saathi').split('@').first;
- await client.from('profiles').upsert({'id':user.id,'full_name':name,'phone':phone.text.trim().isNotEmpty?phone.text.trim():(user.userMetadata?['phone'] as String? ?? ''),'preferred_language':'hi'});
+ final mobile=_normalizeIndianMobile(phone.text.trim().isNotEmpty?phone.text.trim():(user.userMetadata?['phone'] as String? ?? ''));
+  await client.from('profiles').upsert({'id':user.id,'full_name':name,'phone':mobile,'preferred_language':'hi'});
  final existing=await client.from('accounts').select('id,account_type').eq('created_by',user.id);
  final types=<String>{for(final row in existing)(row['account_type'] as String)};
  for(final type in ['personal','retailer']){
@@ -477,34 +515,61 @@ class _AuthPageState extends State<AuthPage>{
  }
  }
  Future<void> submit()async{
- if(!widget.supabaseAvailable){message('Supabase अभी उपलब्ध नहीं है।',error:true);return;}
+ if(!widget.supabaseAvailable){message('लॉगिन सेवा उपलब्ध नहीं है। इंटरनेट कनेक्शन जाँचें।',error:true);return;}
+ final mobile=_normalizeIndianMobile(phone.text.trim());
  final mail=email.text.trim();
- if(!mail.contains('@')||password.text.length<8||(signUp&&(fullName.text.trim().isEmpty||phone.text.replaceAll(RegExp(r'[^0-9]'),'').length!=10))){message('नाम, सही ईमेल, 10 अंकों का मोबाइल और कम-से-कम 8 अक्षर का पासवर्ड भरें।',error:true);return;}
+ final validMobile=RegExp(r'^[6-9][0-9]{9}$').hasMatch(mobile);
+ if(password.text.length<8||!validMobile||(signUp&&(!mail.contains('@')||fullName.text.trim().isEmpty))){
+  message(signUp?'नाम, सही ईमेल, 10 अंकों का मोबाइल और कम-से-कम 8 अक्षर का पासवर्ड भरें।':'10 अंकों का सही मोबाइल नंबर और कम-से-कम 8 अक्षर का पासवर्ड भरें।',error:true);return;
+ }
  setState(()=>busy=true);
  var returnToHome=false;
  try{
- if(signUp){
- final response=await client.auth.signUp(email:mail,password:password.text,data:{'full_name':fullName.text.trim(),'phone':phone.text.trim()},options:SignUpOptions(emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'));
- if(response.session==null){message('रजिस्ट्रेशन अनुरोध स्वीकार हुआ। ईमेल सत्यापन पूरा करके फिर लॉगिन करें।');}
- else{await _ensureProfileAndAccounts();returnToHome=true;}
- }else{
- await client.auth.signInWithPassword(email:mail,password:password.text);
- await _ensureProfileAndAccounts();
- returnToHome=true;
+  if(signUp){
+   final response=await client.auth.signUp(
+    email:mail,password:password.text,
+    data:{'full_name':fullName.text.trim(),'phone':mobile},
+    options:SignUpOptions(emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html')
+   );
+   if(response.session==null){message('रजिस्ट्रेशन अनुरोध स्वीकार हुआ। ईमेल पर भेजे गए लिंक से सत्यापन पूरा करें। फिर मोबाइल नंबर और पासवर्ड से लॉगिन करें।');}
+   else{await _ensureProfileAndAccounts();returnToHome=true;}
+  }else{
+   final response=await client.functions.invoke('phone-password-login',body:{'phone':mobile,'password':password.text});
+   final payload=response.data;
+   if(response.status!=200||payload is! Map||payload['refresh_token'] is! String){
+    final serverMessage=payload is Map?payload['error']?.toString():null;
+    throw AuthException(serverMessage??'मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।');
+   }
+   await client.auth.setSession(payload['refresh_token'] as String);
+   await _ensureProfileAndAccounts();
+   returnToHome=true;
+  }
+ }on AuthException catch(e){message(e.message,error:true);}
+ on PostgrestException catch(e){message(e.message.contains('profiles_phone_normalized_unique')?'यह मोबाइल नंबर किसी दूसरे अकाउंट से जुड़ा हुआ है। दूसरा नंबर इस्तेमाल करें।':'डेटाबेस सेटअप त्रुटि: ${e.message}',error:true);}
+ catch(e){
+  final detail=e.toString().toLowerCase();
+  message(detail.contains('401')||detail.contains('invalid login')||detail.contains('unauthorized')?'मोबाइल नंबर या पासवर्ड गलत है, या ईमेल सत्यापन बाकी है।':'कनेक्शन या अकाउंट सेटअप पूरा नहीं हुआ। दोबारा प्रयास करें।',error:true);
  }
- }on AuthException catch(e){message(e.message,error:true);}on PostgrestException catch(e){message('डेटाबेस सेटअप त्रुटि: ${e.message}',error:true);}catch(e){message('कनेक्शन या अकाउंट सेटअप पूरा नहीं हुआ। दोबारा प्रयास करें।',error:true);}
  if(mounted)setState(()=>busy=false);
  if(returnToHome&&mounted){homeTabRequest.value=homeTabRequest.value+1;Navigator.of(context).popUntil((route)=>route.isFirst);}
- }
+}
  Future<void> resetPassword()async{
  if(!widget.supabaseAvailable){message('Supabase कनेक्शन उपलब्ध नहीं है।',error:true);return;}
- final mail=email.text.trim();if(!mail.contains('@')){message('पहले सही ईमेल पता भरें।',error:true);return;}
+ final resetEmail=TextEditingController();
+ final confirmed=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(
+  title:const Text('पासवर्ड रीसेट करें'),
+  content:TextField(controller:resetEmail,keyboardType:TextInputType.emailAddress,decoration:const InputDecoration(labelText:'रजिस्ट्रेशन वाला ईमेल')),
+  actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:const Text('रीसेट ईमेल भेजें'))]
+ ));
+ if(confirmed!=true){resetEmail.dispose();return;}
+ final resetMail=resetEmail.text.trim();resetEmail.dispose();
+ if(!resetMail.contains('@')){message('पासवर्ड रीसेट के लिए सही रजिस्ट्रेशन ईमेल भरें।',error:true);return;}
  setState(()=>busy=true);
- try{await client.auth.resetPasswordForEmail(mail);message('पासवर्ड रीसेट ईमेल भेजने का अनुरोध सफल हुआ। ईमेल में दिए लिंक का उपयोग करें।');}
- on AuthException catch(e){message(e.message,error:true);}catch(_){message('रीसेट ईमेल नहीं भेजा जा सका। ईमेल और Supabase SMTP सेटिंग जाँचें।',error:true);}
+ try{await client.auth.resetPasswordForEmail(resetMail);message('पासवर्ड रीसेट ईमेल भेजने का अनुरोध सफल हुआ।');}
+ on AuthException catch(e){message(e.message,error:true);}catch(_){message('रीसेट ईमेल नहीं भेजा जा सका। ईमेल और SMTP सेटिंग जाँचें।',error:true);}
  if(mounted)setState(()=>busy=false);
- }
- Future<void> signOut()async{setState(()=>busy=true);try{await client.auth.signOut();message('लॉगआउट हो गया।');}catch(_){message('लॉगआउट पूरा नहीं हुआ।',error:true);}if(mounted)setState(()=>busy=false);}
+}
+ Future<void> signOut()async{setState(()=>busy=true);try{await client.auth.signOut();if(mounted)Navigator.of(context).popUntil((route)=>route.isFirst);}catch(_){message('लॉगआउट पूरा नहीं हुआ।',error:true);}if(mounted)setState(()=>busy=false);}
  Future<void> deleteAccount()async{
   final confirmed=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(
    title:const Text('अकाउंट हमेशा के लिए डिलीट करें?'),
@@ -540,13 +605,15 @@ class _AuthPageState extends State<AuthPage>{
  ]else...[
  if(signUp)TextField(controller:fullName,decoration:const InputDecoration(labelText:'पूरा नाम',prefixIcon:Icon(Icons.person_outline))),
  if(signUp)const SizedBox(height:10),
- if(signUp)TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'मोबाइल नंबर (10 अंक)',prefixIcon:Icon(Icons.phone_android))),
-  if(signUp)const SizedBox(height:10),
-  TextField(controller:email,keyboardType:TextInputType.emailAddress,autocorrect:false,decoration:const InputDecoration(labelText:'ईमेल',prefixIcon:Icon(Icons.email_outlined))),
- const SizedBox(height:10),TextField(controller:password,obscureText:!showPassword,decoration:InputDecoration(labelText:'पासवर्ड (कम-से-कम 8 अक्षर)',prefixIcon:const Icon(Icons.lock_outline),suffixIcon:IconButton(onPressed:()=>setState(()=>showPassword=!showPassword),icon:Icon(showPassword?Icons.visibility_off:Icons.visibility)))),
- SizedBox(height:16),FilledButton(onPressed:busy?null:submit,style:FilledButton.styleFrom(backgroundColor:navy,padding:EdgeInsets.all(15)),child:Text(busy?'कृपया प्रतीक्षा करें':signUp?'अकाउंट बनाएं':'लॉगिन करें')),
+ if(signUp)TextField(controller:email,keyboardType:TextInputType.emailAddress,autocorrect:false,decoration:const InputDecoration(labelText:'ईमेल आईडी (कन्फर्मेशन के लिए)',prefixIcon:Icon(Icons.email_outlined))),
+ if(signUp)const SizedBox(height:10),
+ TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'मोबाइल नंबर (10 अंक)',prefixIcon:Icon(Icons.phone_android),hintText:'जैसे 9876543210')),
+ const SizedBox(height:10),
+ TextField(controller:password,obscureText:!showPassword,decoration:InputDecoration(labelText:'पासवर्ड (कम-से-कम 8 अक्षर)',prefixIcon:const Icon(Icons.lock_outline),suffixIcon:IconButton(onPressed:()=>setState(()=>showPassword=!showPassword),icon:Icon(showPassword?Icons.visibility_off:Icons.visibility)))),
+ if(signUp)Padding(padding:const EdgeInsets.only(top:8),child:Text('रजिस्ट्रेशन के बाद ईमेल पर आए लिंक से अकाउंट कन्फर्म करें। लॉगिन मोबाइल नंबर और पासवर्ड से होगा।',style:TextStyle(color:muted,fontSize:11))),
+ SizedBox(height:16),FilledButton(onPressed:busy?null:submit,style:FilledButton.styleFrom(backgroundColor:navy,padding:EdgeInsets.all(15)),child:Text(busy?'कृपया प्रतीक्षा करें':signUp?'अकाउंट बनाएं':'मोबाइल नंबर से लॉगिन करें')),
  Row(children:[Expanded(child:signUp?OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=false),child:const Text('लॉगिन करें')):FilledButton(onPressed:busy?null:()=>setState(()=>signUp=false),child:const Text('लॉगिन करें'))),const SizedBox(width:10),Expanded(child:signUp?FilledButton(onPressed:busy?null:()=>setState(()=>signUp=true),child:const Text('रजिस्टर करें')):OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=true),child:const Text('रजिस्टर करें')))]),
- if(!signUp)TextButton(onPressed:busy?null:resetPassword,child:const Text('पासवर्ड भूल गए? रीसेट ईमेल भेजें'))
+ if(!signUp)TextButton(onPressed:busy?null:resetPassword,child:const Text('पासवर्ड भूल गए? ईमेल से रीसेट करें'))
  ],
  if(notice!=null)Padding(padding:EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:errorNotice?red:green,fontSize:12,fontWeight:FontWeight.w700)))
  ]));
