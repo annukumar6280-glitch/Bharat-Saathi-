@@ -14,6 +14,8 @@ import 'package:url_launcher/url_launcher.dart';
 const supabaseUrl='https://nlfdqkkrwthobvwqfepl.supabase.co';
 const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
 const privacyPolicyUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/privacy-policy.html';
+const termsConditionsUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/terms-and-conditions.html';
+const termsVersion='1.0';
 Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));}
 
 bool bannerAdsEnabled=true;
@@ -499,7 +501,7 @@ String _normalizeIndianMobile(String value){var digits=value.replaceAll(RegExp(r
 String _uuidV4(){final random=Random.secure();final bytes=List<int>.generate(16,(_)=>random.nextInt(256));bytes[6]=(bytes[6]&0x0f)|0x40;bytes[8]=(bytes[8]&0x3f)|0x80;final h=bytes.map((b)=>b.toRadixString(16).padLeft(2,'0')).join();return '${h.substring(0,8)}-${h.substring(8,12)}-${h.substring(12,16)}-${h.substring(16,20)}-${h.substring(20)}';}
 class AuthPage extends StatefulWidget{final bool supabaseAvailable;const AuthPage({super.key,required this.supabaseAvailable});@override State<AuthPage> createState()=>_AuthPageState();}
 class _AuthPageState extends State<AuthPage>{
- final email=TextEditingController(),password=TextEditingController(),fullName=TextEditingController(),phone=TextEditingController();bool signUp=false,busy=false,showPassword=false;String? notice;bool errorNotice=false;
+ final email=TextEditingController(),password=TextEditingController(),fullName=TextEditingController(),phone=TextEditingController();bool signUp=false,busy=false,showPassword=false,acceptedLegalTerms=false;String? notice;bool errorNotice=false;
  SupabaseClient get client=>Supabase.instance.client;
  void message(String text,{bool error=false}){if(!mounted)return;setState((){notice=text;errorNotice=error;});}
  Future<void> _ensureProfileAndAccounts({String? nameOverride,String? mobileOverride})async{
@@ -523,6 +525,7 @@ class _AuthPageState extends State<AuthPage>{
  final mail=email.text.trim();
  final enteredName=fullName.text.trim();
  final validMobile=RegExp(r'^[6-9][0-9]{9}$').hasMatch(mobile);
+ if(signUp&&!acceptedLegalTerms){message('रजिस्ट्रेशन जारी रखने के लिए Privacy Policy और Terms & Conditions से सहमति दें।',error:true);return;}
  if(password.text.length<8||!validMobile||(signUp&&(!mail.contains('@')||fullName.text.trim().isEmpty))){
   message(signUp?'नाम, सही ईमेल, 10 अंकों का मोबाइल और कम-से-कम 8 अक्षर का पासवर्ड भरें।':'10 अंकों का सही मोबाइल नंबर और कम-से-कम 8 अक्षर का पासवर्ड भरें।',error:true);return;
  }
@@ -532,7 +535,7 @@ class _AuthPageState extends State<AuthPage>{
   if(signUp){
    final response=await client.auth.signUp(
     email:mail,password:password.text,
-    data:{'full_name':enteredName,'phone':mobile},
+    data:{'full_name':enteredName,'phone':mobile,'accepted_terms':true,'terms_version':termsVersion,'terms_accepted_at':DateTime.now().toUtc().toIso8601String()},
     emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'
    );
    if(response.session==null){if(mounted)setState(()=>signUp=false);message('रजिस्ट्रेशन हो गया। ईमेल पर आए लिंक से अकाउंट कन्फर्म करें। उसके बाद मोबाइल नंबर और पासवर्ड से लॉगिन करें।');}
@@ -615,8 +618,22 @@ class _AuthPageState extends State<AuthPage>{
  const SizedBox(height:10),
  TextField(controller:password,obscureText:!showPassword,decoration:InputDecoration(labelText:'पासवर्ड (कम-से-कम 8 अक्षर)',prefixIcon:const Icon(Icons.lock_outline),suffixIcon:IconButton(onPressed:()=>setState(()=>showPassword=!showPassword),icon:Icon(showPassword?Icons.visibility_off:Icons.visibility)))),
  if(signUp)Padding(padding:const EdgeInsets.only(top:8),child:Text('रजिस्ट्रेशन के बाद ईमेल पर आए लिंक से अकाउंट कन्फर्म करें। लॉगिन मोबाइल नंबर और पासवर्ड से होगा।',style:TextStyle(color:muted,fontSize:11))),
+ if(signUp)Padding(padding:const EdgeInsets.only(top:10),child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
+  Checkbox(value:acceptedLegalTerms,onChanged:busy?null:(value)=>setState(()=>acceptedLegalTerms=value??false),materialTapTargetSize:MaterialTapTargetSize.shrinkWrap,visualDensity:VisualDensity.compact),
+  Expanded(child:Padding(padding:const EdgeInsets.only(top:8),child:Wrap(crossAxisAlignment:WrapCrossAlignment.center,children:[
+   const Text('मैंने पढ़ लिया है और सहमत हूँ: ',style:TextStyle(fontSize:11)),
+   InkWell(onTap:()=>launchUrl(Uri.parse(privacyPolicyUrl),mode:LaunchMode.externalApplication),child:const Text('Privacy Policy',style:TextStyle(color:Color(0xFF2367B2),fontSize:11,decoration:TextDecoration.underline,fontWeight:FontWeight.w700))),
+   const Text(' और ',style:TextStyle(fontSize:11)),
+   InkWell(onTap:()=>launchUrl(Uri.parse(termsConditionsUrl),mode:LaunchMode.externalApplication),child:const Text('Terms & Conditions',style:TextStyle(color:Color(0xFF2367B2),fontSize:11,decoration:TextDecoration.underline,fontWeight:FontWeight.w700))),
+   const Text('।',style:TextStyle(fontSize:11))
+  ])))
+ ])),
  SizedBox(height:16),FilledButton(onPressed:busy?null:submit,style:FilledButton.styleFrom(backgroundColor:navy,padding:EdgeInsets.all(15)),child:Text(busy?'कृपया प्रतीक्षा करें':signUp?'अकाउंट बनाएं':'मोबाइल नंबर से लॉगिन करें')),
- Row(children:[Expanded(child:signUp?OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=false),child:const Text('लॉगिन करें')):FilledButton(onPressed:busy?null:()=>setState(()=>signUp=false),child:const Text('लॉगिन करें'))),const SizedBox(width:10),Expanded(child:signUp?FilledButton(onPressed:busy?null:()=>setState(()=>signUp=true),child:const Text('रजिस्टर करें')):OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=true),child:const Text('रजिस्टर करें')))]),
+ Padding(padding:const EdgeInsets.only(top:6),child:Row(children:[
+  Expanded(child:OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=false),style:OutlinedButton.styleFrom(minimumSize:const Size(0,34),padding:const EdgeInsets.symmetric(horizontal:8,vertical:6),visualDensity:VisualDensity.compact),child:Text('Login',style:TextStyle(fontSize:12,fontWeight:!signUp?FontWeight.w800:FontWeight.w500)))),
+  const SizedBox(width:8),
+  Expanded(child:OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=true),style:OutlinedButton.styleFrom(minimumSize:const Size(0,34),padding:const EdgeInsets.symmetric(horizontal:8,vertical:6),visualDensity:VisualDensity.compact,side:BorderSide(color:signUp?blue:borderColor,width:signUp?1.5:1)),child:Text('Register',style:TextStyle(fontSize:12,fontWeight:signUp?FontWeight.w800:FontWeight.w500))))
+ ])),
  if(!signUp)TextButton(onPressed:busy?null:resetPassword,child:const Text('पासवर्ड भूल गए? ईमेल से रीसेट करें'))
  ],
  if(notice!=null)Padding(padding:EdgeInsets.only(top:14),child:Text(notice!,style:TextStyle(color:errorNotice?red:green,fontSize:12,fontWeight:FontWeight.w700)))
