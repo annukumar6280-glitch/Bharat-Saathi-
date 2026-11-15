@@ -31,7 +31,7 @@ void main() {
     await tester.pumpWidget(const BharatSaathiApp(requireAuth: true, supabaseAvailable: false));
     await tester.pumpAndSettle();
     expect(find.text('अकाउंट और सुरक्षा'), findsOneWidget);
-    expect(find.text('आपका हिसाब, एक ही जगह'), findsNothing);
+    expect(find.text('आपका खाता'), findsNothing);
     expect(find.text('बिल पेमेंट'), findsNothing);
     expect(find.text('मोबाइल नंबर (10 अंक)'), findsOneWidget);
   });
@@ -69,7 +69,7 @@ void main() {
 
   testWidgets('Home shows the four requested service icons and no inventory navigation', (tester) async {
     await pumpApp(tester);
-    expect(find.text('आपका हिसाब, एक ही जगह'), findsOneWidget);
+    expect(find.text('आपका खाता'), findsOneWidget);
     expect(find.text('खाता बुक'), findsOneWidget);
     expect(find.text('मोबाइल रिचार्ज'), findsOneWidget);
     expect(find.text('बिल पेमेंट'), findsOneWidget);
