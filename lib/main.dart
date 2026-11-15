@@ -630,9 +630,9 @@ class _AuthPageState extends State<AuthPage>{
  ])),
  SizedBox(height:16),FilledButton(onPressed:busy?null:submit,style:FilledButton.styleFrom(backgroundColor:navy,padding:EdgeInsets.all(15)),child:Text(busy?'कृपया प्रतीक्षा करें':signUp?'अकाउंट बनाएं':'मोबाइल नंबर से लॉगिन करें')),
  Padding(padding:const EdgeInsets.only(top:6),child:Row(children:[
-  Expanded(child:OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=false),style:OutlinedButton.styleFrom(minimumSize:const Size(0,34),padding:const EdgeInsets.symmetric(horizontal:8,vertical:6),visualDensity:VisualDensity.compact),child:Text('Login',style:TextStyle(fontSize:12,fontWeight:!signUp?FontWeight.w800:FontWeight.w500)))),
+  Expanded(child:OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=false),style:OutlinedButton.styleFrom(minimumSize:const Size(0,34),padding:const EdgeInsets.symmetric(horizontal:8,vertical:6),visualDensity:VisualDensity.compact),child:Text('लॉगिन करें',style:TextStyle(fontSize:12,fontWeight:!signUp?FontWeight.w800:FontWeight.w500)))),
   const SizedBox(width:8),
-  Expanded(child:OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=true),style:OutlinedButton.styleFrom(minimumSize:const Size(0,34),padding:const EdgeInsets.symmetric(horizontal:8,vertical:6),visualDensity:VisualDensity.compact,side:BorderSide(color:signUp?blue:borderColor,width:signUp?1.5:1)),child:Text('Register',style:TextStyle(fontSize:12,fontWeight:signUp?FontWeight.w800:FontWeight.w500))))
+  Expanded(child:OutlinedButton(onPressed:busy?null:()=>setState(()=>signUp=true),style:OutlinedButton.styleFrom(minimumSize:const Size(0,34),padding:const EdgeInsets.symmetric(horizontal:8,vertical:6),visualDensity:VisualDensity.compact,side:BorderSide(color:signUp?blue:borderColor,width:signUp?1.5:1)),child:Text('रजिस्टर करें',style:TextStyle(fontSize:12,fontWeight:signUp?FontWeight.w800:FontWeight.w500))))
  ])),
  if(!signUp)TextButton(onPressed:busy?null:resetPassword,child:const Text('पासवर्ड भूल गए? ईमेल से रीसेट करें'))
  ],
