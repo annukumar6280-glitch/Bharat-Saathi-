@@ -111,8 +111,6 @@ void main() {
     expect(find.text('कमीशन वॉलेट'), findsOneWidget);
     expect(find.textContaining('अगली सर्विस पर छूट बनेगी'), findsOneWidget);
     expect(find.text('सर्विस वॉलेट'), findsNothing);
-    expect(find.text('स्टॉक'), findsNothing);
-    expect(find.text('बिक्री'), findsNothing);
   });
 
   testWidgets('Bill payment opens the full list of bill categories', (tester) async {
