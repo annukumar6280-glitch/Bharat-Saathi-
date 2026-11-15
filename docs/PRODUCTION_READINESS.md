@@ -19,7 +19,7 @@ Last reviewed: 15 November 2026. This document describes the current source in `
 
 - App data is stored first in a transactional SQLite snapshot on the device.
 - The current implementation keys each local snapshot by the authenticated Supabase user ID. Different accounts on the same phone read and write separate local rows.
-- Upgrade migration from the previous single-row local database preserves the legacy snapshot separately. The app asks which account should receive it and imports it only after explicit confirmation; declining leaves it unassigned for another account. Users should sign in first with the account that previously used the device.
+- Upgrade migration from the previous single-row local database preserves the legacy snapshot separately. The app asks which account should receive it and imports it only after explicit confirmation. If the user declines or that account already has local records, the legacy snapshot remains unassigned for another account; existing account data is never overwritten. Users should sign in first with the account that previously used the device.
 - SQLite is stored in the app's private device storage. App-level SQLCipher/database encryption is not implemented; do not describe the local database as encrypted at rest.
 - Existing SharedPreferences data is imported once during the same legacy migration.
 
