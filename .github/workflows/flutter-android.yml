@@ -33,7 +33,7 @@ jobs:
 
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           content = manifest.read_text()
-          match = re.search(r"<application\\b[^>]*>", content, re.S)
+          match = re.search(r"<application\b[^>]*>", content, re.S)
           if not match:
               raise SystemExit("Android application tag not found")
 
@@ -44,7 +44,7 @@ jobs:
               "android:dataExtractionRules": "@xml/data_extraction_rules",
           }
           for name, value in attributes.items():
-              pattern = rf'\\b{re.escape(name)}="[^"]*"'
+              pattern = rf'\b{re.escape(name)}="[^"]*"'
               replacement = f'{name}="{value}"'
               if re.search(pattern, tag):
                   tag = re.sub(pattern, replacement, tag)
