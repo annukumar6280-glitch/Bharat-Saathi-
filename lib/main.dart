@@ -535,7 +535,7 @@ class _AuthPageState extends State<AuthPage>{
     data:{'full_name':enteredName,'phone':mobile},
     emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'
    );
-   if(response.session==null){message('रजिस्ट्रेशन अनुरोध स्वीकार हुआ। ईमेल पर भेजे गए लिंक से सत्यापन पूरा करें। फिर मोबाइल नंबर और पासवर्ड से लॉगिन करें।');}
+   if(response.session==null){if(mounted)setState(()=>signUp=false);message('रजिस्ट्रेशन हो गया। ईमेल पर आए लिंक से अकाउंट कन्फर्म करें। उसके बाद मोबाइल नंबर और पासवर्ड से लॉगिन करें।');}
    else{await _ensureProfileAndAccounts(nameOverride:enteredName,mobileOverride:mobile);returnToHome=true;}
   }else{
    final response=await client.functions.invoke('phone-password-login',body:{'phone':mobile,'password':password.text});
