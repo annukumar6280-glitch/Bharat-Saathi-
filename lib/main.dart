@@ -71,6 +71,42 @@ class LocalStore {
   final db=await database;
   await db.insert('app_meta',{'key':'legacy_declined_$userId','value':'1'},conflictAlgorithm:ConflictAlgorithm.replace);
  }
+ static Map<String,dynamic>? _withoutRetiredFields(String? raw){
+  if(raw==null||raw.isEmpty)return null;
+  try{
+   final decoded=jsonDecode(raw);
+   if(decoded is! Map)return null;
+   final cleaned=Map<String,dynamic>.from(decoded);
+   for(final key in const ['products','sales','purchases','supplierLedger','salesReturns','stockAdjustments']){cleaned.remove(key);}
+   return cleaned;
+  }catch(_){return null;}
+ }
+ static Future<String?> sanitizeLegacyInventoryData(String? preferencesLegacy)async{
+  final db=await database;
+  await db.transaction((txn)async{
+   final states=await txn.query('app_state',columns:['user_id','payload']);
+   for(final row in states){
+    final raw=row['payload'] as String?;
+    final cleaned=_withoutRetiredFields(raw);
+    if(cleaned!=null&&raw!=null&&jsonEncode(cleaned)!=raw){
+     await txn.update('app_state',{'payload':jsonEncode(cleaned)},where:'user_id = ?',whereArgs:[row['user_id']]);
+    }
+   }
+   final oldTable=await txn.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_app_state'");
+   if(oldTable.isNotEmpty){
+    final rows=await txn.query('legacy_app_state',columns:['id','payload']);
+    for(final row in rows){
+     final raw=row['payload'] as String?;
+     final cleaned=_withoutRetiredFields(raw);
+     if(cleaned!=null&&raw!=null&&jsonEncode(cleaned)!=raw){
+      await txn.update('legacy_app_state',{'payload':jsonEncode(cleaned)},where:'id = ?',whereArgs:[row['id']]);
+     }
+    }
+   }
+  });
+  final cleaned=_withoutRetiredFields(preferencesLegacy);
+  return cleaned==null?preferencesLegacy:jsonEncode(cleaned);
+ }
  static Future<bool> migrateLegacyForUser(String userId,String? preferencesLegacy)async{
   final db=await database;
   return db.transaction((txn)async{
@@ -205,6 +241,7 @@ final serviceTransactions=<Record>[];
   Future<void> _uploadCloudSnapshot(User user,String raw,DateTime localUpdatedAt)async{
    final decoded=jsonDecode(raw);
    if(decoded is! Map<String,dynamic>)throw const FormatException('स्थानीय रिकॉर्ड का प्रारूप सही नहीं है।');
+   for(final key in const ['products','sales','purchases','supplierLedger','salesReturns','stockAdjustments']){decoded.remove(key);}
    await Supabase.instance.client.from('user_backups').upsert({'user_id':user.id,'payload':decoded,'schema_version':1,'updated_at':localUpdatedAt.toUtc().toIso8601String()});
   }
   Future<String?> _reconcileCloudSnapshot(String? raw)async{
@@ -249,7 +286,9 @@ final serviceTransactions=<Record>[];
   var shouldSanitizeSnapshot=false;
   try{
    final userId=_localUserId;
-   final legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
+   var legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
+   legacyPrefs=await LocalStore.sanitizeLegacyInventoryData(legacyPrefs);
+   if(legacyPrefs!=null)await _prefs.setString('bharat_saathi_store_v1',legacyPrefs);
    final legacyDeclined=await LocalStore.wasLegacyDeclinedForUser(userId);
    final hasLegacy=await LocalStore.hasUnassignedLegacyData(legacyPrefs);
    if(hasLegacy&&!legacyDeclined&&widget.supabaseAvailable){
