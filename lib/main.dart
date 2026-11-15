@@ -533,7 +533,7 @@ class _AuthPageState extends State<AuthPage>{
    final response=await client.auth.signUp(
     email:mail,password:password.text,
     data:{'full_name':enteredName,'phone':mobile},
-    options:SignUpOptions(emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html')
+    emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'
    );
    if(response.session==null){message('रजिस्ट्रेशन अनुरोध स्वीकार हुआ। ईमेल पर भेजे गए लिंक से सत्यापन पूरा करें। फिर मोबाइल नंबर और पासवर्ड से लॉगिन करें।');}
    else{await _ensureProfileAndAccounts(nameOverride:enteredName,mobileOverride:mobile);returnToHome=true;}
