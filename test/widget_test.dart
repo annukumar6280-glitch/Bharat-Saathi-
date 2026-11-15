@@ -101,7 +101,7 @@ void main() {
     expect(await LocalStore.read('account-b'), '{"cash":75}');
   });
 
-  testWidgets('Home shows the four requested service icons and no inventory navigation', (tester) async {
+  testWidgets('Home shows the requested service icons and navigation', (tester) async {
     await pumpApp(tester);
     expect(find.text('आपका खाता'), findsOneWidget);
     expect(find.text('खाता बुक'), findsOneWidget);
