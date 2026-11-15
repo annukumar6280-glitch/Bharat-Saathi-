@@ -153,6 +153,7 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
  bool _cloudSyncBusy=false;
  int tab=0;double cash=0,expenses=0,personalBudget=0;String personalBudgetName='व्यक्तिगत खर्च सीमा';bool loaded=false,english=false,darkMode=false;
  final _prefs=SharedPreferencesAsync();
+ String get _localUserId=>widget.supabaseAvailable?(Supabase.instance.client.auth.currentUser?.id??'local'):'local';
  final products=<Item>[];
  final sales=<Record>[];
  final expensesList=<Record>[];
