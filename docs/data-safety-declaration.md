@@ -1,32 +1,35 @@
 # Bharat Saathi — Google Play Data Safety working declaration
 
-This is an internal preparation note, not a substitute for completing the Play Console form. Re-check the exact release APK and current SDK documentation before submitting.
+Internal preparation note only. Re-check the exact release APK, all included SDKs and the current Google Play Console questions before submission.
 
 ## Data categories identified in the current source
 
-- **Personal info — Name:** full name is collected during account registration and saved to the Supabase profiles table.
-- **Personal info — Email address:** used by Supabase Auth for account registration, login and password reset.
-- **Personal info — Phone number:** registration profile phone number; linked-khata lookup uses a registered mobile number.
-- **Financial info — Other financial info:** shop/personal income and expense records, sales, purchases, stock/khata balances and notes can be included in an explicitly user-triggered cloud backup; linked-khata credit/payment records are stored server-side.
+- **Personal info — Name:** entered during registration and stored in the Supabase profiles table.
+- **Personal info — Email address:** processed by Supabase Auth for registration, email confirmation, login and password recovery.
+- **Personal info — Phone number:** entered during registration, associated with the user profile, and used for phone/password login lookup and linked-khata features.
+- **Financial info — Other financial info:** personal and business records may include income, expenses, budgets, sales, purchases, products/stock, customer/supplier balances, payments, stock changes and transaction notes. These are stored locally first and automatically synchronized as an account-specific cloud snapshot while signed in and online. Linked-khata entries and referral/commission records are stored in Supabase when those features are used.
 - **App activity / app interactions:** Google Mobile Ads SDK may collect ad interactions.
 - **App info and performance / diagnostics:** Google Mobile Ads SDK may collect diagnostics.
-- **Device or other IDs:** Google Mobile Ads SDK may collect advertising ID, app set ID and other device/account identifiers.
+- **Device or other IDs:** Google Mobile Ads SDK may collect advertising ID, app-set ID and other device/account identifiers.
 
 ## Processing and sharing
 
-- Supabase processes account, profile, linked-khata and user-requested backup data as the backend/auth provider.
-- Google Mobile Ads SDK may collect/share IP address, ad interactions, diagnostics and identifiers for advertising, analytics and fraud prevention. Current source uses Google's test App ID and test banner unit ID only.
-- Local app records remain on device until app data is cleared or the user completes in-app account deletion.
-- Cloud backup is user initiated; the app does not automatically synchronise local records.
+- Supabase processes authentication, profile, linked-khata, referral/commission and automatic cloud-backup data.
+- Google Mobile Ads SDK may process/share IP address, ad interactions, diagnostics and identifiers for advertising, analytics and fraud prevention. Current development source uses Google's test App ID and test banner unit ID only.
+- Ordinary financial and shop records are saved locally first. When signed in and internet is available, an account-specific snapshot is automatically synchronized to Supabase; it is not a user-triggered manual backup.
+- Local snapshots are separated by signed-in Supabase user ID on the same device.
+- Data is transmitted over HTTPS/TLS. The SQLite database is not separately encrypted at the application layer.
+- Account deletion is requested through the external deletion page/WhatsApp support and is processed after ownership verification; there is no in-app deletion button in the current source.
 
-## Likely form choices to verify
+## Play Console answers to verify
 
-For each relevant data type, determine whether collected, shared, processed ephemerally, required/optional, purpose, encryption in transit, and deletion request availability. Do not select “no data collected” while the Google Mobile Ads SDK or user-initiated cloud backup is included.
+For each relevant data type, determine whether collected, shared, processed ephemerally, required/optional, purpose, encryption in transit, and deletion request availability. Google Mobile Ads SDK data handling must be declared accurately. Do not select “no data collected” while the SDK or account/cloud features are included.
 
-## Release blockers / checks
+## Release gates
 
-- Replace Google test App ID and test banner unit ID with production IDs before public release, then re-audit Google's current SDK disclosure.
-- Confirm the deployed Privacy Policy URL and external account-deletion URL are public and working.
-- Confirm in-app account deletion works end-to-end and cascade deletes all user-linked records.
-- Confirm the app's final target audience, permissions, ads declaration, app access instructions and content rating in Play Console.
-- Re-audit any new payment/recharge/BBPS SDK or API before enabling it; none is currently integrated in the inspected app source.
+- Replace Google test App ID and test banner unit ID with production IDs only when approved, then re-audit Google's current SDK disclosure and consent requirements.
+- Confirm the hosted Privacy Policy URL and external Account Deletion Request URL are public and working.
+- Test the external account-deletion request and verify the server-side deletion process and retention policy.
+- Confirm the final target audience, permissions, ads declaration, app access instructions and content rating in Play Console.
+- Re-audit any new payment/recharge/BBPS SDK or API before enabling it; provider-dependent services are not active in the current app.
+- Test the exact release APK on physical Android devices, including account switching, offline sync and cross-device restore.
