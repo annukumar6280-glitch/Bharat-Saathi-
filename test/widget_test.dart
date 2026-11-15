@@ -85,6 +85,16 @@ void main() {
     expect(await LocalStore.hasUnassignedLegacyData('{"cash":75}'), isFalse);
   });
 
+  test('Legacy import never overwrites existing account records', () async {
+    await LocalStore.write('account-a', '{"cash":100}');
+    expect(await LocalStore.migrateLegacyForUser('account-a', '{"cash":75}'), isFalse);
+    expect(await LocalStore.read('account-a'), '{"cash":100}');
+    expect(await LocalStore.hasUnassignedLegacyData('{"cash":75}'), isTrue);
+    expect(await LocalStore.migrateLegacyForUser('account-b', '{"cash":75}'), isTrue);
+    expect(await LocalStore.read('account-a'), '{"cash":100}');
+    expect(await LocalStore.read('account-b'), '{"cash":75}');
+  });
+
   testWidgets('Home shows the four requested service icons and no inventory navigation', (tester) async {
     await pumpApp(tester);
     expect(find.text('आपका खाता'), findsOneWidget);
