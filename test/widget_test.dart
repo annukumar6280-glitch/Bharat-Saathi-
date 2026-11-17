@@ -184,14 +184,20 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('नया व्यक्ति जोड़ें'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), 'दोस्त');
+    final personNameField = find.byWidgetPredicate(
+      (widget) => widget is TextField && widget.decoration?.labelText == 'नाम',
+    );
+    await tester.enterText(personNameField, 'दोस्त');
     await tester.tap(find.text('सेव करें'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('दोस्त'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('उधार जोड़ें'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), '2500');
+    final loanAmountField = find.byWidgetPredicate(
+      (widget) => widget is TextField && widget.decoration?.labelText == 'राशि (₹)',
+    );
+    await tester.enterText(loanAmountField, '2500');
     await tester.tap(find.text('सेव करें'));
     await tester.pumpAndSettle();
     expect(find.text('दोस्त'), findsOneWidget);
