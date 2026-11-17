@@ -140,7 +140,7 @@ void main() {
   });
 
   testWidgets('Home shows the requested service icons and navigation', (tester) async {
-    await pumpApp(tester);
+    await pumpDashboardPhone(tester);
     expect(find.text('आपका खाता'), findsOneWidget);
     expect(find.text('खाता बुक'), findsOneWidget);
     expect(find.text('मोबाइल रिचार्ज'), findsOneWidget);
@@ -182,10 +182,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('पर्सनल उधार'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('उधार दें'));
+    await tester.tap(find.text('नया व्यक्ति जोड़ें'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'दोस्त');
-    await tester.enterText(find.byType(TextField).at(1), '2500');
+    await tester.tap(find.text('सेव करें'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('दोस्त'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('उधार जोड़ें'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(0), '2500');
     await tester.tap(find.text('सेव करें'));
     await tester.pumpAndSettle();
     expect(find.text('दोस्त'), findsOneWidget);
