@@ -19,7 +19,7 @@ const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
 const privacyPolicyUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/privacy-policy.html';
 const termsConditionsUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/terms-and-conditions.html';
 const termsVersion='1.0';
-Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));}
+Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){try{await MobileAds.instance.initialize();}catch(error){debugPrint('Mobile Ads initialization failed: $error');}}}
 
 bool bannerAdsEnabled=true;
 const String _bannerAdUnitId='ca-app-pub-3940256099942544/6300978111';
