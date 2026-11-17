@@ -526,6 +526,7 @@ class _BillListPageState extends State<BillListPage>{
    const SizedBox(height:8),FilledButton.icon(onPressed:_sendWhatsApp,icon:const Icon(Icons.chat),label:const Text('WhatsApp पर टेक्स्ट भेजें')),
    const SizedBox(height:8),OutlinedButton.icon(onPressed:()=>Share.share(_message()),icon:const Icon(Icons.share),label:const Text('टेक्स्ट लिस्ट शेयर करें')),
    const SizedBox(height:8),OutlinedButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:_pdfBusy?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2)):const Icon(Icons.picture_as_pdf),label:Text(_pdfBusy?'PDF तैयार हो रहा है...':'PDF बनाएं / डाउनलोड या शेयर करें')),
+   const SizedBox(height:8),FilledButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:const Icon(Icons.picture_as_pdf),label:const Text('PDF WhatsApp पर भेजें')),
    if(_mode=='bill')OutlinedButton.icon(onPressed:_pdfBusy?null:_printPdf,icon:const Icon(Icons.print_outlined),label:const Text('प्रिंट / PDF सेव करें')),
    const SizedBox(height:8),const Text('WhatsApp टेक्स्ट भेजने पर संदेश पहले से लिखा हुआ खुलेगा। PDF शेयर करने पर WhatsApp, Drive या उपलब्ध ऐप चुन सकते हैं। भेजने के लिए चुने हुए ऐप में Send दबाएँ।',style:TextStyle(fontSize:11,color:Colors.grey))
   ]));
