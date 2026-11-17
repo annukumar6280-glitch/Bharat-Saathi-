@@ -349,10 +349,11 @@ final serviceTransactions=<Record>[];
  Future<void> addKhataCustomer(bool personal)async{
   final name=TextEditingController(),phone=TextEditingController();
   String type='ग्राहक';
-  final customer=await showDialog<KhataCustomer>(
+  final list=personal?personalCustomers:shopCustomers;
+  await showDialog<void>(
    context:context,
-   builder:(routeContext)=>StatefulBuilder(
-    builder:(dialogContext,setDialogState)=>AlertDialog(
+   builder:(dialogContext)=>StatefulBuilder(
+    builder:(stateContext,setDialogState)=>AlertDialog(
      title:Text(personal?'नया व्यक्ति जोड़ें':'नया ग्राहक जोड़ें'),
      content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
       TextField(controller:name,decoration:const InputDecoration(labelText:'नाम')),
@@ -371,17 +372,30 @@ final serviceTransactions=<Record>[];
       TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर (वैकल्पिक)')),
      ])),
      actions:[
-      TextButton(onPressed:()=>Navigator.of(routeContext).pop(),child:const Text('रद्द करें')),
+      TextButton(onPressed:()=>Navigator.of(dialogContext).pop(),child:const Text('रद्द करें')),
       FilledButton(
-       onPressed:(){
+       onPressed:()async{
         final cleanName=name.text.trim();
-        if(cleanName.isEmpty){ScaffoldMessenger.of(routeContext).showSnackBar(const SnackBar(content:Text('नाम दर्ज करें')));return;}
-        Navigator.of(routeContext).pop(KhataCustomer(
+        if(cleanName.isEmpty){
+         ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content:Text('नाम दर्ज करें')));
+         return;
+        }
+        if(list.any((x)=>x.name.trim().toLowerCase()==cleanName.toLowerCase())){
+         ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content:Text('इस नाम का ग्राहक पहले से मौजूद है')));
+         return;
+        }
+        final customer=KhataCustomer(
          id:'${personal?'personal':'shop'}-${DateTime.now().microsecondsSinceEpoch}',
          name:cleanName,
          phone:phone.text.trim(),
          type:type,
-        ));
+        );
+        if(!mounted)return;
+        setState(()=>list.add(customer));
+        await _persist();
+        if(!mounted)return;
+        Navigator.of(dialogContext).pop();
+        msg('रिकॉर्ड सेव हो गया');
        },
        child:const Text('सेव करें'),
       ),
@@ -389,15 +403,6 @@ final serviceTransactions=<Record>[];
     ),
    ),
   );
-  if(customer==null)return;
-  final list=personal?personalCustomers:shopCustomers;
-  if(list.any((x)=>x.name.trim().toLowerCase()==customer.name.toLowerCase())){
-   if(mounted)msg('इस नाम का ग्राहक पहले से मौजूद है');
-   return;
-  }
-  setState(()=>list.add(customer));
-  await _persist();
-  if(mounted)msg('रिकॉर्ड सेव हो गया');
  }
  Future<void> addCustomerAmount(String name,bool personal,{bool payment=false})async{
   final value=TextEditingController();final records=personal?personalKhata:khata;final due=records.where((e)=>e.name.toLowerCase()==name.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);
