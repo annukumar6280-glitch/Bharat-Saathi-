@@ -347,9 +347,57 @@ final serviceTransactions=<Record>[];
  }
  Future<void> expense()=>form('खर्च दर्ज करें','खर्च का विवरण','खर्च राशि (₹)',(n,a){setState((){expenses+=a;cash-=a;expensesList.insert(0,Record(n,'खर्च • अभी',a,Icons.payments_outlined));});_persist();msg('खर्च इस डिवाइस पर सेव हुआ');});
  Future<void> addKhataCustomer(bool personal)async{
-  final name=TextEditingController(),phone=TextEditingController();String type='ग्राहक';
-  final ok=await showDialog<bool>(context:context,builder:(c)=>StatefulBuilder(builder:(dialogContext,setDialogState)=>AlertDialog(title:Text(personal?'नया व्यक्ति जोड़ें':'नया ग्राहक जोड़ें'),content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:name,decoration:const InputDecoration(labelText:'नाम')),const SizedBox(height:10),DropdownButtonFormField<String>(initialValue:type,decoration:const InputDecoration(labelText:'व्यक्ति का प्रकार'),items:const [DropdownMenuItem(value:'ग्राहक',child:Text('ग्राहक')),DropdownMenuItem(value:'लेबर',child:Text('लेबर')),DropdownMenuItem(value:'फ्रेंड',child:Text('फ्रेंड'))],onChanged:(v){if(v!=null)setDialogState(()=>type=v);}),const SizedBox(height:10),TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर (वैकल्पिक)'))])),actions:[TextButton(onPressed:()=>Navigator.of(c).pop(false),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.of(c).pop(true),child:const Text('सेव करें'))])));
-  if(ok!=true)return;final n=name.text.trim();if(n.isEmpty){msg('नाम दर्ज करें');return;}final list=personal?personalCustomers:shopCustomers;if(list.any((x)=>x.name.trim().toLowerCase()==n.toLowerCase())){msg('इस नाम का ग्राहक पहले से मौजूद है');return;}setState(()=>list.add(KhataCustomer(id:'${personal?'personal':'shop'}-${DateTime.now().microsecondsSinceEpoch}',name:n,phone:phone.text.trim(),type:type)));await _persist();if(mounted)msg('रिकॉर्ड सेव हो गया');
+  final name=TextEditingController(),phone=TextEditingController();
+  String type='ग्राहक';
+  final customer=await showDialog<KhataCustomer>(
+   context:context,
+   builder:(routeContext)=>StatefulBuilder(
+    builder:(dialogContext,setDialogState)=>AlertDialog(
+     title:Text(personal?'नया व्यक्ति जोड़ें':'नया ग्राहक जोड़ें'),
+     content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
+      TextField(controller:name,decoration:const InputDecoration(labelText:'नाम')),
+      const SizedBox(height:10),
+      DropdownButtonFormField<String>(
+       initialValue:type,
+       decoration:const InputDecoration(labelText:'व्यक्ति का प्रकार'),
+       items:const [
+        DropdownMenuItem(value:'ग्राहक',child:Text('ग्राहक')),
+        DropdownMenuItem(value:'लेबर',child:Text('लेबर')),
+        DropdownMenuItem(value:'फ्रेंड',child:Text('फ्रेंड')),
+       ],
+       onChanged:(value){if(value!=null)setDialogState(()=>type=value);},
+      ),
+      const SizedBox(height:10),
+      TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर (वैकल्पिक)')),
+     ])),
+     actions:[
+      TextButton(onPressed:()=>Navigator.of(routeContext).pop(),child:const Text('रद्द करें')),
+      FilledButton(
+       onPressed:(){
+        final cleanName=name.text.trim();
+        if(cleanName.isEmpty){ScaffoldMessenger.of(routeContext).showSnackBar(const SnackBar(content:Text('नाम दर्ज करें')));return;}
+        Navigator.of(routeContext).pop(KhataCustomer(
+         id:'${personal?'personal':'shop'}-${DateTime.now().microsecondsSinceEpoch}',
+         name:cleanName,
+         phone:phone.text.trim(),
+         type:type,
+        ));
+       },
+       child:const Text('सेव करें'),
+      ),
+     ],
+    ),
+   ),
+  );
+  if(customer==null)return;
+  final list=personal?personalCustomers:shopCustomers;
+  if(list.any((x)=>x.name.trim().toLowerCase()==customer.name.toLowerCase())){
+   if(mounted)msg('इस नाम का ग्राहक पहले से मौजूद है');
+   return;
+  }
+  setState(()=>list.add(customer));
+  await _persist();
+  if(mounted)msg('रिकॉर्ड सेव हो गया');
  }
  Future<void> addCustomerAmount(String name,bool personal,{bool payment=false})async{
   final value=TextEditingController();final records=personal?personalKhata:khata;final due=records.where((e)=>e.name.toLowerCase()==name.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);
