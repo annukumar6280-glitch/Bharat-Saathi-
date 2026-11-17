@@ -358,15 +358,20 @@ final serviceTransactions=<Record>[];
      content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
       TextField(controller:name,decoration:const InputDecoration(labelText:'नाम')),
       const SizedBox(height:10),
-      DropdownButtonFormField<String>(
-       initialValue:type,
-       decoration:const InputDecoration(labelText:'व्यक्ति का प्रकार'),
-       items:const [
-        DropdownMenuItem(value:'ग्राहक',child:Text('ग्राहक')),
-        DropdownMenuItem(value:'लेबर',child:Text('लेबर')),
-        DropdownMenuItem(value:'फ्रेंड',child:Text('फ्रेंड')),
-       ],
-       onChanged:(value){if(value!=null)setDialogState(()=>type=value);},
+      InputDecorator(
+       decoration:const InputDecoration(labelText:'व्यक्ति का प्रकार',border:OutlineInputBorder()),
+       child:DropdownButtonHideUnderline(
+        child:DropdownButton<String>(
+         isExpanded:true,
+         value:type,
+         items:const [
+          DropdownMenuItem(value:'ग्राहक',child:Text('ग्राहक')),
+          DropdownMenuItem(value:'लेबर',child:Text('लेबर')),
+          DropdownMenuItem(value:'फ्रेंड',child:Text('फ्रेंड')),
+         ],
+         onChanged:(value){if(value!=null)setDialogState(()=>type=value);},
+        ),
+       ),
       ),
       const SizedBox(height:10),
       TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर (वैकल्पिक)')),
