@@ -423,10 +423,13 @@ class _BillListPageState extends State<BillListPage>{
  final _name=TextEditingController(),_phone=TextEditingController();
  final List<_BillRow> _rows=[_BillRow()];
  String _mode='bill';bool _started=false;
+ @override void initState(){super.initState();_watch(_rows.first);}
+ void _watch(_BillRow r){r.item.addListener(_refresh);r.qty.addListener(_refresh);r.price.addListener(_refresh);}
+ void _refresh(){if(mounted)setState((){});}
  @override void dispose(){_name.dispose();_phone.dispose();for(final r in _rows)r.dispose();super.dispose();}
  double get _total=>_rows.fold<double>(0,(sum,r)=>sum+(double.tryParse(r.qty.text.trim())??0)*(double.tryParse(r.price.text.trim())??0));
  String _phoneForWhatsApp(){var p=_phone.text.replaceAll(RegExp(r'[^0-9]'),'');if(p.length==10)p='91$p';if(p.startsWith('0')&&p.length==11)p='91${p.substring(1)}';return p;}
- void _addRow()=>setState(()=>_rows.add(_BillRow()));
+ void _addRow(){final r=_BillRow();_watch(r);setState(()=>_rows.add(r));}
  void _removeRow(int i){if(_rows.length==1)return;setState(()=>_rows.removeAt(i).dispose());}
  String _message(){
   final b=StringBuffer();b.writeln(_mode=='bill'?'*बिल*':'*सामान की लिस्ट*');b.writeln('ग्राहक: ${_name.text.trim()}');b.writeln('--------------------');
