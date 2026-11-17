@@ -297,8 +297,7 @@ final serviceTransactions=<Record>[];
    if(legacyPrefs!=null)await _prefs.setString('bharat_saathi_store_v1',legacyPrefs);
    final legacyDeclined=await LocalStore.wasLegacyDeclinedForUser(userId);
    final hasLegacy=await LocalStore.hasUnassignedLegacyData(legacyPrefs);
-   if(hasLegacy&&!legacyDeclined&&widget.supabaseAvailable){
-    if(!mounted)return;
+   if(hasLegacy&&!legacyDeclined&&widget.supabaseAvailable){    if(!mounted)return;
     final importLegacy=await showDialog<bool>(context:context,barrierDismissible:false,builder:(dialogContext)=>AlertDialog(
      title:const Text('पुराने डेटा की पहचान / Legacy data found'),
      content:const Text('इस फोन में पिछले संस्करण के रिकॉर्ड मिले हैं। उन्हें केवल उसी अकाउंट में जोड़ें जो पहले इस फोन पर इस्तेमाल होता था। अगर यह दूसरा अकाउंट है, तो “अभी नहीं” चुनें। पुराना डेटा किसी दूसरे अकाउंट में अपने-आप नहीं जाएगा।\n\nLegacy records from an earlier app version were found. Import them only into the account that previously used this phone. Choose “Not now” if this is a different account. The data will not be assigned automatically to another account.'),
@@ -349,24 +348,57 @@ final serviceTransactions=<Record>[];
  Future<void> editExpense(Record item)async{
   final name=TextEditingController(text:item.name);
   final amount=TextEditingController(text:item.amount.toStringAsFixed(item.amount.truncateToDouble()==item.amount?0:2));
-  var selectedDate=item.createdAt??DateTime.now();
-  final saved=await showDialog<bool>(context:context,builder:(dialogContext)=>StatefulBuilder(builder:(dialogContext,setDialogState)=>AlertDialog(
-   title:const Text('खर्च एडिट करें'),
-   content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
-    TextField(controller:name,decoration:const InputDecoration(labelText:'खर्च का विवरण')),
-    const SizedBox(height:10),
-    TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'खर्च राशि (₹)')),
-    const SizedBox(height:10),
-    OutlinedButton.icon(onPressed:()async{final picked=await showDatePicker(context:dialogContext,initialDate:selectedDate,firstDate:DateTime(2000),lastDate:DateTime(2100));if(picked!=null)setDialogState(()=>selectedDate=picked);},icon:const Icon(Icons.calendar_month),label:Text("तारीख: ${selectedDate.day.toString().padLeft(2,'0')}/${selectedDate.month.toString().padLeft(2,'0')}/${selectedDate.year}"))
-   ])),
-   actions:[TextButton(onPressed:()=>Navigator.pop(dialogContext,false),child:const Text('रद्द करें')),FilledButton(onPressed:(){final parsed=double.tryParse(amount.text.trim());if(name.text.trim().isEmpty||parsed==null||parsed<=0){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('सही विवरण और रकम दर्ज करें')));return;}Navigator.pop(dialogContext,true);},child:const Text('बदलाव सेव करें'))]
-  )));
-  if(saved==true){
-   final updatedAmount=double.parse(amount.text.trim());
-   setState((){expenses+=updatedAmount-item.amount;cash+=item.amount-updatedAmount;item.name=name.text.trim();item.amount=updatedAmount;item.createdAt=DateTime(selectedDate.year,selectedDate.month,selectedDate.day);});
-   await _persist();if(mounted)msg('खर्च अपडेट हो गया');
+  final selectedDate=ValueNotifier<DateTime>(item.createdAt??DateTime.now());
+  try{
+   final saved=await showDialog<bool>(context:context,builder:(dialogContext)=>AlertDialog(
+    title:const Text('खर्च एडिट करें'),
+    content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
+     TextField(controller:name,decoration:const InputDecoration(labelText:'खर्च का विवरण')),
+     const SizedBox(height:10),
+     TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'खर्च राशि (₹)')),
+     const SizedBox(height:10),
+     ValueListenableBuilder<DateTime>(
+      valueListenable:selectedDate,
+      builder:(context,date,_)=>OutlinedButton.icon(
+       onPressed:()async{
+        final picked=await showDatePicker(context:dialogContext,initialDate:selectedDate.value,firstDate:DateTime(2000),lastDate:DateTime(2100));
+        if(picked!=null)selectedDate.value=picked;
+       },
+       icon:const Icon(Icons.calendar_month),
+       label:Text("तारीख: ${date.day.toString().padLeft(2,'0')}/${date.month.toString().padLeft(2,'0')}/${date.year}"),
+      ),
+     )
+    ])),
+    actions:[
+     TextButton(onPressed:()=>Navigator.pop(dialogContext,false),child:const Text('रद्द करें')),
+     FilledButton(onPressed:(){
+      final parsed=double.tryParse(amount.text.trim());
+      if(name.text.trim().isEmpty||parsed==null||parsed<=0){
+       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('सही विवरण और रकम दर्ज करें')));
+       return;
+      }
+      Navigator.pop(dialogContext,true);
+     },child:const Text('बदलाव सेव करें'))
+    ],
+   ));
+   if(saved==true&&mounted){
+    final updatedAmount=double.parse(amount.text.trim());
+    final date=selectedDate.value;
+    setState((){
+     expenses+=updatedAmount-item.amount;
+     cash+=item.amount-updatedAmount;
+     item.name=name.text.trim();
+     item.amount=updatedAmount;
+     item.createdAt=DateTime(date.year,date.month,date.day);
+    });
+    await _persist();
+    if(mounted)msg('खर्च अपडेट हो गया');
+   }
+  }finally{
+   name.dispose();
+   amount.dispose();
+   selectedDate.dispose();
   }
-  name.dispose();amount.dispose();
  }
  Future<void> addKhataCustomer(bool personal)async{
   final name=TextEditingController(),phone=TextEditingController();
@@ -597,8 +629,7 @@ class _BillListPageState extends State<BillListPage>{
    ])));}),
    OutlinedButton.icon(onPressed:_addRow,icon:const Icon(Icons.add),label:const Text('एक और सामान जोड़ें')),
    if(_mode=='bill')Padding(padding:const EdgeInsets.symmetric(vertical:14),child:Text('कुल राशि: ₹${_total.toStringAsFixed(2)}',textAlign:TextAlign.right,style:const TextStyle(fontSize:21,fontWeight:FontWeight.w900))),
-   const SizedBox(height:8),FilledButton.icon(onPressed:_sendWhatsApp,icon:const Icon(Icons.chat),label:const Text('WhatsApp पर टेक्स्ट भेजें')),
-   const SizedBox(height:8),OutlinedButton.icon(onPressed:()=>Share.share(_message()),icon:const Icon(Icons.share),label:const Text('टेक्स्ट लिस्ट शेयर करें')),
+   const SizedBox(height:8),FilledButton.icon(onPressed:_sendWhatsApp,icon:const Icon(Icons.chat),label:const Text('WhatsApp पर टेक्स्ट भेजें')),   const SizedBox(height:8),OutlinedButton.icon(onPressed:()=>Share.share(_message()),icon:const Icon(Icons.share),label:const Text('टेक्स्ट लिस्ट शेयर करें')),
    const SizedBox(height:8),OutlinedButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:_pdfBusy?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2)):const Icon(Icons.picture_as_pdf),label:Text(_pdfBusy?'PDF तैयार हो रहा है...':'PDF बनाएं / डाउनलोड या शेयर करें')),
    const SizedBox(height:8),FilledButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:const Icon(Icons.picture_as_pdf),label:const Text('PDF WhatsApp पर भेजें')),
    if(_mode=='bill')OutlinedButton.icon(onPressed:_pdfBusy?null:_printPdf,icon:const Icon(Icons.print_outlined),label:const Text('प्रिंट / PDF सेव करें')),
@@ -897,8 +928,7 @@ class _AuthPageState extends State<AuthPage>{
    final response=await client.auth.signUp(
     email:mail,password:password.text,
     data:{'full_name':enteredName,'phone':mobile,'accepted_terms':true,'terms_version':termsVersion,'terms_accepted_at':DateTime.now().toUtc().toIso8601String()},
-    emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'
-   );
+    emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'   );
    if(response.session==null){if(mounted)setState(()=>signUp=false);message('रजिस्ट्रेशन हो गया। ईमेल पर आए लिंक से अकाउंट कन्फर्म करें। उसके बाद मोबाइल नंबर और पासवर्ड से लॉगिन करें।');}
    else{await _ensureProfileAndAccounts(nameOverride:enteredName,mobileOverride:mobile);returnToHome=true;}
   }else{
