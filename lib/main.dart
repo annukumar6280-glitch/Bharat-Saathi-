@@ -373,8 +373,9 @@ final serviceTransactions=<Record>[];
  final currentUser=widget.supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
  final metadataName=currentUser?.userMetadata?['full_name'];
  final accountName=metadataName is String&&metadataName.trim().isNotEmpty?metadataName.trim():(currentUser?.email?.split('@').first??'').trim();
+ final accountPhone=_normalizeIndianMobile(currentUser?.phone??(currentUser?.userMetadata?['phone'] as String? ?? ''));
  final pages=<Widget>[
-  Dashboard(english:english,supabaseAvailable:widget.supabaseAvailable,accountName:accountName,onWallet:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommerceWalletPage(supabaseAvailable:widget.supabaseAvailable))),shopDue:khata.fold<double>(0,(s,e)=>s+e.amount),personalDue:personalKhata.fold<double>(0,(s,e)=>s+e.amount),monthExpense:expensesList.where((e)=>e.createdAt!=null&&e.createdAt!.year==DateTime.now().year&&e.createdAt!.month==DateTime.now().month).fold<double>(0,(s,e)=>s+e.amount),onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>BillListPage(accountName:accountName))),onExpense:()=>setState(()=>tab=2),onRecharge:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'recharge',english:english))),onBills:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'bills',english:english))),onChallan:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'challan',english:english))),onInsurance:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'insurance',english:english)))),
+  Dashboard(english:english,supabaseAvailable:widget.supabaseAvailable,accountName:accountName,onWallet:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommerceWalletPage(supabaseAvailable:widget.supabaseAvailable))),shopDue:khata.fold<double>(0,(s,e)=>s+e.amount),personalDue:personalKhata.fold<double>(0,(s,e)=>s+e.amount),monthExpense:expensesList.where((e)=>e.createdAt!=null&&e.createdAt!.year==DateTime.now().year&&e.createdAt!.month==DateTime.now().month).fold<double>(0,(s,e)=>s+e.amount),onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>BillListPage(accountName:accountName,accountPhone:accountPhone))),onExpense:()=>setState(()=>tab=2),onRecharge:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'recharge',english:english))),onBills:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'bills',english:english))),onChallan:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'challan',english:english))),onInsurance:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'insurance',english:english)))),
   KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,customers:shopCustomers,personal:false,onAddCustomer:()=>addKhataCustomer(false),onCredit:(n)=>addCustomerAmount(n,false),onPayment:(n)=>addCustomerAmount(n,false,payment:true),onGoods:addGoodsEntry,onCorrection:(n)=>addBalanceCorrection(n,false),onReminder:(c)=>sendLocalKhataReminder(c,false)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,customers:personalCustomers,personal:true,onAddCustomer:()=>addKhataCustomer(true),onCredit:(n)=>addCustomerAmount(n,true),onPayment:(n)=>addCustomerAmount(n,true,payment:true),onGoods:null,onCorrection:(n)=>addBalanceCorrection(n,true),onReminder:(c)=>sendLocalKhataReminder(c,true)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
   ExpenseOnlyPage(items:expensesList,onAdd:expense),
   TransactionHistoryPage(items:serviceTransactions,english:english),
@@ -434,8 +435,8 @@ class Dashboard extends StatelessWidget{
  ]))));
 }
 class BillListPage extends StatefulWidget{
- final String accountName;
- const BillListPage({super.key,required this.accountName});
+ final String accountName,accountPhone;
+ const BillListPage({super.key,required this.accountName,required this.accountPhone});
  @override State<BillListPage> createState()=>_BillListPageState();
 }
 class _BillListPageState extends State<BillListPage>{
@@ -457,7 +458,7 @@ class _BillListPageState extends State<BillListPage>{
  void _removeRow(int i){if(_rows.length==1)return;setState(()=>_rows.removeAt(i).dispose());}
  List<_BillRow> get _validRows=>_rows.where((r)=>r.item.text.trim().isNotEmpty).toList();
  String _message(){
-  final b=StringBuffer();b.writeln(_mode=='bill'?'*बिल*':'*सामान की लिस्ट*');if(_mode=='bill'){b.writeln('ग्राहक: ${_name.text.trim()}');b.writeln('मोबाइल: ${_phone.text.trim()}');}else if(widget.accountName.trim().isNotEmpty){b.writeln('नाम: ${widget.accountName.trim()}');}b.writeln('--------------------');
+  final b=StringBuffer();b.writeln(_mode=='bill'?'*बिल*':'*सामान की लिस्ट*');if(_mode=='bill'){b.writeln('ग्राहक: ${_name.text.trim()}');b.writeln('मोबाइल: ${_phone.text.trim()}');}else{if(widget.accountName.trim().isNotEmpty)b.writeln('नाम: ${widget.accountName.trim()}');if(widget.accountPhone.trim().isNotEmpty)b.writeln('मोबाइल: ${widget.accountPhone.trim()}');}b.writeln('--------------------');
   var i=0;for(final r in _validRows){i++;final q=_qtyText(r);final unit=_units[r.unit]??r.unit;b.writeln('$i. ${r.item.text.trim()} — $q $unit${_mode=='bill'?' — ₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)} प्रति ${_units[r.rateUnit]??r.rateUnit} — कुल ₹${_lineTotal(r).toStringAsFixed(2)}':''}');}
   if(_mode=='bill')b.writeln('कुल राशि: *₹${_total.toStringAsFixed(2)}*');b.writeln('धन्यवाद');return b.toString();
  }
