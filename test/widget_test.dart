@@ -55,6 +55,16 @@ void main() {
     // Keep this test focused on registration consent state.
   });
 
+  test('Bill line totals multiply quantity by unit price', () {
+    expect(calculateBillLineTotal(2, 50), 100);
+    expect(calculateBillLineTotal(3, 40), 120);
+  });
+
+  test('Bill grand total adds all calculated item totals', () {
+    expect(calculateBillTotal([100, 120]), 220);
+    expect(calculateBillTotal([]), 0);
+  });
+
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
