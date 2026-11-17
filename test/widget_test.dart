@@ -9,8 +9,21 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 
 Future<void> pumpApp(WidgetTester tester) async {
   await tester.pumpWidget(const BharatSaathiApp());
-  await tester.runAsync(() async { await Future<void>.delayed(const Duration(seconds: 5)); });
-  await tester.pump();
+  // RetailerHome restores its local SQLite/SharedPreferences snapshot
+  // asynchronously. Wait for the real dashboard marker rather than sleeping
+  // for a fixed duration and accidentally testing the loading spinner.
+  for (var attempt = 0; attempt < 40; attempt++) {
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+    });
+    await tester.pump();
+    if (find.text('खाता बुक').evaluate().isNotEmpty) return;
+  }
+  expect(
+    find.text('खाता बुक'),
+    findsOneWidget,
+    reason: 'Dashboard did not finish restoring local app data.',
+  );
 }
 
 Future<void> pumpDashboardPhone(WidgetTester tester) async {
