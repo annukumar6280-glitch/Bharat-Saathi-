@@ -369,7 +369,7 @@ final serviceTransactions=<Record>[];
  Future<void> deleteKhataCustomer(KhataCustomer customer,bool personal)async{
   final records=personal?personalKhata:khata;
   final linkedCount=records.where((e)=>e.name.trim().toLowerCase()==customer.name.trim().toLowerCase()).length;
-  final ok=await showDialog<bool>(context:context,builder:(c)=>AlertDialog(title:const Text('ग्राहक हटाएँ?'),content:Text('“\${customer.name}” और उससे जुड़ी $linkedCount खाता एंट्री भी स्थायी रूप से हट जाएँगी। क्या जारी रखें?'),actions:[TextButton(onPressed:()=>Navigator.pop(c,false),child:const Text('रद्द करें')),FilledButton(style:FilledButton.styleFrom(backgroundColor:red),onPressed:()=>Navigator.pop(c,true),child:const Text('हटाएँ'))]));
+  final ok=await showDialog<bool>(context:context,builder:(c)=>AlertDialog(title:const Text('ग्राहक हटाएँ?'),content:Text('“${customer.name}” और उससे जुड़ी $linkedCount खाता एंट्री भी स्थायी रूप से हट जाएँगी। क्या जारी रखें?'),actions:[TextButton(onPressed:()=>Navigator.pop(c,false),child:const Text('रद्द करें')),FilledButton(style:FilledButton.styleFrom(backgroundColor:red),onPressed:()=>Navigator.pop(c,true),child:const Text('हटाएँ'))]));
   if(ok!=true)return;
   setState((){
    (personal?personalCustomers:shopCustomers).removeWhere((x)=>x.id==customer.id);
