@@ -490,7 +490,7 @@ class _BillListPageState extends State<BillListPage>{
    final bytes=await _buildPdf();
    final safeName=_name.text.trim().replaceAll(RegExp(r'[^a-zA-Z0-9_-]'),'_');
    final fileName='${_mode=='bill'?'BharatSaathi_Bill':'BharatSaathi_List'}_${safeName.isEmpty?'document':safeName}.pdf';
-   await Share.shareXFiles([XFile.fromData(bytes,name:fileName,mimeType:'application/pdf')],text:_mode=='bill'?'बिल की PDF रसीद':'सामान की लिस्ट की PDF');
+   await Share.shareXFiles([XFile.fromData(bytes,name:fileName,mimeType:'application/pdf')],text:'${_mode=='bill'?'बिल की PDF रसीद':'शॉपिंग लिस्ट की PDF'}\nग्राहक: ${_name.text.trim()}\nWhatsApp: ${_phone.text.trim()}');
   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('PDF नहीं बन पाया: $e')));}
   finally{if(mounted)setState(()=>_pdfBusy=false);}
  }
@@ -536,7 +536,7 @@ class _BillListPageState extends State<BillListPage>{
    const SizedBox(height:8),FilledButton.icon(onPressed:_sendWhatsApp,icon:const Icon(Icons.chat),label:const Text('WhatsApp पर टेक्स्ट भेजें')),
    const SizedBox(height:8),OutlinedButton.icon(onPressed:()=>Share.share(_message()),icon:const Icon(Icons.share),label:const Text('टेक्स्ट लिस्ट शेयर करें')),
    const SizedBox(height:8),OutlinedButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:_pdfBusy?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2)):const Icon(Icons.picture_as_pdf),label:Text(_pdfBusy?'PDF तैयार हो रहा है...':'PDF बनाएं / डाउनलोड या शेयर करें')),
-   const SizedBox(height:8),FilledButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:const Icon(Icons.picture_as_pdf),label:const Text('PDF WhatsApp पर भेजें')),
+   const SizedBox(height:8),FilledButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:const Icon(Icons.picture_as_pdf),label:const Text('PDF WhatsApp / अन्य ऐप पर शेयर करें')),
    OutlinedButton.icon(onPressed:_pdfBusy?null:_printPdf,icon:const Icon(Icons.print_outlined),label:const Text('प्रिंट / PDF सेव करें')),
    const SizedBox(height:8),const Text('PDF शेयर करने पर Android Share Sheet खुलेगी। WhatsApp चुनकर ग्राहक की चैट चुनें और Send दबाएँ। ऐप आपकी अनुमति के बिना संदेश नहीं भेजता।',style:TextStyle(fontSize:11,color:Colors.grey))
   ]));
