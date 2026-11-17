@@ -350,7 +350,7 @@ final serviceTransactions=<Record>[];
   final name=TextEditingController(),phone=TextEditingController();
   String type='ग्राहक';
   final list=personal?personalCustomers:shopCustomers;
-  await showDialog<void>(
+  final customer=await showDialog<KhataCustomer>(
    context:context,
    builder:(dialogContext)=>StatefulBuilder(
     builder:(stateContext,setDialogState)=>AlertDialog(
@@ -369,7 +369,9 @@ final serviceTransactions=<Record>[];
           DropdownMenuItem(value:'लेबर',child:Text('लेबर')),
           DropdownMenuItem(value:'फ्रेंड',child:Text('फ्रेंड')),
          ],
-         onChanged:(value){if(value!=null)setDialogState(()=>type=value);},
+         onChanged:(value){
+          if(value!=null)setDialogState(()=>type=value);
+         },
         ),
        ),
       ),
@@ -379,7 +381,7 @@ final serviceTransactions=<Record>[];
      actions:[
       TextButton(onPressed:()=>Navigator.of(dialogContext).pop(),child:const Text('रद्द करें')),
       FilledButton(
-       onPressed:()async{
+       onPressed:(){
         final cleanName=name.text.trim();
         if(cleanName.isEmpty){
          ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content:Text('नाम दर्ज करें')));
@@ -389,18 +391,12 @@ final serviceTransactions=<Record>[];
          ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content:Text('इस नाम का ग्राहक पहले से मौजूद है')));
          return;
         }
-        final customer=KhataCustomer(
+        Navigator.of(dialogContext).pop(KhataCustomer(
          id:'${personal?'personal':'shop'}-${DateTime.now().microsecondsSinceEpoch}',
          name:cleanName,
          phone:phone.text.trim(),
          type:type,
-        );
-        if(!mounted)return;
-        setState(()=>list.add(customer));
-        await _persist();
-        if(!dialogContext.mounted)return;
-        Navigator.of(dialogContext).pop();
-        msg('रिकॉर्ड सेव हो गया');
+        ));
        },
        child:const Text('सेव करें'),
       ),
@@ -408,6 +404,12 @@ final serviceTransactions=<Record>[];
     ),
    ),
   );
+  name.dispose();
+  phone.dispose();
+  if(customer==null||!mounted)return;
+  setState(()=>list.add(customer));
+  await _persist();
+  if(mounted)msg('रिकॉर्ड सेव हो गया');
  }
  Future<void> addCustomerAmount(String name,bool personal,{bool payment=false})async{
   final value=TextEditingController();final records=personal?personalKhata:khata;final due=records.where((e)=>e.name.toLowerCase()==name.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);
