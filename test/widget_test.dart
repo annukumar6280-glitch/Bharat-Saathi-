@@ -190,6 +190,11 @@ void main() {
     await tester.enterText(personNameField, 'दोस्त');
     await tester.tap(find.text('सेव करें'));
     await tester.pumpAndSettle();
+    // Saving a khata person also awaits SQLite persistence. Let that async
+    // operation finish before looking for the newly inserted list tile.
+    await flushStorage(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('दोस्त'), findsOneWidget);
     await tester.tap(find.text('दोस्त'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('उधार जोड़ें'));
