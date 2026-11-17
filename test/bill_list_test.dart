@@ -36,8 +36,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('कीमत (वैकल्पिक ₹)'), findsOneWidget);
     final printButton = find.text('प्रिंट / PDF सेव करें');
-    await tester.ensureVisible(printButton);
-    await tester.pump();
+    await tester.scrollUntilVisible(printButton, 300);
+    await tester.pumpAndSettle();
     expect(printButton, findsOneWidget);
     await tester.tap(find.text('एक और सामान जोड़ें'));
     await tester.pumpAndSettle();
