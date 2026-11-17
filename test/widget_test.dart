@@ -189,10 +189,12 @@ void main() {
         widget.decoration?.labelText == 'नाम');
     expect(nameField, findsOneWidget);
     await tester.enterText(nameField, 'दोस्त');
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.tap(find.byType(DropdownButton<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('फ्रेंड').last);
     await tester.pumpAndSettle();
+    // Confirm the dropdown itself now displays the selected type before save.
+    expect(find.text('फ्रेंड'), findsOneWidget);
     await tester.tap(find.text('सेव करें'));
     await tester.pumpAndSettle();
     // Verify that the customer is actually added to the visible ledger and
