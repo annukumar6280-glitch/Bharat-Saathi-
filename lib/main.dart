@@ -393,7 +393,7 @@ final serviceTransactions=<Record>[];
         if(!mounted)return;
         setState(()=>list.add(customer));
         await _persist();
-        if(!mounted)return;
+        if(!dialogContext.mounted)return;
         Navigator.of(dialogContext).pop();
         msg('रिकॉर्ड सेव हो गया');
        },
