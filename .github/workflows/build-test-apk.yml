@@ -62,11 +62,11 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-pub
       - name: Build release APK
-        run: flutter build apk --release
+        run: cd android && ./gradlew assembleRelease -x lintVitalAnalyzeRelease
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: bharat-saathi-test-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
