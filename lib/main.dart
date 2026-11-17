@@ -449,9 +449,7 @@ class _BillListPageState extends State<BillListPage>{
  void _watch(_BillRow r){r.item.addListener(_refresh);r.qty.addListener(_refresh);r.price.addListener(_refresh);}
  void _refresh(){if(mounted)setState((){});}
  @override void dispose(){_name.dispose();_phone.dispose();for(final r in _rows){r.dispose();}super.dispose();}
- double _unitFactor(String u)=>u=='kg'?1000:1;
- String _unitFamily(String u){if(u=='normal')return 'normal';if(u=='kg'||u=='g')return 'weight';if(u=='ft')return 'length';if(u=='piece')return 'piece';if(u=='bag')return 'bag';return 'packet';}
- double _lineTotal(_BillRow r){final q=double.tryParse(r.qty.text.trim())??0;final p=double.tryParse(r.price.text.trim())??0;if(_unitFamily(r.unit)!=_unitFamily(r.rateUnit))return 0;return q*_unitFactor(r.unit)/_unitFactor(r.rateUnit)*p;}
+ double _lineTotal(_BillRow r){final q=double.tryParse(r.qty.text.trim())??0;final p=double.tryParse(r.price.text.trim())??0;return q*p;}
  double get _total=>_rows.fold<double>(0,(sum,r)=>sum+_lineTotal(r));
  String _qtyText(_BillRow r){final v=double.tryParse(r.qty.text.trim())??0;return v==v.roundToDouble()?v.toInt().toString():v.toString();}
  String _phoneForWhatsApp(){var p=_phone.text.replaceAll(RegExp(r'[^0-9]'),'');if(p.length==10)p='91$p';if(p.startsWith('0')&&p.length==11)p='91${p.substring(1)}';return p;}
@@ -460,7 +458,7 @@ class _BillListPageState extends State<BillListPage>{
  List<_BillRow> get _validRows=>_rows.where((r)=>r.item.text.trim().isNotEmpty).toList();
  String _message(){
   final b=StringBuffer();b.writeln(_mode=='bill'?'*बिल*':'*सामान की लिस्ट*');if(_mode=='bill'){b.writeln('ग्राहक: ${_name.text.trim()}');b.writeln('मोबाइल: ${_phone.text.trim()}');}else{if(widget.accountName.trim().isNotEmpty)b.writeln('नाम: ${widget.accountName.trim()}');if(widget.accountPhone.trim().isNotEmpty)b.writeln('मोबाइल: ${widget.accountPhone.trim()}');}b.writeln('--------------------');
-  var i=0;for(final r in _validRows){i++;final q=_qtyText(r);final unit=_units[r.unit]??r.unit;b.writeln('$i. ${r.item.text.trim()} — $q $unit${_mode=='bill'?' — ₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)} प्रति ${_units[r.rateUnit]??r.rateUnit} — कुल ₹${_lineTotal(r).toStringAsFixed(2)}':''}');}
+  var i=0;for(final r in _validRows){i++;final q=_qtyText(r);final unit=_units[r.unit]??r.unit;b.writeln('$i. ${r.item.text.trim()} — $q $unit${_mode=='bill'?' — ₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)}${r.unit=='normal'?'':' प्रति ${_units[r.unit]??r.unit}'} — कुल ₹${_lineTotal(r).toStringAsFixed(2)}':''}');}
   if(_mode=='bill')b.writeln('कुल राशि: *₹${_total.toStringAsFixed(2)}*');b.writeln('धन्यवाद');return b.toString();
  }
  Future<Uint8List> _buildPdf()async{
@@ -482,7 +480,7 @@ class _BillListPageState extends State<BillListPage>{
      return pw.Padding(padding:const pw.EdgeInsets.symmetric(vertical:6),child:pw.Row(children:[
       pw.Expanded(child:pw.Text('${entry.key+1}. ${r.item.text.trim()}')),
       pw.SizedBox(width:105,child:pw.Text(qty,textAlign:pw.TextAlign.right)),
-      if(_mode=='bill')pw.SizedBox(width:120,child:pw.Text('₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)} / ${_units[r.rateUnit]??r.rateUnit} = ₹${_lineTotal(r).toStringAsFixed(2)}',textAlign:pw.TextAlign.right))
+      if(_mode=='bill')pw.SizedBox(width:120,child:pw.Text('₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)}${r.unit=='normal'?'':' / ${_units[r.unit]??r.unit}'} = ₹${_lineTotal(r).toStringAsFixed(2)}',textAlign:pw.TextAlign.right))
      ]));
     }),
     pw.Divider(),
@@ -542,7 +540,7 @@ class _BillListPageState extends State<BillListPage>{
      const SizedBox(width:8),
      Expanded(child:DropdownButtonFormField<String>(initialValue:r.unit,decoration:const InputDecoration(labelText:'यूनिट',border:OutlineInputBorder()),items:_units.entries.map((e)=>DropdownMenuItem(value:e.key,child:Text(e.value))).toList(),onChanged:(v){if(v!=null)setState(()=>r.unit=v);})),
     ]),
-    if(_mode=='bill')Padding(padding:const EdgeInsets.only(top:8),child:Column(children:[TextField(controller:r.price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:InputDecoration(labelText:'${_units[r.rateUnit]??r.rateUnit} का रेट (₹)',hintText:'एक यूनिट का दाम लिखें',border:const OutlineInputBorder())),const SizedBox(height:8),Row(children:[Expanded(child:DropdownButtonFormField<String>(initialValue:r.rateUnit,decoration:const InputDecoration(labelText:'रेट किस यूनिट का है?',border:OutlineInputBorder()),items:_units.entries.map((e)=>DropdownMenuItem(value:e.key,child:Text(e.value))).toList(),onChanged:(v){if(v!=null)setState(()=>r.rateUnit=v);})),const SizedBox(width:8),Expanded(child:InputDecorator(decoration:const InputDecoration(labelText:'इस सामान का कुल',border:OutlineInputBorder()),child:Text('₹${_lineTotal(r).toStringAsFixed(2)}',style:const TextStyle(fontWeight:FontWeight.w800))))])]))
+    if(_mode=='bill')Padding(padding:const EdgeInsets.only(top:8),child:Column(children:[TextField(controller:r.price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:InputDecoration(labelText:r.unit=='normal'?'रेट (₹)':'${_units[r.unit]??r.unit} का रेट (₹)',hintText:'चुनी गई यूनिट का दाम लिखें',border:const OutlineInputBorder())),const SizedBox(height:8),InputDecorator(decoration:const InputDecoration(labelText:'इस सामान का कुल',border:OutlineInputBorder()),child:Align(alignment:Alignment.centerLeft,child:Text('₹${_lineTotal(r).toStringAsFixed(2)}',style:const TextStyle(fontWeight:FontWeight.w800))))]))
    ])));}),
    OutlinedButton.icon(onPressed:_addRow,icon:const Icon(Icons.add),label:const Text('एक और सामान जोड़ें')),
    if(_mode=='bill')Padding(padding:const EdgeInsets.symmetric(vertical:14),child:Text('कुल राशि: ₹${_total.toStringAsFixed(2)}',textAlign:TextAlign.right,style:const TextStyle(fontSize:21,fontWeight:FontWeight.w900))),
@@ -556,7 +554,7 @@ class _BillListPageState extends State<BillListPage>{
  }
 }
 class _BillRow{
- final item=TextEditingController();final qty=TextEditingController(text:'1');final price=TextEditingController(text:'0');String unit='piece',rateUnit='piece';
+ final item=TextEditingController();final qty=TextEditingController(text:'1');final price=TextEditingController(text:'0');String unit='piece';
  void dispose(){item.dispose();qty.dispose();price.dispose();}
 }
 class KhataHubPage extends StatelessWidget{
