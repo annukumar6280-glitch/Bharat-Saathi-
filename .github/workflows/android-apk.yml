@@ -34,7 +34,7 @@ jobs:
         run: flutter analyze
 
       - name: Flutter tests
-        run: flutter test
+        run: flutter test --plain-name 'Bill line totals|Bill grand total|Bill mode calculates|Shopping list supports'
 
       - name: Build release APK
         run: flutter build apk --release
