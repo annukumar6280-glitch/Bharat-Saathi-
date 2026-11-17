@@ -568,7 +568,7 @@ class _LocalLedgerPageState extends State<LocalLedgerPage>{
 }
 class LocalCustomerDetailsPage extends StatefulWidget{
  final KhataCustomer customer;final List<Record> items;final bool personal;final Future<void> Function() onCredit,onPayment;final Future<void> Function()? onGoods;final Future<void> Function() onCorrection,onReminder;
- const LocalCustomerDetailsPage({super.key,required this.customer,required this.items,required this.personal,required this.onCredit,required this.onPayment,required this.onGoods,required this.onReminder});
+ const LocalCustomerDetailsPage({super.key,required this.customer,required this.items,required this.personal,required this.onCredit,required this.onPayment,required this.onGoods,required this.onCorrection,required this.onReminder});
  @override State<LocalCustomerDetailsPage> createState()=>_LocalCustomerDetailsPageState();
 }
 class _LocalCustomerDetailsPageState extends State<LocalCustomerDetailsPage>{
