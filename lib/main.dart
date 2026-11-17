@@ -660,7 +660,7 @@ class _ExpenseOnlyPageState extends State<ExpenseOnlyPage>{
     const SizedBox(height:4),
     Text('₹'+money(yearTotal),style:TextStyle(color:navy,fontSize:25,fontWeight:FontWeight.w900)),
     const SizedBox(height:12),
-    DropdownButtonFormField<int>(value:selectedYear,decoration:const InputDecoration(labelText:'साल चुनें'),items:years.map((y)=>DropdownMenuItem<int>(value:y,child:Text(y.toString()))).toList(),onChanged:(y){if(y!=null)setState(()=>selectedYear=y);})
+    DropdownButtonFormField<int>(initialValue:selectedYear,decoration:const InputDecoration(labelText:'साल चुनें'),items:years.map((y)=>DropdownMenuItem<int>(value:y,child:Text(y.toString()))).toList(),onChanged:(y){if(y!=null)setState(()=>selectedYear=y);})
    ]))),
    const SizedBox(height:10),
    Text('महीने के हिसाब से खर्च',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:16)),
