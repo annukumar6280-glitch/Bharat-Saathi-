@@ -446,15 +446,18 @@ class _BillListPageState extends State<BillListPage>{
  void _watch(_BillRow r){r.item.addListener(_refresh);r.qty.addListener(_refresh);r.price.addListener(_refresh);}
  void _refresh(){if(mounted)setState((){});}
  @override void dispose(){_name.dispose();_phone.dispose();for(final r in _rows){r.dispose();}super.dispose();}
- double get _total=>_rows.fold<double>(0,(sum,r)=>sum+(double.tryParse(r.price.text.trim())??0));
+ double _unitFactor(String u)=>u=='kg'?1000:1;
+ String _unitFamily(String u)=>(u=='kg'||u=='g')?'weight':(u=='piece'?'piece':'packet');
+ double _lineTotal(_BillRow r){final q=double.tryParse(r.qty.text.trim())??0;final p=double.tryParse(r.price.text.trim())??0;if(_unitFamily(r.unit)!=_unitFamily(r.rateUnit))return 0;return q*_unitFactor(r.unit)/_unitFactor(r.rateUnit)*p;}
+ double get _total=>_rows.fold<double>(0,(sum,r)=>sum+_lineTotal(r));
  String _qtyText(_BillRow r){final v=double.tryParse(r.qty.text.trim())??0;return v==v.roundToDouble()?v.toInt().toString():v.toString();}
  String _phoneForWhatsApp(){var p=_phone.text.replaceAll(RegExp(r'[^0-9]'),'');if(p.length==10)p='91$p';if(p.startsWith('0')&&p.length==11)p='91${p.substring(1)}';return p;}
  void _addRow(){final r=_BillRow();_watch(r);setState(()=>_rows.add(r));}
  void _removeRow(int i){if(_rows.length==1)return;setState(()=>_rows.removeAt(i).dispose());}
  List<_BillRow> get _validRows=>_rows.where((r)=>r.item.text.trim().isNotEmpty).toList();
  String _message(){
-  final b=StringBuffer();b.writeln(_mode=='bill'?'*बिल*':'*सामान मंगवाने की लिस्ट*');b.writeln('ग्राहक: ${_name.text.trim()}');b.writeln('मोबाइल: ${_phone.text.trim()}');b.writeln('--------------------');
-  var i=0;for(final r in _validRows){i++;final q=_qtyText(r);final unit=_units[r.unit]??r.unit;b.writeln('$i. ${r.item.text.trim()} — $q $unit${_mode=='bill'?' — ₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)}':''}');}
+  final b=StringBuffer();b.writeln(_mode=='bill'?'*बिल*':'*सामान की लिस्ट*');if(_mode=='bill'){b.writeln('ग्राहक: ${_name.text.trim()}');b.writeln('मोबाइल: ${_phone.text.trim()}');}b.writeln('--------------------');
+  var i=0;for(final r in _validRows){i++;final q=_qtyText(r);final unit=_units[r.unit]??r.unit;b.writeln('$i. ${r.item.text.trim()} — $q $unit${_mode=='bill'?' — ₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)} प्रति ${_units[r.rateUnit]??r.rateUnit} — कुल ₹${_lineTotal(r).toStringAsFixed(2)}':''}');}
   if(_mode=='bill')b.writeln('कुल राशि: *₹${_total.toStringAsFixed(2)}*');b.writeln('धन्यवाद');return b.toString();
  }
  Future<Uint8List> _buildPdf()async{
@@ -467,8 +470,8 @@ class _BillListPageState extends State<BillListPage>{
    build:(context)=>[
     pw.Center(child:pw.Text(_mode=='bill'?'बिल / रसीद':'सामान मंगवाने की लिस्ट',style:pw.TextStyle(fontSize:20,fontWeight:pw.FontWeight.bold))),
     pw.SizedBox(height:14),
-    pw.Text('ग्राहक: ${_name.text.trim()}'),
-    pw.Text('WhatsApp: ${_phone.text.trim()}'),
+    if(_mode=='bill')pw.Text('ग्राहक: ${_name.text.trim()}'),
+    if(_mode=='bill')pw.Text('WhatsApp: ${_phone.text.trim()}'),
     pw.Text('दिनांक: ${DateTime.now().toLocal().toString().substring(0,16)}'),
     pw.Divider(),
     ..._validRows.asMap().entries.map((entry){
@@ -476,7 +479,7 @@ class _BillListPageState extends State<BillListPage>{
      return pw.Padding(padding:const pw.EdgeInsets.symmetric(vertical:6),child:pw.Row(children:[
       pw.Expanded(child:pw.Text('${entry.key+1}. ${r.item.text.trim()}')),
       pw.SizedBox(width:105,child:pw.Text(qty,textAlign:pw.TextAlign.right)),
-      if(_mode=='bill')pw.SizedBox(width:90,child:pw.Text('₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)}',textAlign:pw.TextAlign.right))
+      if(_mode=='bill')pw.SizedBox(width:120,child:pw.Text('₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)} / ${_units[r.rateUnit]??r.rateUnit} = ₹${_lineTotal(r).toStringAsFixed(2)}',textAlign:pw.TextAlign.right))
      ]));
     }),
     pw.Divider(),
@@ -492,7 +495,7 @@ class _BillListPageState extends State<BillListPage>{
   setState(()=>_pdfBusy=true);
   try{
    final bytes=await _buildPdf();
-   final safeName=_name.text.trim().replaceAll(RegExp(r'[^a-zA-Z0-9_-]'),'_');
+   final safeName=_mode=='bill'?_name.text.trim().replaceAll(RegExp(r'[^a-zA-Z0-9_-]'),'_'):'';
    final fileName='${_mode=='bill'?'BharatSaathi_Bill':'BharatSaathi_List'}_${safeName.isEmpty?'document':safeName}.pdf';
    await Share.shareXFiles([XFile.fromData(bytes,name:fileName,mimeType:'application/pdf')],text:_mode=='bill'?'बिल की PDF रसीद':'सामान की लिस्ट की PDF');
   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('PDF नहीं बन पाया: $e')));}
@@ -507,21 +510,25 @@ class _BillListPageState extends State<BillListPage>{
  }
  Future<void> _sendWhatsApp()async{
   if(_validRows.isEmpty){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('कम से कम एक सामान जोड़ें।')));return;}
+  if(_mode=='list'){await Share.share(_message(),subject:'सामान की लिस्ट');return;}
   final phone=_phoneForWhatsApp();if(phone.length<11||phone.length>15){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('सही WhatsApp नंबर दर्ज करें।')));return;}
   final uri=Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(_message())}');
   if(!await launchUrl(uri,mode:LaunchMode.externalApplication)&&mounted){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('WhatsApp नहीं खुल पाया।')));}
  }
  @override Widget build(BuildContext context){
   return Scaffold(appBar:AppBar(title:const Text('बिल / सामान लिस्ट')),body:!_started?ListView(padding:const EdgeInsets.all(18),children:[
-   const Text('पहले ग्राहक की जानकारी भरें',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
-   const SizedBox(height:14),TextField(controller:_name,decoration:const InputDecoration(labelText:'ग्राहक / लिस्ट पाने वाले का नाम',border:OutlineInputBorder())),
-   const SizedBox(height:12),TextField(controller:_phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर',hintText:'10 अंकों का नंबर',border:OutlineInputBorder())),
-   const SizedBox(height:18),FilledButton(onPressed:(){if(_name.text.trim().isEmpty||_phoneForWhatsApp().length<11){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('नाम और सही मोबाइल नंबर भरें।')));return;}setState(()=>_started=true);},child:const Text('आगे बढ़ें'))
+   const Text('क्या बनाना है?',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
+   const SizedBox(height:14),
+   SegmentedButton<String>(segments:const [ButtonSegment(value:'bill',label:Text('बिल'),icon:Icon(Icons.receipt_long)),ButtonSegment(value:'list',label:Text('सामान की लिस्ट'),icon:Icon(Icons.shopping_bag_outlined))],selected:{_mode},onSelectionChanged:(v)=>setState(()=>_mode=v.first)),
+   if(_mode=='bill')...[
+    const SizedBox(height:14),TextField(controller:_name,decoration:const InputDecoration(labelText:'ग्राहक का नाम',border:OutlineInputBorder())),
+    const SizedBox(height:12),TextField(controller:_phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर',hintText:'10 अंकों का नंबर',border:OutlineInputBorder())),
+   ] else const Padding(padding:EdgeInsets.only(top:14),child:Text('सामान की लिस्ट में नाम या मोबाइल नंबर नहीं चाहिए। भेजते समय WhatsApp संपर्क चुनें।')),
+   const SizedBox(height:18),FilledButton(onPressed:(){if(_mode=='bill'&&(_name.text.trim().isEmpty||_phoneForWhatsApp().length<11)){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('बिल के लिए नाम और सही मोबाइल नंबर भरें।')));return;}setState(()=>_started=true);},child:const Text('आगे बढ़ें'))
   ]):ListView(padding:const EdgeInsets.all(16),children:[
-   Text('नाम: ${_name.text.trim()}  •  ${_phone.text.trim()}',style:const TextStyle(fontWeight:FontWeight.w800)),
-   const SizedBox(height:12),SegmentedButton<String>(segments:const [ButtonSegment(value:'bill',label:Text('बिल'),icon:Icon(Icons.receipt_long)),ButtonSegment(value:'list',label:Text('सामान लिस्ट'),icon:Icon(Icons.shopping_bag_outlined))],selected:{_mode},onSelectionChanged:(v)=>setState(()=>_mode=v.first)),
+   if(_mode=='bill')Text('नाम: '+_name.text.trim()+'  •  '+_phone.text.trim(),style:const TextStyle(fontWeight:FontWeight.w800)) else const Text('सामान की लिस्ट',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),
    const SizedBox(height:8),
-   Text(_mode=='bill'?'हर सामान की मात्रा और उस सामान की कुल कीमत भरें।':'सामान का नाम, मात्रा और उसकी यूनिट चुनें। कीमत भरना जरूरी नहीं है।',style:TextStyle(color:muted,fontSize:12)),
+   Text(_mode=='bill'?'मात्रा और यूनिट चुनें। रेट की यूनिट पर एक यूनिट का दाम लिखें; कुल अपने-आप निकलेगा।':'सामान का नाम, मात्रा और उसकी यूनिट चुनें। कीमत भरना जरूरी नहीं है।',style:TextStyle(color:muted,fontSize:12)),
    const SizedBox(height:8),
    ...List.generate(_rows.length,(i){final r=_rows[i];return Card(color:surfaceColor,child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[
     Row(children:[Expanded(child:Text('सामान ${i+1}',style:const TextStyle(fontWeight:FontWeight.w800))),IconButton(onPressed:()=>_removeRow(i),icon:const Icon(Icons.delete_outline))]),
@@ -532,7 +539,7 @@ class _BillListPageState extends State<BillListPage>{
      const SizedBox(width:8),
      Expanded(child:DropdownButtonFormField<String>(initialValue:r.unit,decoration:const InputDecoration(labelText:'यूनिट',border:OutlineInputBorder()),items:_units.entries.map((e)=>DropdownMenuItem(value:e.key,child:Text(e.value))).toList(),onChanged:(v){if(v!=null)setState(()=>r.unit=v);})),
     ]),
-    if(_mode=='bill')Padding(padding:const EdgeInsets.only(top:8),child:TextField(controller:r.price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'इस सामान की कीमत (₹)',hintText:'उदाहरण: 45',border:OutlineInputBorder())))
+    if(_mode=='bill')Padding(padding:const EdgeInsets.only(top:8),child:Column(children:[TextField(controller:r.price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:InputDecoration(labelText:'${_units[r.rateUnit]??r.rateUnit} का रेट (₹)',hintText:'एक यूनिट का दाम लिखें',border:const OutlineInputBorder())),const SizedBox(height:8),Row(children:[Expanded(child:DropdownButtonFormField<String>(initialValue:r.rateUnit,decoration:const InputDecoration(labelText:'रेट किस यूनिट का है?',border:OutlineInputBorder()),items:_units.entries.map((e)=>DropdownMenuItem(value:e.key,child:Text(e.value))).toList(),onChanged:(v){if(v!=null)setState(()=>r.rateUnit=v);})),const SizedBox(width:8),Expanded(child:InputDecorator(decoration:const InputDecoration(labelText:'इस सामान का कुल',border:OutlineInputBorder()),child:Text('₹${_lineTotal(r).toStringAsFixed(2)}',style:const TextStyle(fontWeight:FontWeight.w800))))])]))
    ])));}),
    OutlinedButton.icon(onPressed:_addRow,icon:const Icon(Icons.add),label:const Text('एक और सामान जोड़ें')),
    if(_mode=='bill')Padding(padding:const EdgeInsets.symmetric(vertical:14),child:Text('कुल राशि: ₹${_total.toStringAsFixed(2)}',textAlign:TextAlign.right,style:const TextStyle(fontSize:21,fontWeight:FontWeight.w900))),
@@ -546,7 +553,7 @@ class _BillListPageState extends State<BillListPage>{
  }
 }
 class _BillRow{
- final item=TextEditingController();final qty=TextEditingController(text:'1');final price=TextEditingController(text:'0');String unit='piece';
+ final item=TextEditingController();final qty=TextEditingController(text:'1');final price=TextEditingController(text:'0');String unit='piece',rateUnit='piece';
  void dispose(){item.dispose();qty.dispose();price.dispose();}
 }
 class KhataHubPage extends StatelessWidget{
