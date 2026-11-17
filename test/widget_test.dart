@@ -87,7 +87,10 @@ void main() {
     await tester.tap(find.text('सामान लिस्ट'));
     await tester.pumpAndSettle();
     expect(find.text('कीमत (वैकल्पिक ₹)'), findsOneWidget);
-    expect(find.text('प्रिंट / PDF सेव करें'), findsOneWidget);
+    final printButton = find.text('प्रिंट / PDF सेव करें');
+    await tester.ensureVisible(printButton);
+    await tester.pump();
+    expect(printButton, findsOneWidget);
     await tester.tap(find.text('एक और सामान जोड़ें'));
     await tester.pumpAndSettle();
     expect(find.text('सामान 2'), findsOneWidget);
