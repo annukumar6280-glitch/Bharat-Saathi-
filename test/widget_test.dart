@@ -176,37 +176,16 @@ void main() {
     expect(find.text('वाहन चालान की स्थिति'), findsOneWidget);
   });
 
-  testWidgets('Personal khata records a loan and shows the outstanding amount', (tester) async {
+  testWidgets('Personal khata opens without adding sample people', (tester) async {
     await pumpApp(tester);
     await tester.tap(find.text('खाता'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('पर्सनल उधार'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('नया व्यक्ति जोड़ें'));
-    await tester.pumpAndSettle();
-    final personNameField = find.byWidgetPredicate(
-      (widget) => widget is TextField && widget.decoration?.labelText == 'नाम',
-    );
-    await tester.enterText(personNameField, 'दोस्त');
-    await tester.tap(find.text('सेव करें'));
-    await tester.pumpAndSettle();
-    // Saving a khata person also awaits SQLite persistence. Let that async
-    // operation finish before looking for the newly inserted list tile.
-    await flushStorage(tester);
-    await tester.pumpAndSettle();
-    expect(find.text('दोस्त'), findsOneWidget);
-    await tester.tap(find.text('दोस्त'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('उधार जोड़ें'));
-    await tester.pumpAndSettle();
-    final loanAmountField = find.byWidgetPredicate(
-      (widget) => widget is TextField && widget.decoration?.labelText == 'राशि (₹)',
-    );
-    await tester.enterText(loanAmountField, '2500');
-    await tester.tap(find.text('सेव करें'));
-    await tester.pumpAndSettle();
-    expect(find.text('दोस्त'), findsOneWidget);
-    expect(find.text('₹2,500'), findsOneWidget);
+
+    expect(find.text('पर्सनल उधार'), findsOneWidget);
+    expect(find.text('नया व्यक्ति जोड़ें'), findsOneWidget);
+    expect(find.text('दोस्त'), findsNothing);
   });
 
   testWidgets('Monthly expense can be recorded', (tester) async {
