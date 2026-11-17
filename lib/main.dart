@@ -444,13 +444,13 @@ class _BillListPageState extends State<BillListPage>{
  final _name=TextEditingController(),_phone=TextEditingController();
  final List<_BillRow> _rows=[_BillRow()];
  String _mode='bill';bool _started=false,_pdfBusy=false;
- static const Map<String,String> _units={'kg':'किलो','g':'ग्राम','packet':'पैकेट','piece':'पीस'};
+ static const Map<String,String> _units={'kg':'किलो','g':'ग्राम','ft':'फुट','piece':'पीस','packet':'पैकेट','bag':'बोरी'};
  @override void initState(){super.initState();_watch(_rows.first);}
  void _watch(_BillRow r){r.item.addListener(_refresh);r.qty.addListener(_refresh);r.price.addListener(_refresh);}
  void _refresh(){if(mounted)setState((){});}
  @override void dispose(){_name.dispose();_phone.dispose();for(final r in _rows){r.dispose();}super.dispose();}
  double _unitFactor(String u)=>u=='kg'?1000:1;
- String _unitFamily(String u)=>(u=='kg'||u=='g')?'weight':(u=='piece'?'piece':'packet');
+ String _unitFamily(String u){if(u=='kg'||u=='g')return 'weight';if(u=='ft')return 'length';if(u=='piece')return 'piece';if(u=='bag')return 'bag';return 'packet';}
  double _lineTotal(_BillRow r){final q=double.tryParse(r.qty.text.trim())??0;final p=double.tryParse(r.price.text.trim())??0;if(_unitFamily(r.unit)!=_unitFamily(r.rateUnit))return 0;return q*_unitFactor(r.unit)/_unitFactor(r.rateUnit)*p;}
  double get _total=>_rows.fold<double>(0,(sum,r)=>sum+_lineTotal(r));
  String _qtyText(_BillRow r){final v=double.tryParse(r.qty.text.trim())??0;return v==v.roundToDouble()?v.toInt().toString():v.toString();}
