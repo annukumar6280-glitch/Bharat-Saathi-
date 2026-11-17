@@ -200,7 +200,7 @@ void main() {
     await tester.pumpAndSettle();
     await flushStorage(tester);
     expect(find.text('बिजली'), findsOneWidget);
-    expect(find.text('₹900'), findsOneWidget);
+    expect(find.text('₹900'), findsNWidgets(3));
   });
 
   testWidgets('Profile has only Hindi and English and no UPI or OTP option', (tester) async {
