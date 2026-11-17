@@ -27,6 +27,26 @@ jobs:
             flutter create --platforms=android --org com.bharatsaathi --project-name bharat_saathi .
           fi
 
+      - name: Configure Google Mobile Ads App ID
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          content = manifest.read_text()
+          if "com.google.android.gms.ads.APPLICATION_ID" not in content:
+              marker = "<application"
+              start = content.find(marker)
+              if start < 0:
+                  raise SystemExit("Android application tag not found")
+              end = content.find(">", start)
+              metadata = '\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />'
+              content = content[:end + 1] + metadata + content[end + 1:]
+              manifest.write_text(content)
+          if "ca-app-pub-3940256099942544~3347511713" not in content:
+              raise SystemExit("Google Mobile Ads App ID was not configured")
+          print("Configured Google Mobile Ads test App ID")
+          PY
+
       - name: Get dependencies
         run: flutter pub get
 
