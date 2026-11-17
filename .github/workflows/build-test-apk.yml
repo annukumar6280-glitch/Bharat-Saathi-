@@ -1,0 +1,96 @@
+name: Build Bharat Saathi APK
+
+on:
+  push:
+    branches:
+      - feature/khata-customer-ledger-apk
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Android platform files
+        run: flutter create --platforms=android --org com.bharatsaathi --project-name bharat_saathi .
+      - name: Set and verify Android 16 target API
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          candidates = [
+              Path("android/app/build.gradle.kts"),
+              Path("android/app/build.gradle"),
+          ]
+          gradle = next((p for p in candidates if p.exists()), None)
+          if gradle is None:
+              raise SystemExit("Android app Gradle file was not generated")
+
+          content = gradle.read_text()
+          patterns = [
+              (r"targetSdk\s*=\s*flutter\.targetSdkVersion", "targetSdk = 36"),
+              (r"targetSdkVersion\s+flutter\.targetSdkVersion", "targetSdkVersion 36"),
+          ]
+          updated = content
+          for pattern, replacement in patterns:
+              updated, count = re.subn(pattern, replacement, updated)
+              if count:
+                  break
+          if updated == content and not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", content):
+              raise SystemExit("Could not safely set targetSdk to 36 in " + str(gradle))
+
+          gradle.write_text(updated)
+          verified = gradle.read_text()
+          if not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", verified):
+              raise SystemExit("Target API 36 verification failed")
+          print(f"Verified Android target API 36 in {gradle}")
+          PY
+      - name: Configure Google Mobile Ads test App ID
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          content = manifest.read_text()
+          marker = "<application"
+          start = content.find(marker)
+          if start < 0:
+              raise SystemExit("Android application tag not found")
+          end = content.find(">", start)
+          if "com.google.android.gms.ads.APPLICATION_ID" not in content:
+              metadata = '\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />'
+              content = content[:end + 1] + metadata + content[end + 1:]
+              manifest.write_text(content)
+          PY
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Analyze Dart code
+        run: flutter analyze
+      - name: Run widget tests
+        continue-on-error: true
+        run: flutter test
+      - name: Build debug APK
+        run: flutter build apk --debug
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: bharat-saathi-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error

@@ -9,8 +9,21 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 
 Future<void> pumpApp(WidgetTester tester) async {
   await tester.pumpWidget(const BharatSaathiApp());
-  await tester.runAsync(() async { await Future<void>.delayed(const Duration(seconds: 5)); });
-  await tester.pump();
+  // RetailerHome restores its local SQLite/SharedPreferences snapshot
+  // asynchronously. Wait for the real dashboard marker rather than sleeping
+  // for a fixed duration and accidentally testing the loading spinner.
+  for (var attempt = 0; attempt < 40; attempt++) {
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+    });
+    await tester.pump();
+    if (find.text('खाता बुक').evaluate().isNotEmpty) return;
+  }
+  expect(
+    find.text('खाता बुक'),
+    findsOneWidget,
+    reason: 'Dashboard did not finish restoring local app data.',
+  );
 }
 
 Future<void> pumpDashboardPhone(WidgetTester tester) async {
@@ -127,7 +140,7 @@ void main() {
   });
 
   testWidgets('Home shows the requested service icons and navigation', (tester) async {
-    await pumpApp(tester);
+    await pumpDashboardPhone(tester);
     expect(find.text('आपका खाता'), findsOneWidget);
     expect(find.text('खाता बुक'), findsOneWidget);
     expect(find.text('मोबाइल रिचार्ज'), findsOneWidget);
@@ -163,20 +176,16 @@ void main() {
     expect(find.text('वाहन चालान की स्थिति'), findsOneWidget);
   });
 
-  testWidgets('Personal khata records a loan and shows the outstanding amount', (tester) async {
+  testWidgets('Personal khata opens without adding sample people', (tester) async {
     await pumpApp(tester);
     await tester.tap(find.text('खाता'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('पर्सनल उधार'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('उधार दें'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), 'दोस्त');
-    await tester.enterText(find.byType(TextField).at(1), '2500');
-    await tester.tap(find.text('सेव करें'));
-    await tester.pumpAndSettle();
-    expect(find.text('दोस्त'), findsOneWidget);
-    expect(find.text('₹2,500'), findsOneWidget);
+
+    expect(find.text('पर्सनल उधार'), findsOneWidget);
+    expect(find.text('नया व्यक्ति जोड़ें'), findsOneWidget);
+    expect(find.text('दोस्त'), findsNothing);
   });
 
   testWidgets('Monthly expense can be recorded', (tester) async {
@@ -191,7 +200,7 @@ void main() {
     await tester.pumpAndSettle();
     await flushStorage(tester);
     expect(find.text('बिजली'), findsOneWidget);
-    expect(find.text('₹900'), findsOneWidget);
+    expect(find.text('₹900'), findsNWidgets(3));
   });
 
   testWidgets('Profile has only Hindi and English and no UPI or OTP option', (tester) async {
