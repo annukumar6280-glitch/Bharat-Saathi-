@@ -40,21 +40,21 @@ jobs:
           if gradle is None:
               raise SystemExit("Android app Gradle file was not generated")
           content = gradle.read_text()
-          patterns = [(r"targetSdk\\s*=\\s*flutter\\.targetSdkVersion", "targetSdk = 36"),
-                      (r"targetSdkVersion\\s+flutter\\.targetSdkVersion", "targetSdkVersion 36")]
+          patterns = [(r"targetSdk\s*=\s*flutter\.targetSdkVersion", "targetSdk = 36"),
+                      (r"targetSdkVersion\s+flutter\.targetSdkVersion", "targetSdkVersion 36")]
           updated = content
           for pattern, replacement in patterns:
               updated, count = re.subn(pattern, replacement, updated)
               if count:
                   break
-          if updated == content and not re.search(r"targetSdk(?:Version)?\\s*(?:=\\s*)?36\\b", content):
+          if updated == content and not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", content):
               raise SystemExit("Could not safely set targetSdk to 36")
           gradle.write_text(updated)
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           xml = manifest.read_text()
           if "com.google.android.gms.ads.APPLICATION_ID" not in xml:
               pos = xml.find(">", xml.find("<application"))
-              xml = xml[:pos+1] + '\\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />' + xml[pos+1:]
+              xml = xml[:pos+1] + '\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />' + xml[pos+1:]
               manifest.write_text(xml)
           PY
       - name: Install dependencies
