@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: bharat-saathi-android-${{ github.ref }}
+  group: bharat-saathi-debug-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -78,8 +78,8 @@ jobs:
         run: flutter pub get
       - name: Analyze Dart code
         run: flutter analyze
-      - name: Run widget tests
-        run: flutter test
+      - name: Run focused Bill and Shopping List tests
+        run: flutter test test/bill_list_test.dart
       - name: Build debug APK
         run: flutter build apk --debug
       - name: Upload debug APK

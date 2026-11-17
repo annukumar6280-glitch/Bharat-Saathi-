@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart';
@@ -21,7 +19,7 @@ const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
 const privacyPolicyUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/privacy-policy.html';
 const termsConditionsUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/terms-and-conditions.html';
 const termsVersion='1.0';
-Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));}
+Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){try{await MobileAds.instance.initialize();}catch(error){debugPrint('Mobile Ads initialization failed: $error');}}}
 
 bool bannerAdsEnabled=true;
 const String _bannerAdUnitId='ca-app-pub-3940256099942544/6300978111';
@@ -420,6 +418,9 @@ class Dashboard extends StatelessWidget{
   Spacer(),Text(title,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13)),SizedBox(height:3),Text(subtitle,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(color:muted,fontSize:10))
  ]))));
 }
+double calculateBillLineTotal(double quantity,double unitPrice)=>quantity*unitPrice;
+double calculateBillTotal(Iterable<double> lineTotals)=>lineTotals.fold<double>(0,(sum,value)=>sum+value);
+
 class BillListPage extends StatefulWidget{
  const BillListPage({super.key});
  @override State<BillListPage> createState()=>_BillListPageState();
@@ -432,8 +433,12 @@ class _BillListPageState extends State<BillListPage>{
  @override void initState(){super.initState();_watch(_rows.first);}
  void _watch(_BillRow r){r.item.addListener(_refresh);r.qty.addListener(_refresh);r.price.addListener(_refresh);}
  void _refresh(){if(mounted)setState((){});}
- @override void dispose(){_name.dispose();_phone.dispose();for(final r in _rows)r.dispose();super.dispose();}
- double get _total=>_rows.fold<double>(0,(sum,r)=>sum+(double.tryParse(r.price.text.trim())??0));
+ @override void dispose(){_name.dispose();_phone.dispose();for(final r in _rows){r.dispose();}super.dispose();}
+ double _qty(_BillRow r)=>double.tryParse(r.qty.text.trim())??0;
+ double _price(_BillRow r)=>double.tryParse(r.price.text.trim())??0;
+ double _lineTotal(_BillRow r)=>calculateBillLineTotal(_qty(r),_price(r));
+ String? _validateRows(){if(_validRows.isEmpty)return 'कम से कम एक सामान का नाम भरें।';for(var i=0;i<_rows.length;i++){final r=_rows[i];if(r.item.text.trim().isEmpty)continue;final q=double.tryParse(r.qty.text.trim());if(q==null||!q.isFinite||q<=0)return 'सामान ${i+1} की मात्रा शून्य से अधिक भरें।';final raw=r.price.text.trim();if(raw.isNotEmpty){final p=double.tryParse(raw);if(p==null||!p.isFinite||p<0)return 'सामान ${i+1} की कीमत सही भरें।';}if(_mode=='bill'&&raw.isEmpty)return 'बिल में सामान ${i+1} की कीमत भरें।';}return null;}
+ double get _total=>calculateBillTotal(_rows.where((r)=>r.item.text.trim().isNotEmpty).map(_lineTotal));
  String _qtyText(_BillRow r){final v=double.tryParse(r.qty.text.trim())??0;return v==v.roundToDouble()?v.toInt().toString():v.toString();}
  String _phoneForWhatsApp(){var p=_phone.text.replaceAll(RegExp(r'[^0-9]'),'');if(p.length==10)p='91$p';if(p.startsWith('0')&&p.length==11)p='91${p.substring(1)}';return p;}
  void _addRow(){final r=_BillRow();_watch(r);setState(()=>_rows.add(r));}
@@ -441,8 +446,8 @@ class _BillListPageState extends State<BillListPage>{
  List<_BillRow> get _validRows=>_rows.where((r)=>r.item.text.trim().isNotEmpty).toList();
  String _message(){
   final b=StringBuffer();b.writeln(_mode=='bill'?'*बिल*':'*सामान मंगवाने की लिस्ट*');b.writeln('ग्राहक: ${_name.text.trim()}');b.writeln('मोबाइल: ${_phone.text.trim()}');b.writeln('--------------------');
-  var i=0;for(final r in _validRows){i++;final q=_qtyText(r);final unit=_units[r.unit]??r.unit;b.writeln('$i. ${r.item.text.trim()} — $q $unit${_mode=='bill'?' — ₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)}':''}');}
-  if(_mode=='bill')b.writeln('कुल राशि: *₹${_total.toStringAsFixed(2)}*');b.writeln('धन्यवाद');return b.toString();
+  var i=0;for(final r in _validRows){i++;final q=_qtyText(r);final unit=_units[r.unit]??r.unit;final price=r.price.text.trim().isEmpty?'':' — ₹${_price(r).toStringAsFixed(2)}';final total=_mode=='bill'?' — कुल ₹${_lineTotal(r).toStringAsFixed(2)}':'';b.writeln('$i. ${r.item.text.trim()} — $q $unit$price$total');}
+  if(_mode=='bill')b.writeln('कुल राशि: *₹${_total.toStringAsFixed(2)}*');b.writeln('दिनांक: ${DateTime.now().toLocal().toString().substring(0,16)}');b.writeln('धन्यवाद');return b.toString();
  }
  Future<Uint8List> _buildPdf()async{
   final regular=await PdfGoogleFonts.notoSansDevanagariRegular();
@@ -458,12 +463,14 @@ class _BillListPageState extends State<BillListPage>{
     pw.Text('WhatsApp: ${_phone.text.trim()}'),
     pw.Text('दिनांक: ${DateTime.now().toLocal().toString().substring(0,16)}'),
     pw.Divider(),
+    pw.Row(children:[pw.Expanded(child:pw.Text('सामान')),pw.SizedBox(width:105,child:pw.Text('मात्रा',textAlign:pw.TextAlign.right)),pw.SizedBox(width:90,child:pw.Text('प्रति यूनिट',textAlign:pw.TextAlign.right)),if(_mode=='bill')pw.SizedBox(width:90,child:pw.Text('कुल',textAlign:pw.TextAlign.right))]),
     ..._validRows.asMap().entries.map((entry){
      final r=entry.value;final qty='${_qtyText(r)} ${_units[r.unit]??r.unit}';
      return pw.Padding(padding:const pw.EdgeInsets.symmetric(vertical:6),child:pw.Row(children:[
       pw.Expanded(child:pw.Text('${entry.key+1}. ${r.item.text.trim()}')),
       pw.SizedBox(width:105,child:pw.Text(qty,textAlign:pw.TextAlign.right)),
-      if(_mode=='bill')pw.SizedBox(width:90,child:pw.Text('₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)}',textAlign:pw.TextAlign.right))
+      pw.SizedBox(width:90,child:pw.Text(r.price.text.trim().isEmpty?'—':'₹${_price(r).toStringAsFixed(2)}',textAlign:pw.TextAlign.right)),
+      if(_mode=='bill')pw.SizedBox(width:90,child:pw.Text('₹${_lineTotal(r).toStringAsFixed(2)}',textAlign:pw.TextAlign.right))
      ]));
     }),
     pw.Divider(),
@@ -475,26 +482,27 @@ class _BillListPageState extends State<BillListPage>{
   return doc.save();
  }
  Future<void> _sharePdf()async{
-  if(_validRows.isEmpty){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('कम से कम एक सामान जोड़ें।')));return;}
+  final validation=_validateRows();if(validation!=null){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(validation)));return;}
   setState(()=>_pdfBusy=true);
   try{
    final bytes=await _buildPdf();
    final safeName=_name.text.trim().replaceAll(RegExp(r'[^a-zA-Z0-9_-]'),'_');
    final fileName='${_mode=='bill'?'BharatSaathi_Bill':'BharatSaathi_List'}_${safeName.isEmpty?'document':safeName}.pdf';
-   await Share.shareXFiles([XFile.fromData(bytes,name:fileName,mimeType:'application/pdf')],text:_mode=='bill'?'बिल की PDF रसीद':'सामान की लिस्ट की PDF');
+   await Share.shareXFiles([XFile.fromData(bytes,name:fileName,mimeType:'application/pdf')],text:'${_mode=='bill'?'बिल की PDF रसीद':'शॉपिंग लिस्ट की PDF'}\nग्राहक: ${_name.text.trim()}\nWhatsApp: ${_phone.text.trim()}');
   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('PDF नहीं बन पाया: $e')));}
   finally{if(mounted)setState(()=>_pdfBusy=false);}
  }
  Future<void> _printPdf()async{
-  if(_validRows.isEmpty){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('कम से कम एक सामान जोड़ें।')));return;}
+  final validation=_validateRows();if(validation!=null){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(validation)));return;}
   setState(()=>_pdfBusy=true);
   try{final bytes=await _buildPdf();await Printing.layoutPdf(onLayout:(_)=>bytes);}
   catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('PDF प्रिंट नहीं हो पाया: $e')));}
   finally{if(mounted)setState(()=>_pdfBusy=false);}
  }
  Future<void> _sendWhatsApp()async{
-  if(_validRows.isEmpty){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('कम से कम एक सामान जोड़ें।')));return;}
+  final validation=_validateRows();if(validation!=null){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(validation)));return;}
   final phone=_phoneForWhatsApp();if(phone.length<11||phone.length>15){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('सही WhatsApp नंबर दर्ज करें।')));return;}
+  if(!RegExp(r'^(91)?[6-9][0-9]{9}$').hasMatch(phone)){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('भारत का सही 10 अंकों का WhatsApp नंबर दर्ज करें।')));return;}
   final uri=Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(_message())}');
   if(!await launchUrl(uri,mode:LaunchMode.externalApplication)&&mounted){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('WhatsApp नहीं खुल पाया।')));}
  }
@@ -502,8 +510,8 @@ class _BillListPageState extends State<BillListPage>{
   return Scaffold(appBar:AppBar(title:const Text('बिल / सामान लिस्ट')),body:!_started?ListView(padding:const EdgeInsets.all(18),children:[
    const Text('पहले ग्राहक की जानकारी भरें',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
    const SizedBox(height:14),TextField(controller:_name,decoration:const InputDecoration(labelText:'ग्राहक / लिस्ट पाने वाले का नाम',border:OutlineInputBorder())),
-   const SizedBox(height:12),TextField(controller:_phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर',hintText:'10 अंकों का नंबर',border:OutlineInputBorder())),
-   const SizedBox(height:18),FilledButton(onPressed:(){if(_name.text.trim().isEmpty||_phoneForWhatsApp().length<11){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('नाम और सही मोबाइल नंबर भरें।')));return;}setState(()=>_started=true);},child:const Text('आगे बढ़ें'))
+   const SizedBox(height:12),TextField(controller:_phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर',hintText:'भारत का 10 अंकों का नंबर',border:OutlineInputBorder())),
+   const SizedBox(height:18),FilledButton(onPressed:(){if(_name.text.trim().isEmpty||!RegExp(r'^(91)?[6-9][0-9]{9}$').hasMatch(_phoneForWhatsApp())){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('नाम और सही मोबाइल नंबर भरें।')));return;}setState(()=>_started=true);},child:const Text('आगे बढ़ें'))
   ]):ListView(padding:const EdgeInsets.all(16),children:[
    Text('नाम: ${_name.text.trim()}  •  ${_phone.text.trim()}',style:const TextStyle(fontWeight:FontWeight.w800)),
    const SizedBox(height:12),SegmentedButton<String>(segments:const [ButtonSegment(value:'bill',label:Text('बिल'),icon:Icon(Icons.receipt_long)),ButtonSegment(value:'list',label:Text('सामान लिस्ट'),icon:Icon(Icons.shopping_bag_outlined))],selected:{_mode},onSelectionChanged:(v)=>setState(()=>_mode=v.first)),
@@ -517,23 +525,23 @@ class _BillListPageState extends State<BillListPage>{
     Row(children:[
      Expanded(flex:2,child:TextField(controller:r.qty,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'मात्रा (जैसे 200 या 2)',border:OutlineInputBorder()))),
      const SizedBox(width:8),
-     Expanded(child:DropdownButtonFormField<String>(value:r.unit,decoration:const InputDecoration(labelText:'यूनिट',border:OutlineInputBorder()),items:_units.entries.map((e)=>DropdownMenuItem(value:e.key,child:Text(e.value))).toList(),onChanged:(v){if(v!=null)setState(()=>r.unit=v);})),
+     Expanded(child:DropdownButtonFormField<String>(initialValue:r.unit,decoration:const InputDecoration(labelText:'यूनिट',border:OutlineInputBorder()),items:_units.entries.map((e)=>DropdownMenuItem(value:e.key,child:Text(e.value))).toList(),onChanged:(v){if(v!=null)setState(()=>r.unit=v);})),
     ]),
-    if(_mode=='bill')Padding(padding:const EdgeInsets.only(top:8),child:TextField(controller:r.price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'इस सामान की कीमत (₹)',hintText:'उदाहरण: 45',border:OutlineInputBorder())))
+    Padding(padding:const EdgeInsets.only(top:8),child:TextField(controller:r.price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:InputDecoration(labelText:_mode=='bill'?'प्रति यूनिट कीमत (₹)':'कीमत (वैकल्पिक ₹)',hintText:_mode=='bill'?'उदाहरण: 45':'खाली छोड़ सकते हैं',border:const OutlineInputBorder())))
    ])));}),
    OutlinedButton.icon(onPressed:_addRow,icon:const Icon(Icons.add),label:const Text('एक और सामान जोड़ें')),
    if(_mode=='bill')Padding(padding:const EdgeInsets.symmetric(vertical:14),child:Text('कुल राशि: ₹${_total.toStringAsFixed(2)}',textAlign:TextAlign.right,style:const TextStyle(fontSize:21,fontWeight:FontWeight.w900))),
    const SizedBox(height:8),FilledButton.icon(onPressed:_sendWhatsApp,icon:const Icon(Icons.chat),label:const Text('WhatsApp पर टेक्स्ट भेजें')),
    const SizedBox(height:8),OutlinedButton.icon(onPressed:()=>Share.share(_message()),icon:const Icon(Icons.share),label:const Text('टेक्स्ट लिस्ट शेयर करें')),
    const SizedBox(height:8),OutlinedButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:_pdfBusy?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2)):const Icon(Icons.picture_as_pdf),label:Text(_pdfBusy?'PDF तैयार हो रहा है...':'PDF बनाएं / डाउनलोड या शेयर करें')),
-   const SizedBox(height:8),FilledButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:const Icon(Icons.picture_as_pdf),label:const Text('PDF WhatsApp पर भेजें')),
-   if(_mode=='bill')OutlinedButton.icon(onPressed:_pdfBusy?null:_printPdf,icon:const Icon(Icons.print_outlined),label:const Text('प्रिंट / PDF सेव करें')),
-   const SizedBox(height:8),const Text('WhatsApp टेक्स्ट भेजने पर संदेश पहले से लिखा हुआ खुलेगा। PDF शेयर करने पर WhatsApp, Drive या उपलब्ध ऐप चुन सकते हैं। भेजने के लिए चुने हुए ऐप में Send दबाएँ।',style:TextStyle(fontSize:11,color:Colors.grey))
+   const SizedBox(height:8),FilledButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:const Icon(Icons.picture_as_pdf),label:const Text('PDF WhatsApp / अन्य ऐप पर शेयर करें')),
+   OutlinedButton.icon(onPressed:_pdfBusy?null:_printPdf,icon:const Icon(Icons.print_outlined),label:const Text('प्रिंट / PDF सेव करें')),
+   const SizedBox(height:8),const Text('PDF शेयर करने पर Android Share Sheet खुलेगी। WhatsApp चुनकर ग्राहक की चैट चुनें और Send दबाएँ। ऐप आपकी अनुमति के बिना संदेश नहीं भेजता।',style:TextStyle(fontSize:11,color:Colors.grey))
   ]));
  }
 }
 class _BillRow{
- final item=TextEditingController();final qty=TextEditingController(text:'1');final price=TextEditingController(text:'0');String unit='piece';
+ final item=TextEditingController();final qty=TextEditingController(text:'1');final price=TextEditingController();String unit='piece';
  void dispose(){item.dispose();qty.dispose();price.dispose();}
 }
 class KhataHubPage extends StatelessWidget{
@@ -562,7 +570,6 @@ class _ExpenseOnlyPageState extends State<ExpenseOnlyPage>{
 class ServiceCategoryPage extends StatelessWidget{
  final String kind;final bool english;const ServiceCategoryPage({super.key,required this.kind,required this.english});
  @override Widget build(BuildContext context){
-  final insurance=kind=='insurance';
   final opts=kind=='recharge'?(english?['Prepaid mobile recharge','Postpaid mobile bill']:['प्रीपेड मोबाइल रिचार्ज','पोस्टपेड मोबाइल बिल']):kind=='bills'?(english?['Electricity bill','Water bill','Gas bill','DTH recharge','Broadband / internet bill','Landline bill','FASTag recharge (Coming Soon)']:['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल','FASTag रिचार्ज (Coming Soon)']):kind=='challan'?(english?['Traffic challan','Vehicle challan status']:['ट्रैफिक चालान','वाहन चालान की स्थिति']):(english?['Bike Insurance','Car Insurance']:['बाइक इंश्योरेंस','कार इंश्योरेंस']);
   final title=kind=='recharge'?(english?'Mobile Recharge':'मोबाइल रिचार्ज'):kind=='bills'?(english?'Bill Payment':'बिल पेमेंट'):kind=='challan'?(english?'Challan Payment':'चालान पेमेंट'):(english?'Bike / Car Insurance':'बाइक / कार इंश्योरेंस');
   return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(title)),body:ListView(padding:EdgeInsets.all(16),children:opts.map((x)=>Card(color:surfaceColor,child:ListTile(title:Text(x),trailing:Chip(label:Text('COMING SOON')),onTap:()=>openComingSoon(context,x)))).toList()));
