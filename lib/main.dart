@@ -57,9 +57,7 @@ class LocalStore {
  }
  static Future<bool> hasUnassignedLegacyData(String? preferencesLegacy)async{
   final db=await database;
-  debugPrint('RESTORE: checking legacy assignment');
   final marker=await db.query('app_meta',columns:['value'],where:'key = ?',whereArgs:['legacy_data_assigned'],limit:1);
-  debugPrint('RESTORE: legacy assignment checked');
   if(marker.isNotEmpty)return false;
   final oldTable=await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_app_state'");
   if(oldTable.isNotEmpty){
@@ -187,15 +185,15 @@ ThemeData buildAppTheme(bool dark){
  return ThemeData(useMaterial3:true,brightness:dark?Brightness.dark:Brightness.light,scaffoldBackgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF4F6FB),colorScheme:scheme,appBarTheme:AppBarTheme(backgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF4F6FB),foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),elevation:0,centerTitle:false),cardTheme:CardThemeData(color:dark?const Color(0xFF17263B):Colors.white),inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:dark?const Color(0xFF17263B):Colors.white,contentPadding:const EdgeInsets.symmetric(horizontal:14,vertical:14),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFF6FA4E8),width:1.5))),filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:dark?const Color(0xFF315A8A):const Color(0xFF14233B),foregroundColor:Colors.white,minimumSize:const Size(0,48),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),minimumSize:const Size(0,46),side:BorderSide(color:dark?const Color(0xFF526985):const Color(0xFFCCD6E4)),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating));
 }
 class BharatSaathiApp extends StatelessWidget{
- final bool supabaseAvailable,requireAuth,skipLegacyMigrationForTesting;
- const BharatSaathiApp({super.key,this.supabaseAvailable=false,this.requireAuth=false,this.skipLegacyMigrationForTesting=false});
+ final bool supabaseAvailable,requireAuth,testModeSkipRestore;
+ const BharatSaathiApp({super.key,this.supabaseAvailable=false,this.requireAuth=false,this.testModeSkipRestore=false});
  @override Widget build(BuildContext context)=>ValueListenableBuilder<bool>(
   valueListenable:appDarkMode,
   builder:(context,isDark,_)=>MaterialApp(
    title:'Bharat Saathi',debugShowCheckedModeBanner:false,
    theme:buildAppTheme(false),darkTheme:buildAppTheme(true),
    themeMode:isDark?ThemeMode.dark:ThemeMode.light,
-   home:requireAuth?AuthGate(supabaseAvailable:supabaseAvailable):RetailerHome(supabaseAvailable:supabaseAvailable,skipLegacyMigrationForTesting:skipLegacyMigrationForTesting)
+   home:requireAuth?AuthGate(supabaseAvailable:supabaseAvailable):RetailerHome(supabaseAvailable:supabaseAvailable,testModeSkipRestore:testModeSkipRestore)
   )
  );
 }
@@ -225,7 +223,7 @@ class _AuthGateState extends State<AuthGate>{
  }
 }
 class Record{String name,detail;double amount;IconData icon;DateTime? createdAt;Record(this.name,this.detail,this.amount,this.icon,[DateTime? timestamp]):createdAt=timestamp??DateTime.now();Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint,'createdAt':createdAt?.toIso8601String()};factory Record.fromJson(Map<String,dynamic> j){final timestamp=j['createdAt'] is String?DateTime.tryParse(j['createdAt'] as String):null;return Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long,timestamp)..createdAt=timestamp;}}
-class RetailerHome extends StatefulWidget{final bool supabaseAvailable,skipLegacyMigrationForTesting;const RetailerHome({super.key,this.supabaseAvailable=false,this.skipLegacyMigrationForTesting=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
+class RetailerHome extends StatefulWidget{final bool supabaseAvailable,testModeSkipRestore;const RetailerHome({super.key,this.supabaseAvailable=false,this.testModeSkipRestore=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
 class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver{
  Timer? _autoSyncDebounce;
  Timer? _autoSyncRetry;
@@ -239,7 +237,7 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
  final personalKhata=<Record>[];
  final khata=<Record>[];
 final serviceTransactions=<Record>[];
- @override void initState(){super.initState();_localUserId=widget.supabaseAvailable?(Supabase.instance.client.auth.currentUser?.id??'local'):'local';WidgetsBinding.instance.addObserver(this);homeTabRequest.addListener(_returnToHomeTab);_autoSyncRetry=Timer.periodic(const Duration(seconds:60),(_)=>_syncCloudNow());_restore();}
+ @override void initState(){super.initState();_localUserId=widget.supabaseAvailable?(Supabase.instance.client.auth.currentUser?.id??'local'):'local';WidgetsBinding.instance.addObserver(this);homeTabRequest.addListener(_returnToHomeTab);_autoSyncRetry=Timer.periodic(const Duration(seconds:60),(_)=>_syncCloudNow());if(widget.testModeSkipRestore){loaded=true;}else{_restore();}}
   void _returnToHomeTab(){if(mounted&&tab!=0)setState(()=>tab=0);}
   @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed)_syncCloudNow();}
   @override void dispose(){WidgetsBinding.instance.removeObserver(this);homeTabRequest.removeListener(_returnToHomeTab);_autoSyncDebounce?.cancel();_autoSyncRetry?.cancel();super.dispose();}
@@ -286,23 +284,18 @@ final serviceTransactions=<Record>[];
    }finally{_cloudSyncBusy=false;}
   }
  Future<void> _restore({bool syncCloud=true})async{
-  debugPrint('RESTORE: started');
   if(mounted)setState(()=>loaded=false);
   cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';
   expensesList.clear();khata.clear();personalTransactions.clear();serviceTransactions.clear();
   var shouldSanitizeSnapshot=false;
   try{
    final userId=_localUserId;
-   if(!widget.skipLegacyMigrationForTesting){
+   if(!widget.testModeSkipRestore){
    var legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
-   debugPrint('RESTORE: preferences read');
    legacyPrefs=await LocalStore.sanitizeLegacyInventoryData(legacyPrefs);
-   debugPrint('RESTORE: legacy sanitized');
    if(legacyPrefs!=null)await _prefs.setString('bharat_saathi_store_v1',legacyPrefs);
    final legacyDeclined=await LocalStore.wasLegacyDeclinedForUser(userId);
-   debugPrint('RESTORE: legacy flags read');
    final hasLegacy=await LocalStore.hasUnassignedLegacyData(legacyPrefs);
-   debugPrint('RESTORE: hasLegacy=$hasLegacy');
    if(hasLegacy&&!legacyDeclined&&widget.supabaseAvailable){
     if(!mounted)return;
     final importLegacy=await showDialog<bool>(context:context,barrierDismissible:false,builder:(dialogContext)=>AlertDialog(
@@ -316,9 +309,7 @@ final serviceTransactions=<Record>[];
     ));
     if(!mounted)return;
     if(importLegacy==true){
-     debugPrint('RESTORE: starting legacy migration');
     final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
-    debugPrint('RESTORE: legacy migration complete');
      if(migrated&&legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
      if(!migrated){
       if(!mounted)return;
@@ -337,15 +328,12 @@ final serviceTransactions=<Record>[];
    }
    }
    var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
-   debugPrint('RESTORE: local snapshot read');
    if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
-   debugPrint('RESTORE: cloud reconcile complete');
    if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));shouldSanitizeSnapshot=true;}
   }catch(error,stackTrace){
    debugPrint('Bharat Saathi restore failed: $error');
    debugPrintStack(stackTrace:stackTrace);
   }
-  debugPrint('RESTORE: setting loaded=true');
   if(mounted)setState(()=>loaded=true);
   if(shouldSanitizeSnapshot){await _persist();}else if(syncCloud){_scheduleCloudSync();}
  }
