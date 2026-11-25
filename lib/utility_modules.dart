@@ -11,7 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _ink=Color(0xFF14233B), _teal=Color(0xFF168C86), _gold=Color(0xFFF2A93B);
+const _ink=Color(0xFF25345B), _teal=Color(0xFF159B88), _gold=Color(0xFFF2B544);
 const _vault=FlutterSecureStorage();
 const _geminiModel='gemini-3.1-flash-lite-image';
 
@@ -28,12 +28,14 @@ class UtilityModulesPage extends StatelessWidget {
   @override Widget build(BuildContext context)=>Scaffold(
     appBar:AppBar(title:const Text('दुकानदार के स्मार्ट टूल')),
     body:ListView(padding:const EdgeInsets.all(16),children:[
+      Container(padding:const EdgeInsets.all(17),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFFDDE8FF),Color(0xFFEDE5FF),Color(0xFFDDF7EF)]),borderRadius:BorderRadius.circular(20)),child:const Row(children:[Icon(Icons.dashboard_customize_rounded,color:Color(0xFF536CC0),size:30),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Smart Tools',style:TextStyle(color:_ink,fontSize:20,fontWeight:FontWeight.w900)),Text('आपके कारोबार के लिए आसान डिजिटल टूल',style:TextStyle(color:Color(0xFF657295),fontSize:12))]))])),
+      const SizedBox(height:16),
       Text('रोज़ के काम के लिए उपयोगी सुविधाएँ',style:TextStyle(color:_ink,fontSize:17,fontWeight:FontWeight.w800)),
       const SizedBox(height:12),
       GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:modules.length,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,mainAxisSpacing:12,crossAxisSpacing:12,childAspectRatio:1.12),itemBuilder:(context,i){
         final m=modules[i];
         final colors=[const Color(0xFFE7F0FF),const Color(0xFFFFE8F0),const Color(0xFFE6F8F1),const Color(0xFFFFF2D9),const Color(0xFFEDE9FF),const Color(0xFFE4F6FA)];
-        return Material(color:Colors.white,borderRadius:BorderRadius.circular(18),child:InkWell(borderRadius:BorderRadius.circular(18),onTap:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>UtilityModulePage(kind:m.$4,title:m.$1))),child:Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xFFE1E7F0))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Container(width:48,height:48,decoration:BoxDecoration(color:colors[i],borderRadius:BorderRadius.circular(14)),child:Icon(m.$3,color:_ink,size:27)),const Spacer(),Text(m.$1,style:const TextStyle(color:_ink,fontWeight:FontWeight.w800,fontSize:14)),const SizedBox(height:4),Text(m.$2,style:const TextStyle(color:Colors.blueGrey,fontSize:11))]))));
+        return Material(color:Colors.white,elevation:3,shadowColor:const Color(0x20526FC4),borderRadius:BorderRadius.circular(20),child:InkWell(borderRadius:BorderRadius.circular(20),onTap:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>UtilityModulePage(kind:m.$4,title:m.$1))),child:Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Colors.white,Color.lerp(colors[i],Colors.white,.48)!]),borderRadius:BorderRadius.circular(20),border:Border.all(color:Color.lerp(colors[i],const Color(0xFF8498D8),.3)!)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Container(width:49,height:49,decoration:BoxDecoration(gradient:LinearGradient(colors:[colors[i],Color.lerp(colors[i],Colors.white,.2)!]),borderRadius:BorderRadius.circular(15)),child:Icon(m.$3,color:const Color(0xFF4E64AF),size:27)),const Spacer(),Text(m.$1,style:const TextStyle(color:_ink,fontWeight:FontWeight.w900,fontSize:14)),const SizedBox(height:4),Text(m.$2,style:const TextStyle(color:Color(0xFF78839C),fontSize:11))]))));
       })
     ])
   );
