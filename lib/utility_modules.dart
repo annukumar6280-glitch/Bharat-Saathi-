@@ -14,7 +14,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _ink=Color(0xFF25345B), _teal=Color(0xFF159B88);
 const _vault=FlutterSecureStorage();
-const _geminiModel='gemini-3.1-flash-lite-image';
 
 class UtilityModulesPage extends StatelessWidget {
   const UtilityModulesPage({super.key});
