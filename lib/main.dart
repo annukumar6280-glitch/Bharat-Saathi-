@@ -373,8 +373,8 @@ final serviceTransactions=<Record>[];
   ]))));
   WidgetsBinding.instance.addPostFrameCallback((_) {person.dispose();reason.dispose();items.dispose();amount.dispose();});
  }
- Future<void> entry([bool payment=false])=>_ledgerEntry(khata,payment:payment,personal:false);
- Future<void> personalLoanEntry([bool payment=false])=>_ledgerEntry(personalKhata,payment:payment,personal:true);
+ Future<void> entry([bool payment=false,String? customer])=>_ledgerEntry(khata,payment:payment,personal:false,fixedPerson:customer);
+ Future<void> personalLoanEntry([bool payment=false,String? customer])=>_ledgerEntry(personalKhata,payment:payment,personal:true,fixedPerson:customer);
  Future<void> renameLedgerPerson(String oldName,List<Record> target)async{
   final name=TextEditingController(text:oldName);
   await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('नाम एडिट करें'),content:TextField(controller:name,decoration:const InputDecoration(labelText:'नया नाम')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:(){final value=name.text.trim();if(value.isEmpty){msg('नाम खाली नहीं हो सकता');return;}setState((){for(final r in target){if(r.name==oldName)r.name=value;}});_persist();Navigator.pop(c);msg('नाम अपडेट हो गया');},child:const Text('सेव करें'))]));
