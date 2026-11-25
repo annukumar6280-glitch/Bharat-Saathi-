@@ -167,6 +167,10 @@ void main() {
     expect(find.text('GST'), findsOneWidget);
     expect(find.text('GST सहित'), findsNothing);
     expect(find.text('छूट के बाद'), findsNothing);
+    await tester.tap(find.text('GST'));
+    await tester.pumpAndSettle();
+    expect(find.text('5%'), findsOneWidget);
+    expect(find.text('18%'), findsOneWidget);
   });
 
   testWidgets('Personal khata records a loan and shows the outstanding amount', (tester) async {
