@@ -235,8 +235,16 @@ void main() {
     expect(find.text('रकम जोड़ें'), findsNothing);
     expect(find.text('रकम घटाएँ'), findsNothing);
 
-    // Open the customer's own ledger, then add a loan there.
+    // Create a customer first, then open that customer's own ledger.
+    await tester.tap(find.text('ग्राहक जोड़ें'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'दोस्त');
+    await tester.tap(find.text('ग्राहक जोड़ें').last);
+    await tester.pumpAndSettle();
+    expect(find.text('दोस्त'), findsOneWidget);
+
     await tester.tap(find.text('हिसाब'));
+
     await tester.pumpAndSettle();
     await tester.tap(find.text('उधार जोड़ें'));
     await tester.pumpAndSettle();
