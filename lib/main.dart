@@ -373,38 +373,228 @@ final serviceTransactions=<Record>[];
  Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:Icon(Icons.add),label:Text(s));
 }
 
-class Dashboard extends StatelessWidget{
- final bool english;final String accountName;final VoidCallback onKhata,onDocument;final ValueChanged<String> onTools;
- const Dashboard({super.key,required this.english,required this.accountName,required this.onKhata,required this.onDocument,required this.onTools});
- @override Widget build(BuildContext context)=>Container(color:appBgColor,child:ListView(padding:const EdgeInsets.fromLTRB(16,14,16,24),children:[
-  Container(padding:const EdgeInsets.fromLTRB(18,20,18,20),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF142B49),Color(0xFF294D73)]),borderRadius:BorderRadius.circular(22)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-   Text(accountName.isNotEmpty?(english?'Account: $accountName':'खाता: $accountName'):(english?'Your account':'आपका खाता'),style:const TextStyle(color:Colors.white,fontSize:21,fontWeight:FontWeight.w900),maxLines:2,overflow:TextOverflow.ellipsis),
-   const SizedBox(height:5),Text(english?'Your daily business at a glance':'आपके रोज़ के कारोबार का साफ़ और आसान हिसाब',style:const TextStyle(color:Color(0xFFD5DFEA),fontSize:12))
-  ]),
-  const SizedBox(height:14),
-  GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.52,children:[
-   _tile(english?'Khata Book':'खाता बुक',english?'Shop and personal ledger':'दुकान और पर्सनल हिसाब',Icons.menu_book_rounded,const Color(0xFFE8F0FF),onKhata),
-   _tile(english?'Bill / Item List':'बिल / सामान लिस्ट',english?'Create bill or shopping list':'बिल या सामान की पर्ची बनाएँ',Icons.receipt_long_rounded,const Color(0xFFFFF2DE),onDocument)
-  ]),
-  const SizedBox(height:20),
-  Row(children:[Expanded(child:Text(english?'Shopkeeper Tools':'दुकानदार के स्मार्ट टूल',style:TextStyle(color:navy,fontSize:18,fontWeight:FontWeight.w900))),Text(english?'6 useful tools':'6 उपयोगी सुविधाएँ',style:TextStyle(color:muted,fontSize:11))]),
-  const SizedBox(height:12),
-  GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.52,children:[
-   _tile('QR Code Tools','QR बनाएँ और स्कैन करें',Icons.qr_code_2,const Color(0xFFE8F0FF),()=>onTools('qr')),
-   _tile('Poster Maker','ऑफर पोस्टर बनाएँ',Icons.palette_outlined,const Color(0xFFFFF2DE),()=>onTools('poster')),
-   _tile('Reminders & Notes','काम और भुगतान याद रखें',Icons.notifications_active_outlined,const Color(0xFFE6F7F0),()=>onTools('reminders')),
-   _tile('Smart Calculator','GST, छूट और मुनाफा',Icons.calculate_outlined,const Color(0xFFF1EAFE),()=>onTools('calculator')),
-   _tile('Payment Sound Box','पेमेंट सूचना सेटअप',Icons.volume_up_outlined,const Color(0xFFE8F0FF),()=>onTools('soundbox')),
-   _tile('AI Calling Assistant','कॉल असिस्टेंट',Icons.support_agent,const Color(0xFFFFF2DE),()=>onTools('calling'))
-  ]),
-  const SizedBox(height:12),
-  Text(english?'Khata Book and Bill / Item List remain available.':'खाता बुक और बिल / सामान लिस्ट पहले की तरह उपलब्ध हैं।',style:TextStyle(color:muted,fontSize:10))
- ]));
- Widget _tile(String title,String subtitle,IconData icon,Color iconBg,VoidCallback tap)=>Material(color:surfaceColor,borderRadius:BorderRadius.circular(17),child:InkWell(onTap:tap,borderRadius:BorderRadius.circular(17),child:Container(padding:const EdgeInsets.all(13),decoration:BoxDecoration(borderRadius:BorderRadius.circular(17),border:Border.all(color:borderColor),boxShadow:darkModeEnabled?[BoxShadow(color:Colors.black.withValues(alpha:.16),blurRadius:10,offset:const Offset(0,4))]:[]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-  Container(width:44,height:44,decoration:BoxDecoration(color:darkModeEnabled?const Color(0xFF233D5B):iconBg,borderRadius:BorderRadius.circular(13),border:Border.all(color:darkModeEnabled?const Color(0xFF385779):borderColor)),child:Icon(icon,color:darkModeEnabled?const Color(0xFF9CCBFF):navy,size:25)),
-  const Spacer(),Text(title,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13)),const SizedBox(height:3),Text(subtitle,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(color:muted,fontSize:10))
- ]))));
+class Dashboard extends StatelessWidget {
+  final bool english;
+  final String accountName;
+  final VoidCallback onKhata, onDocument;
+  final ValueChanged<String> onTools;
+
+  const Dashboard({
+    super.key,
+    required this.english,
+    required this.accountName,
+    required this.onKhata,
+    required this.onDocument,
+    required this.onTools,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: appBgColor,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF142B49), Color(0xFF294D73)],
+              ),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  accountName.isNotEmpty
+                      ? (english ? 'Account: $accountName' : 'खाता: $accountName')
+                      : (english ? 'Your account' : 'आपका खाता'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  english
+                      ? 'Your daily business at a glance'
+                      : 'आपके रोज़ के कारोबार का साफ़ और आसान हिसाब',
+                  style: const TextStyle(
+                    color: Color(0xFFD5DFEA),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.52,
+            children: [
+              _tile(
+                english ? 'Khata Book' : 'खाता बुक',
+                english ? 'Shop and personal ledger' : 'दुकान और पर्सनल हिसाब',
+                Icons.menu_book_rounded,
+                const Color(0xFFE8F0FF),
+                onKhata,
+              ),
+              _tile(
+                english ? 'Bill / Item List' : 'बिल / सामान लिस्ट',
+                english ? 'Create bill or shopping list' : 'बिल या सामान की पर्ची बनाएँ',
+                Icons.receipt_long_rounded,
+                const Color(0xFFFFF2DE),
+                onDocument,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  english ? 'Shopkeeper Tools' : 'दुकानदार के स्मार्ट टूल',
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                english ? '6 useful tools' : '6 उपयोगी सुविधाएँ',
+                style: TextStyle(color: muted, fontSize: 11),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.52,
+            children: [
+              _tile('QR Code Tools', 'QR बनाएँ और स्कैन करें', Icons.qr_code_2,
+                  const Color(0xFFE8F0FF), () => onTools('qr')),
+              _tile('Poster Maker', 'ऑफर पोस्टर बनाएँ', Icons.palette_outlined,
+                  const Color(0xFFFFF2DE), () => onTools('poster')),
+              _tile('Reminders & Notes', 'काम और भुगतान याद रखें',
+                  Icons.notifications_active_outlined, const Color(0xFFE6F7F0),
+                  () => onTools('reminders')),
+              _tile('Smart Calculator', 'GST, छूट और मुनाफा',
+                  Icons.calculate_outlined, const Color(0xFFF1EAFE),
+                  () => onTools('calculator')),
+              _tile('Payment Sound Box', 'पेमेंट सूचना सेटअप',
+                  Icons.volume_up_outlined, const Color(0xFFE8F0FF),
+                  () => onTools('soundbox')),
+              _tile('AI Calling Assistant', 'कॉल असिस्टेंट',
+                  Icons.support_agent, const Color(0xFFFFF2DE),
+                  () => onTools('calling')),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            english
+                ? 'Khata Book and Bill / Item List remain available.'
+                : 'खाता बुक और बिल / सामान लिस्ट पहले की तरह उपलब्ध हैं।',
+            style: TextStyle(color: muted, fontSize: 10),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tile(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color iconBg,
+    VoidCallback tap,
+  ) {
+    return Material(
+      color: surfaceColor,
+      borderRadius: BorderRadius.circular(17),
+      child: InkWell(
+        onTap: tap,
+        borderRadius: BorderRadius.circular(17),
+        child: Container(
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(17),
+            border: Border.all(color: borderColor),
+            boxShadow: darkModeEnabled
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: .16),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: darkModeEnabled
+                      ? const Color(0xFF233D5B)
+                      : iconBg,
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(
+                    color: darkModeEnabled
+                        ? const Color(0xFF385779)
+                        : borderColor,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  color: darkModeEnabled
+                      ? const Color(0xFF9CCBFF)
+                      : navy,
+                  size: 25,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: navy,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: muted, fontSize: 10),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
+
 class BillListPage extends StatefulWidget{
  const BillListPage({super.key});
  @override State<BillListPage> createState()=>_BillListPageState();
