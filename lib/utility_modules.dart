@@ -152,7 +152,7 @@ class _PosterToolState extends State<_PosterTool>{
   const SizedBox(height:10),
   TextField(controller:brief,maxLines:4,decoration:InputDecoration(labelText:generationType=='video'?'किस तरह का वीडियो चाहिए?':'किस तरह की फोटो / डिजाइन चाहिए?',hintText:creativeMode=='shop'?'जैसे दिवाली ऑफर, प्रोडक्ट विज्ञापन, दुकान का बैनर...':'जैसे जन्मदिन, शादी, त्योहार, फोटो एडिट, वॉलपेपर, सोशल मीडिया आर्ट...')),
   const SizedBox(height:10),
-  OutlinedButton.icon(onPressed:generating?_nullPick:_pickImage,icon:const Icon(Icons.add_photo_alternate_outlined),label:Text(referenceImage==null?'अपनी फोटो जोड़ें (वैकल्पिक)':'फोटो चुनी गई — बदलने के लिए टैप करें')),
+  OutlinedButton.icon(onPressed:generating?null:_pickImage,icon:const Icon(Icons.add_photo_alternate_outlined),label:Text(referenceImage==null?'अपनी फोटो जोड़ें (वैकल्पिक)':'फोटो चुनी गई — बदलने के लिए टैप करें')),
   if(referenceImage!=null)Padding(padding:const EdgeInsets.only(top:8),child:ClipRRect(borderRadius:BorderRadius.circular(14),child:Image.memory(referenceImage!,height:130,fit:BoxFit.contain))),
   const SizedBox(height:12),
   FilledButton.icon(onPressed:generating?null:_generate,icon:generating?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.auto_awesome),label:Text(generating?'AI तैयार कर रहा है...':generationType=='video'?'AI वीडियो बनाएँ':'AI फोटो / पोस्टर बनाएँ')),
@@ -167,7 +167,6 @@ class _PosterToolState extends State<_PosterTool>{
   const SizedBox(height:12),
   const Text('आप अपनी फोटो से नया डिजाइन या एडिट बनवा सकते हैं। सामान्य क्रिएटिव डिजाइन के लिए दुकान का नाम या मोबाइल नंबर देना जरूरी नहीं है। AI सेवा की API Key ऐप में नहीं दिखाई जाएगी।',style:TextStyle(color:Colors.blueGrey,fontSize:11)),
  ]);
- VoidCallback? get _nullPick=>null;
 }
 class _ReminderTool extends StatefulWidget{const _ReminderTool();@override State<_ReminderTool> createState()=>_ReminderToolState();}
 class _ReminderToolState extends State<_ReminderTool>{
