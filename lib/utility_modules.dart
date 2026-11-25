@@ -238,6 +238,7 @@ class _SoundboxInfoState extends State<_SoundboxInfo>{
  @override void dispose(){endpoint.dispose();token.dispose();super.dispose();}
  Future<void> _load()async{endpoint.text=await _vault.read(key:'soundbox_api_url')??'';token.text=await _vault.read(key:'soundbox_api_token')??'';if(mounted)setState(()=>loading=false);}
  Future<void> _save()async{await _vault.write(key:'soundbox_api_url',value:endpoint.text.trim());await _vault.write(key:'soundbox_api_token',value:token.text.trim());if(mounted)setState(()=>status='API सेटिंग सेव हो गई। अब कनेक्शन टेस्ट करें।');}
+ Future<void> _disconnect()async{await _vault.delete(key:'soundbox_api_url');await _vault.delete(key:'soundbox_api_token');endpoint.clear();token.clear();if(mounted)setState((){connected=false;status='API डिस्कनेक्ट कर दी गई है।';});}
  Future<void> _test()async{
   final uri=Uri.tryParse(endpoint.text.trim());
   if(uri==null||!uri.hasScheme||!uri.hasAuthority){setState(()=>status='सही HTTPS API URL दर्ज करें।');return;}
@@ -257,6 +258,7 @@ class _SoundboxInfoState extends State<_SoundboxInfo>{
   const SizedBox(height:10),TextField(controller:token,obscureText:obscure,decoration:InputDecoration(labelText:'API Token / Secret (वैकल्पिक)',suffixIcon:IconButton(onPressed:()=>setState(()=>obscure=!obscure),icon:Icon(obscure?Icons.visibility:Icons.visibility_off)))),
   const SizedBox(height:14),OutlinedButton.icon(onPressed:_save,icon:const Icon(Icons.save_outlined),label:const Text('API सेटिंग सेव करें')),
   const SizedBox(height:8),FilledButton.icon(onPressed:testing?null:_test,icon:testing?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.link),label:Text(testing?'कनेक्शन जाँच रहे हैं...':'API Connect / Test Connection')),
+  TextButton.icon(onPressed:_disconnect,icon:const Icon(Icons.link_off),label:const Text('Disconnect / API हटाएँ')),
   const SizedBox(height:14),Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:connected?const Color(0xFFE5F7EF):const Color(0xFFFFF4DF),borderRadius:BorderRadius.circular(14)),child:Row(children:[Icon(connected?Icons.check_circle:Icons.info_outline,color:connected?Colors.green:Colors.orange),const SizedBox(width:10),Expanded(child:Text(status,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w600)))])),
   const SizedBox(height:12),const Text('ध्यान दें: यह endpoint और token को सेव करके API की पहुँच जाँचता है। असली पेमेंट की आवाज़ तभी चलेगी जब आपके payment provider का webhook/event format और verified payment callback जोड़ा जाएगा। केवल HTTP response को भुगतान की पुष्टि नहीं माना जाएगा।',style:TextStyle(color:Colors.blueGrey,fontSize:11))
  ]);
