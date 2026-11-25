@@ -1,7 +1,7 @@
 name: bharat_saathi
 description: Bharat Saathi personal finance and retailer management app.
 publish_to: "none"
-version: 0.1.0+442
+version: 0.1.0+465
 environment:
   sdk: ">=3.11.0 <4.0.0"
 dependencies:
