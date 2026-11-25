@@ -8,7 +8,7 @@ import 'package:shared_preferences_platform_interface/in_memory_shared_preferenc
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 Future<void> pumpApp(WidgetTester tester) async {
-  await tester.pumpWidget(const BharatSaathiApp());
+  await tester.pumpWidget(const BharatSaathiApp(skipLegacyMigrationForTesting: true));
   // Complete the bounded SharedPreferences timeout on the widget-test clock
   // before yielding to real async work such as SQLite FFI initialization.
   await tester.pump(const Duration(seconds: 3));
