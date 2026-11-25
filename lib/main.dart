@@ -167,9 +167,8 @@ class LocalStore {
   });
  }
 }
-final ValueNotifier<bool> appDarkMode=ValueNotifier<bool>(false);
 final ValueNotifier<int> homeTabRequest=ValueNotifier<int>(0);
-bool get darkModeEnabled=>appDarkMode.value;
+bool get darkModeEnabled=>false;
 Color get navy=>darkModeEnabled?const Color(0xFFEAF1FF):const Color(0xFF172B4D);
 Color get blue=>darkModeEnabled?const Color(0xFF9CC3FF):const Color(0xFF4F46E5);
 Color get gold=>const Color(0xFFF59E0B);
@@ -181,74 +180,21 @@ Color get surfaceColor=>darkModeEnabled?const Color(0xFF17263B):const Color(0xFF
 Color get appBgColor=>darkModeEnabled?const Color(0xFF0D1728):const Color(0xFFF3F5FC);
 Color get borderColor=>darkModeEnabled?const Color(0xFF30435D):const Color(0xFFE1E6F0);
 ThemeData buildAppTheme(bool dark){
- final scheme=ColorScheme.fromSeed(seedColor:dark?const Color(0xFF6FA4E8):const Color(0xFF4F46E5),brightness:dark?Brightness.dark:Brightness.light).copyWith(
-  primary:dark?const Color(0xFF9CC3FF):const Color(0xFF4F46E5),
-  secondary:dark?const Color(0xFF64C9C1):const Color(0xFF0D9488),
-  tertiary:dark?const Color(0xFFFFCE78):const Color(0xFFF59E0B),
-  surface:dark?const Color(0xFF17263B):Colors.white,
-  onSurface:dark?const Color(0xFFE5EEFF):const Color(0xFF172B4D),
- );
- return ThemeData(
-  useMaterial3:true,
-  brightness:dark?Brightness.dark:Brightness.light,
-  scaffoldBackgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF3F5FC),
-  colorScheme:scheme,
-  appBarTheme:AppBarTheme(
-   backgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF3F5FC),
-   foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF172B4D),
-   elevation:0,scrolledUnderElevation:0,centerTitle:false,toolbarHeight:62,
-   titleTextStyle:TextStyle(color:dark?const Color(0xFFE5EEFF):const Color(0xFF172B4D),fontSize:19,fontWeight:FontWeight.w800),
-   iconTheme:IconThemeData(color:dark?const Color(0xFFE5EEFF):const Color(0xFF4F46E5)),
-  ),
-  cardTheme:CardThemeData(
-   color:dark?const Color(0xFF17263B):Colors.white,elevation:2,
-   shadowColor:dark?Colors.black26:const Color(0x16514F9D),
-   margin:const EdgeInsets.symmetric(vertical:6),
-   shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(18),side:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE6E9F2))),
-  ),
-  inputDecorationTheme:InputDecorationTheme(
-   filled:true,fillColor:dark?const Color(0xFF17263B):const Color(0xFFFAFBFF),
-   contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:15),
-   border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E6F0))),
-   enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E6F0))),
-   focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFF4F46E5),width:1.6)),
-  ),
-  filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(
-   backgroundColor:dark?const Color(0xFF315A8A):const Color(0xFF4F46E5),foregroundColor:Colors.white,
-   minimumSize:const Size(0,49),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),
-   textStyle:const TextStyle(fontWeight:FontWeight.w800),
-   shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15)),
-  )),
-  outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(
-   foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF172B4D),
-   minimumSize:const Size(0,46),
-   side:BorderSide(color:dark?const Color(0xFF526985):const Color(0xFFCCD6E4)),
-   shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)),
-  )),
-  snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating,backgroundColor:Color(0xFF26345B),contentTextStyle:TextStyle(color:Colors.white,fontWeight:FontWeight.w600)),
-  dividerColor:dark?const Color(0xFF30435D):const Color(0xFFE3E8F5),
-  navigationBarTheme:NavigationBarThemeData(
-   backgroundColor:dark?const Color(0xFF17263B):Colors.white,
-   indicatorColor:dark?const Color(0xFF29496D):const Color(0xFFE9E7FF),
-   labelTextStyle:WidgetStateProperty.resolveWith((s)=>TextStyle(
-    fontSize:11,fontWeight:s.contains(WidgetState.selected)?FontWeight.w800:FontWeight.w500,
-    color:s.contains(WidgetState.selected)?(dark?const Color(0xFFBBD5FF):const Color(0xFF4F46E5)):(dark?const Color(0xFFA9B8CC):const Color(0xFF8993A9)),
-   )),
-  ),
- );
+ const ink=Color(0xFF49320D),gold=Color(0xFFB77912),goldLight=Color(0xFFFFF1C7),canvas=Color(0xFFFFFBF1),line=Color(0xFFEAD8AA);
+ final scheme=ColorScheme.fromSeed(seedColor:gold,brightness:Brightness.light).copyWith(primary:gold,secondary:const Color(0xFF8C651F),tertiary:const Color(0xFFD6A64C),surface:Colors.white,onSurface:ink);
+ return ThemeData(useMaterial3:true,brightness:Brightness.light,scaffoldBackgroundColor:canvas,colorScheme:scheme,
+ appBarTheme:const AppBarTheme(backgroundColor:canvas,foregroundColor:ink,elevation:0,scrolledUnderElevation:0,centerTitle:false,toolbarHeight:62,titleTextStyle:TextStyle(color:ink,fontSize:19,fontWeight:FontWeight.w800),iconTheme:IconThemeData(color:gold)),
+ cardTheme:CardThemeData(color:Colors.white,elevation:2,shadowColor:const Color(0x18A87919),margin:const EdgeInsets.symmetric(vertical:6),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(18),side:const BorderSide(color:line))),
+ inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:const Color(0xFFFFFDF7),contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:15),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:line)),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:line)),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:gold,width:1.6))),
+ filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:gold,foregroundColor:Colors.white,minimumSize:const Size(0,49),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),textStyle:const TextStyle(fontWeight:FontWeight.w800),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15)))),
+ outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:ink,minimumSize:const Size(0,46),side:const BorderSide(color:line),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),
+ snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating,backgroundColor:ink,contentTextStyle:TextStyle(color:Colors.white,fontWeight:FontWeight.w600)),dividerColor:line,
+ navigationBarTheme:NavigationBarThemeData(backgroundColor:Colors.white,indicatorColor:goldLight,labelTextStyle:WidgetStateProperty.resolveWith((states)=>TextStyle(fontSize:11,fontWeight:states.contains(WidgetState.selected)?FontWeight.w800:FontWeight.w500,color:states.contains(WidgetState.selected)?gold:const Color(0xFF9A8866)))));
 }
 class BharatSaathiApp extends StatelessWidget{
  final bool supabaseAvailable,requireAuth,testModeSkipRestore;
  const BharatSaathiApp({super.key,this.supabaseAvailable=false,this.requireAuth=false,this.testModeSkipRestore=false});
- @override Widget build(BuildContext context)=>ValueListenableBuilder<bool>(
-  valueListenable:appDarkMode,
-  builder:(context,isDark,_)=>MaterialApp(
-   title:'Bharat Saathi',debugShowCheckedModeBanner:false,
-   theme:buildAppTheme(false),darkTheme:buildAppTheme(true),
-   themeMode:isDark?ThemeMode.dark:ThemeMode.light,
-   home:requireAuth?AuthGate(supabaseAvailable:supabaseAvailable):RetailerHome(supabaseAvailable:supabaseAvailable,testModeSkipRestore:testModeSkipRestore)
-  )
- );
+ @override Widget build(BuildContext context)=>MaterialApp(title:'Bharat Saathi',debugShowCheckedModeBanner:false,theme:buildAppTheme(false),themeMode:ThemeMode.light,home:requireAuth?AuthGate(supabaseAvailable:supabaseAvailable):RetailerHome(supabaseAvailable:supabaseAvailable,testModeSkipRestore:testModeSkipRestore));
 }
 class AuthGate extends StatefulWidget{
  final bool supabaseAvailable;
@@ -382,7 +328,7 @@ final serviceTransactions=<Record>[];
    }
    var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
    if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
-   if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));shouldSanitizeSnapshot=true;}
+   if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=false;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));shouldSanitizeSnapshot=true;}
   }catch(error,stackTrace){
    debugPrint('Bharat Saathi restore failed: $error');
    debugPrintStack(stackTrace:stackTrace);
@@ -1288,7 +1234,7 @@ class ProfilePage extends StatelessWidget{
    setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const PrivacyPolicyPage(english:false)))),
    Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
-   SwitchListTile(secondary:Icon(Icons.dark_mode_outlined,color:blue),title:Text(english?'Dark theme':'डार्क थीम',style:TextStyle(color:navy,fontWeight:FontWeight.w800)),subtitle:Text(english?'Professional deep-blue appearance':'ऑन करने पर पूरे ऐप में प्रोफेशनल ब्लू डार्क थीम लागू होगी',style:TextStyle(color:muted,fontSize:11)),value:darkMode,onChanged:onDarkMode,activeThumbColor:blue,contentPadding:EdgeInsets.symmetric(horizontal:14)),
+   setting(Icons.card_giftcard,english?'Refer & Earn':'रेफर एंड अर्न',english?'Earn coins and unlock AI Call Assistant':'सफल रेफरल पर 10 कॉइन पाएँ; 100 कॉइन पर AI Call Assistant का 1 महीना',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
     setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),
    setting(Icons.cloud_sync,english?'Automatic cloud sync':'ऑटोमैटिक क्लाउड सिंक',english?'Records sync automatically; restore from cloud':'रिकॉर्ड अपने-आप सिंक होते हैं; क्लाउड से रीस्टोर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),
