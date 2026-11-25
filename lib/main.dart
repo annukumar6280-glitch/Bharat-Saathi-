@@ -328,7 +328,10 @@ final serviceTransactions=<Record>[];
    var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
    if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
    if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));shouldSanitizeSnapshot=true;}
-  }catch(_){}
+  }catch(error,stackTrace){
+   debugPrint('Bharat Saathi restore failed: $error');
+   debugPrintStack(stackTrace:stackTrace);
+  }
   if(mounted)setState(()=>loaded=true);
   if(shouldSanitizeSnapshot){await _persist();}else if(syncCloud){_scheduleCloudSync();}
  }
