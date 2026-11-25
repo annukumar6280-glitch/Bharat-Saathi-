@@ -57,7 +57,9 @@ class LocalStore {
  }
  static Future<bool> hasUnassignedLegacyData(String? preferencesLegacy)async{
   final db=await database;
+  debugPrint('RESTORE: checking legacy assignment');
   final marker=await db.query('app_meta',columns:['value'],where:'key = ?',whereArgs:['legacy_data_assigned'],limit:1);
+  debugPrint('RESTORE: legacy assignment checked');
   if(marker.isNotEmpty)return false;
   final oldTable=await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='legacy_app_state'");
   if(oldTable.isNotEmpty){
@@ -299,6 +301,7 @@ final serviceTransactions=<Record>[];
    final legacyDeclined=await LocalStore.wasLegacyDeclinedForUser(userId);
    debugPrint('RESTORE: legacy flags read');
    final hasLegacy=await LocalStore.hasUnassignedLegacyData(legacyPrefs);
+   debugPrint('RESTORE: hasLegacy=$hasLegacy');
    if(hasLegacy&&!legacyDeclined&&widget.supabaseAvailable){
     if(!mounted)return;
     final importLegacy=await showDialog<bool>(context:context,barrierDismissible:false,builder:(dialogContext)=>AlertDialog(
@@ -312,7 +315,9 @@ final serviceTransactions=<Record>[];
     ));
     if(!mounted)return;
     if(importLegacy==true){
-     final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
+     debugPrint('RESTORE: starting legacy migration');
+    final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
+    debugPrint('RESTORE: legacy migration complete');
      if(migrated&&legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
      if(!migrated){
       if(!mounted)return;
