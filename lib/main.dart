@@ -771,9 +771,9 @@ class _BillListPageState extends State<BillListPage>{
     TextField(controller:r.item,decoration:const InputDecoration(labelText:'सामान का नाम',border:OutlineInputBorder())),
     const SizedBox(height:8),
     Row(children:[
-     Expanded(flex:2,child:TextField(controller:r.qty,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'मात्रा (जैसे 200 या 2)',border:OutlineInputBorder()))),
+     Expanded(flex:3,child:TextField(controller:r.qty,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'मात्रा (जैसे 200 या 2)',border:OutlineInputBorder()))),
      const SizedBox(width:8),
-     Expanded(child:DropdownButtonFormField<String>(initialValue:r.unit,decoration:const InputDecoration(labelText:'यूनिट',border:OutlineInputBorder()),items:_units.entries.map((e)=>DropdownMenuItem(value:e.key,child:Text(e.value))).toList(),onChanged:(v){if(v!=null)setState(()=>r.unit=v);})),
+     Expanded(flex:2,child:DropdownButtonFormField<String>(isExpanded:true,initialValue:r.unit,decoration:const InputDecoration(labelText:'यूनिट',border:OutlineInputBorder()),items:_units.entries.map((e)=>DropdownMenuItem(value:e.key,child:Text(e.value,overflow:TextOverflow.ellipsis))).toList(),onChanged:(v){if(v!=null)setState(()=>r.unit=v);})),
     ]),
     if(_mode=='bill')Padding(padding:const EdgeInsets.only(top:8),child:TextField(controller:r.price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'इस सामान की कीमत (₹)',hintText:'उदाहरण: 45',border:OutlineInputBorder())))
    ])));}),
