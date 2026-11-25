@@ -368,7 +368,7 @@ final serviceTransactions=<Record>[];
     if(payment&&(due<=0||value>due)){msg('घटाई जाने वाली रकम मौजूदा बकाया से अधिक नहीं हो सकती');return;}
     final detail='$why${items.text.trim().isEmpty?'':' • सामान: ${items.text.trim()}'} • ${DateTime.now().toLocal().toString().substring(0,16)}';
     setState(()=>target.insert(0,Record(n,detail,payment?-value:value,personal?Icons.people_outline:(payment?Icons.payments_outlined:Icons.person))));
-    await _persist();if(!mounted)return;Navigator.pop(c);msg('खाता रिकॉर्ड सेव हो गया');
+    await _persist();if(!mounted||!c.mounted)return;Navigator.pop(c);msg('खाता रिकॉर्ड सेव हो गया');
    },child:const Text('सेव करें')))
   ]))));
   WidgetsBinding.instance.addPostFrameCallback((_) {person.dispose();reason.dispose();items.dispose();amount.dispose();});
@@ -382,12 +382,12 @@ final serviceTransactions=<Record>[];
    content:TextField(controller:name,autofocus:true,decoration:const InputDecoration(labelText:'ग्राहक का नाम')),
    actions:[
     TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),
-    FilledButton(onPressed:(){
+    FilledButton(onPressed:()async{
      final value=name.text.trim();
      if(value.isEmpty){msg('ग्राहक का नाम लिखें');return;}
      if(target.any((r)=>r.name.toLowerCase()==value.toLowerCase())){msg('यह नाम पहले से मौजूद है');return;}
      setState(()=>target.add(Record(value,'खाता बनाया गया',0,Icons.person_outline)));
-     await _persist();if(!mounted)return;Navigator.pop(c);msg('ग्राहक जोड़ दिया गया');
+     await _persist();if(!mounted||!c.mounted)return;Navigator.pop(c);msg('ग्राहक जोड़ दिया गया');
     },child:const Text('ग्राहक जोड़ें'))
    ],
   ));
@@ -395,7 +395,7 @@ final serviceTransactions=<Record>[];
  }
  Future<void> renameLedgerPerson(String oldName,List<Record> target)async{
   final name=TextEditingController(text:oldName);
-  await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('नाम एडिट करें'),content:TextField(controller:name,decoration:const InputDecoration(labelText:'नया नाम')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:()async{final value=name.text.trim();if(value.isEmpty){msg('नाम खाली नहीं हो सकता');return;}if(value.toLowerCase()!=oldName.toLowerCase()&&target.any((r)=>r.name.toLowerCase()==value.toLowerCase())){msg('यह नाम पहले से मौजूद है');return;}setState((){for(final r in target){if(r.name==oldName)r.name=value;}});await _persist();if(!mounted)return;Navigator.pop(c);msg('नाम अपडेट हो गया');},child:const Text('सेव करें'))]));
+  await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('नाम एडिट करें'),content:TextField(controller:name,decoration:const InputDecoration(labelText:'नया नाम')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:()async{final value=name.text.trim();if(value.isEmpty){msg('नाम खाली नहीं हो सकता');return;}if(value.toLowerCase()!=oldName.toLowerCase()&&target.any((r)=>r.name.toLowerCase()==value.toLowerCase())){msg('यह नाम पहले से मौजूद है');return;}setState((){for(final r in target){if(r.name==oldName)r.name=value;}});await _persist();if(!mounted||!c.mounted)return;Navigator.pop(c);msg('नाम अपडेट हो गया');},child:const Text('सेव करें'))]));
   WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();});
  }
  Future<void> editLedgerRecord(Record record,List<Record> target)async{
