@@ -64,11 +64,11 @@ class _QrToolState extends State<_QrTool>{
   const SizedBox(height:14),
   TextField(controller:input,onChanged:(_)=>setState((){}),decoration:InputDecoration(labelText:mode=='upi'?'UPI ID (जैसे name@upi)':'Text या Website URL',hintText:mode=='upi'?'yourname@upi':'https://example.com')),
   const SizedBox(height:16),
-  if(input.text.trim().isNotEmpty)Center(child:Container(color:Colors.white,padding:const EdgeInsets.all(14),child:QrImageView(data:mode=='upi'?'upi://pay?pa=\${input.text.trim()}&pn=Bharat%20Saathi':input.text.trim(),size:220))),
+  if(input.text.trim().isNotEmpty)Center(child:Container(color:Colors.white,padding:const EdgeInsets.all(14),child:QrImageView(data:mode=='upi'?'upi://pay?pa=${input.text.trim()}&pn=Bharat%20Saathi':input.text.trim(),size:220))),
   FilledButton(onPressed:()=>setState((){}),child:const Text('QR कोड बनाएँ')),
   OutlinedButton.icon(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>_QrScanner(onValue:(v){setState(()=>scanned=v);Navigator.pop(context);}))),icon:const Icon(Icons.qr_code_scanner),label:const Text('QR स्कैन करें')),
   if(scanned!=null)SelectableText('स्कैन परिणाम: $scanned'),
-  if(input.text.trim().isNotEmpty)TextButton.icon(onPressed:()=>Share.share('QR content: \${mode=='upi'?'upi://pay?pa=\${input.text.trim()}&pn=Bharat%20Saathi':input.text.trim()}'),icon:const Icon(Icons.share),label:const Text('कंटेंट शेयर करें')),
+  if(input.text.trim().isNotEmpty)TextButton.icon(onPressed:()=>Share.share('QR content: ${mode=='upi'?'upi://pay?pa=${input.text.trim()}&pn=Bharat%20Saathi':input.text.trim()}'),icon:const Icon(Icons.share),label:const Text('कंटेंट शेयर करें')),
  ]);
 }
 class _QrScanner extends StatelessWidget{final ValueChanged<String> onValue;const _QrScanner({required this.onValue});@override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('QR स्कैन करें')),body:MobileScanner(onDetect:(capture){final value=(capture.barcodes.isNotEmpty?capture.barcodes.first.rawValue:null);if(value!=null&&value.isNotEmpty)onValue(value);}));}
@@ -105,7 +105,7 @@ class _PosterToolState extends State<_PosterTool>{
   }
   setState((){generating=true;error=null;});
   try{
-   final prompt='Create one beautiful, premium, colorful vertical 4:5 Indian small-business promotional poster BACKGROUND image. Do not draw any words, letters, numbers, logos, watermarks, QR codes or phone numbers. Leave a clean, high-contrast central area for text overlay. Theme based on this brief: \${brief.text.trim()}. Use professional Indian retail advertising art direction, rich gradients, attractive product/celebration motifs, crisp composition.';
+   final prompt='Create one beautiful, premium, colorful vertical 4:5 Indian small-business promotional poster BACKGROUND image. Do not draw any words, letters, numbers, logos, watermarks, QR codes or phone numbers. Leave a clean, high-contrast central area for text overlay. Theme based on this brief: ${brief.text.trim()}. Use professional Indian retail advertising art direction, rich gradients, attractive product/celebration motifs, crisp composition.';
    final uri=Uri.https('generativelanguage.googleapis.com','/v1beta/models/$_geminiModel:generateContent');
    final response=await http.post(uri,headers:{'Content-Type':'application/json','x-goog-api-key':apiKey},body:jsonEncode({
     'contents':[{'parts':[{'text':prompt}]}],
@@ -128,7 +128,7 @@ class _PosterToolState extends State<_PosterTool>{
    final bytes=base64Decode(encoded);
    if(!mounted)return;
    setState(()=>background=bytes);
-  }catch(e){if(mounted)setState(()=>error='पोस्टर नहीं बन पाया: \${e.toString().replaceFirst('Exception: ','')}');}
+  }catch(e){if(mounted)setState(()=>error='पोस्टर नहीं बन पाया: ${e.toString().replaceFirst('Exception: ','')}');}
   finally{if(mounted)setState(()=>generating=false);}
  }
  Future<void> _download()async{
@@ -178,7 +178,7 @@ class _ReminderToolState extends State<_ReminderTool>{
  Future<void> _add()async{if(title.text.trim().isEmpty)return;items.insert(0,{'title':title.text.trim(),'due':due.toIso8601String(),'done':false});title.clear();await _save();if(mounted)setState((){});}
  @override Widget build(BuildContext context)=>loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
   TextField(controller:title,decoration:const InputDecoration(labelText:'काम / भुगतान की याद')),
-  const SizedBox(height:8),OutlinedButton.icon(onPressed:()async{final d=await showDatePicker(context:context,initialDate:due,firstDate:DateTime.now(),lastDate:DateTime.now().add(const Duration(days:3650)));if(d!=null)setState(()=>due=d);},icon:const Icon(Icons.calendar_month),label:Text('तारीख: \${due.day}-\${due.month}-\${due.year}')),
+  const SizedBox(height:8),OutlinedButton.icon(onPressed:()async{final d=await showDatePicker(context:context,initialDate:due,firstDate:DateTime.now(),lastDate:DateTime.now().add(const Duration(days:3650)));if(d!=null)setState(()=>due=d);},icon:const Icon(Icons.calendar_month),label:Text('तारीख: ${due.day}-${due.month}-${due.year}')),
   FilledButton(onPressed:_add,child:const Text('याद सेव करें')),
   const Divider(height:28),
   if(items.isEmpty)const Text('अभी कोई रिमाइंडर नहीं है।'),
@@ -244,10 +244,10 @@ class _SoundboxInfoState extends State<_SoundboxInfo>{
   setState((){testing=true;status='API कनेक्शन जाँचा जा रहा है...';});
   try{
    final headers=<String,String>{'Accept':'application/json'};
-   if(token.text.trim().isNotEmpty)headers['Authorization']='Bearer \${token.text.trim()}';
+   if(token.text.trim().isNotEmpty)headers['Authorization']='Bearer ${token.text.trim()}';
    final response=await http.get(uri,headers:headers).timeout(const Duration(seconds:20));
-   if(response.statusCode>=200&&response.statusCode<300){connected=true;status='API endpoint से सफल response मिला (HTTP \${response.statusCode})। Payment feed की पुष्टि अलग से करनी होगी.';}
-   else{connected=false;status='API ने HTTP \${response.statusCode} लौटाया। URL, token या provider का सही endpoint जाँचें.';}
+   if(response.statusCode>=200&&response.statusCode<300){connected=true;status='API endpoint से सफल response मिला (HTTP ${response.statusCode})। Payment feed की पुष्टि अलग से करनी होगी.';}
+   else{connected=false;status='API ने HTTP ${response.statusCode} लौटाया। URL, token या provider का सही endpoint जाँचें.';}
   }catch(e){connected=false;status='कनेक्शन नहीं हुआ: $e';}
   if(mounted)setState(()=>testing=false);
  }
