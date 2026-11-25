@@ -224,20 +224,28 @@ void main() {
     expect(find.text('बिल'), findsNothing);
   });
 
-  testWidgets('Personal khata records a loan and shows the outstanding amount', (tester) async {
+  testWidgets('Personal khata records a loan inside the selected customer ledger', (tester) async {
     await pumpApp(tester);
     await tester.tap(find.text('खाता'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('पर्सनल उधार'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('रकम जोड़ें'));
+
+    // The list page must not expose global add/subtract actions.
+    expect(find.text('रकम जोड़ें'), findsNothing);
+    expect(find.text('रकम घटाएँ'), findsNothing);
+
+    // Open the customer's own ledger, then add a loan there.
+    await tester.tap(find.text('हिसाब'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), 'दोस्त');
-    await tester.enterText(find.byType(TextField).at(1), 'घर का खर्च');
-    await tester.enterText(find.byType(TextField).at(2), 'किराना 5 किलो');
-    await tester.enterText(find.byType(TextField).at(3), '2500');
+    await tester.tap(find.text('उधार जोड़ें'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(0), 'घर का खर्च');
+    await tester.enterText(find.byType(TextField).at(1), 'किराना 5 किलो');
+    await tester.enterText(find.byType(TextField).at(2), '2500');
     await tester.tap(find.text('सेव करें'));
     await tester.pumpAndSettle();
+
     expect(find.text('दोस्त'), findsOneWidget);
     expect(find.textContaining('2,500'), findsWidgets);
   });
