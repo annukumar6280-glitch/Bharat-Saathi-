@@ -70,7 +70,6 @@ void main() {
   setUp(() async {
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     await LocalStore.clear();
-    appDarkMode.value = false;
     bannerAdsEnabled = false;
   });
   tearDown(() { SharedPreferencesAsyncPlatform.instance = null; bannerAdsEnabled = true; });
