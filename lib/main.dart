@@ -405,7 +405,7 @@ final serviceTransactions=<Record>[];
  Future<void> editExpense(Record record)async{
   final name=TextEditingController(text:record.name),detail=TextEditingController(text:record.detail),amount=TextEditingController(text:record.amount.toString());
   await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('खर्च एडिट करें'),content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:name,decoration:const InputDecoration(labelText:'खर्च का नाम')),TextField(controller:detail,decoration:const InputDecoration(labelText:'विवरण / वजह')),TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'राशि (₹)'))])),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:(){final value=double.tryParse(amount.text);if(name.text.trim().isEmpty||value==null||value<=0){msg('सही जानकारी भरें');return;}final delta=value-record.amount;setState((){record.name=name.text.trim();record.detail=detail.text.trim();record.amount=value;expenses+=delta;cash-=delta;});_persist();Navigator.pop(c);msg('खर्च अपडेट हो गया');},child:const Text('सेव करें'))]));
-  name.dispose();detail.dispose();amount.dispose();
+  WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();detail.dispose();amount.dispose();});
  }
  Future<void> _ledgerEntry(List<Record> target,{required bool payment,required bool personal})async{
   final person=TextEditingController(),reason=TextEditingController(),items=TextEditingController(),amount=TextEditingController();
@@ -432,12 +432,12 @@ final serviceTransactions=<Record>[];
  Future<void> renameLedgerPerson(String oldName,List<Record> target)async{
   final name=TextEditingController(text:oldName);
   await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('नाम एडिट करें'),content:TextField(controller:name,decoration:const InputDecoration(labelText:'नया नाम')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:(){final value=name.text.trim();if(value.isEmpty){msg('नाम खाली नहीं हो सकता');return;}setState((){for(final r in target){if(r.name==oldName)r.name=value;}});_persist();Navigator.pop(c);msg('नाम अपडेट हो गया');},child:const Text('सेव करें'))]));
-  name.dispose();
+  WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();});
  }
  Future<void> editLedgerRecord(Record record,List<Record> target)async{
   final name=TextEditingController(text:record.name),detail=TextEditingController(text:record.detail),amount=TextEditingController(text:record.amount.abs().toString());
   await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('खाता एंट्री एडिट करें'),content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:name,decoration:const InputDecoration(labelText:'नाम')),TextField(controller:detail,maxLines:3,decoration:const InputDecoration(labelText:'वजह / सामान की लिस्ट')),TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'राशि (₹)'))])),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:(){final value=double.tryParse(amount.text);if(name.text.trim().isEmpty||value==null||value<=0){msg('सही जानकारी भरें');return;}setState((){record.name=name.text.trim();record.detail=detail.text.trim();record.amount=record.amount<0?-value:value;});_persist();Navigator.pop(c);msg('खाता एंट्री अपडेट हो गई');},child:const Text('सेव करें'))]));
-  name.dispose();detail.dispose();amount.dispose();
+  WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();detail.dispose();amount.dispose();});
  }
 
  void setPersonalBudget()=>form('खर्च सीमा सेट करें','सीमा का नाम','अधिकतम राशि (₹)',(n,a){setState((){personalBudget=a;personalBudgetName=n;});_persist();msg('खर्च सीमा सेव हुई');});
