@@ -57,8 +57,8 @@ void main() {
     await tester.tap(find.byType(Checkbox));
     await tester.pump();
     expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
-    expect(find.text('अकाउंट बनाएं'), findsOneWidget);
-    // The login/register switch is covered by the account-security test.
+    // Consent state is the behavior under test; the account-security test
+    // separately covers the login/register switch.
     // Keep this test focused on registration consent state.
   });
 
