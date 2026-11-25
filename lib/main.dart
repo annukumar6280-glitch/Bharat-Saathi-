@@ -42,8 +42,8 @@ class LocalStore {
  static Database? _db;
  static Future<Database> get database async {
   if(_db!=null)return _db!;
-  final root=await getDatabasesPath();
-  _db=await openDatabase(p.join(root,'bharat_saathi.db'),version:2,onCreate:(db,version)async{
+  final root=await databaseFactory.getDatabasesPath();
+  _db=await databaseFactory.openDatabase(p.join(root,'bharat_saathi.db'),version:2,onCreate:(db,version)async{
    await db.execute('CREATE TABLE app_state (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
    await db.execute('CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
   },onUpgrade:(db,oldVersion,newVersion)async{
