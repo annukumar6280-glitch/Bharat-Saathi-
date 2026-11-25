@@ -219,7 +219,7 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
    if(first!=null&&operator!=null&&!fresh){
     next=_calculate(first!,value,operator!);
     if(!next.isFinite){display='Error';first=null;operator=null;expression='';fresh=true;return;}
-    history.add('${expression} ${_fmt(value)} = ${_fmt(next)}');
+    history.add('$expression ${_fmt(value)} = ${_fmt(next)}');
     display=_fmt(next);
    }
    first=next;
