@@ -1277,6 +1277,7 @@ class ProfilePage extends StatelessWidget{
    setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const PrivacyPolicyPage(english:false)))),
    Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
+   setting(Icons.account_balance_wallet_outlined,english?'Coin Wallet':'कॉइन वॉलेट',english?'Balance, history and AI Call redemption':'कॉइन बैलेंस, हिस्ट्री और AI Call सब्सक्रिप्शन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const AiCoinWalletPage(supabaseAvailable:true)))),
    setting(Icons.card_giftcard,english?'Refer & Earn':'रेफर एंड अर्न',english?'Earn coins and unlock AI Call Assistant':'सफल रेफरल पर 10 कॉइन पाएँ; 100 कॉइन पर AI Call Assistant का 1 महीना',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
     setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),
@@ -1358,6 +1359,59 @@ class _CommerceWalletPageState extends State<CommerceWalletPage>{
  ]));
  Widget _walletCard(String title,String subtitle,String amount,IconData icon)=>Container(padding:EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(17)),child:Row(children:[Icon(icon,color:gold,size:28),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900)),Text(subtitle,style:TextStyle(color:Colors.white70,fontSize:11))])),Text(amount,style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:18))]));
 }
+class AiCoinWalletPage extends StatefulWidget{
+ final bool supabaseAvailable;
+ const AiCoinWalletPage({super.key,required this.supabaseAvailable});
+ @override State<AiCoinWalletPage> createState()=>_AiCoinWalletPageState();
+}
+class _AiCoinWalletPageState extends State<AiCoinWalletPage>{
+ bool loading=true,busy=false;int balance=0;List<Map<String,dynamic>> history=[];DateTime? callExpiry;String? error;
+ @override void initState(){super.initState();_load();}
+ Future<void> _load()async{
+  final client=Supabase.instance.client;final user=client.auth.currentUser;
+  if(!widget.supabaseAvailable||user==null){if(mounted)setState(()=>loading=false);return;}
+  try{
+   final results=await Future.wait([
+    client.from('ai_coin_wallets').select('balance').eq('user_id',user.id).maybeSingle(),
+    client.from('ai_coin_transactions').select('direction,amount,reason,description,created_at').eq('user_id',user.id).order('created_at',ascending:false).limit(40),
+    client.from('ai_call_subscriptions').select('expires_at').eq('user_id',user.id).maybeSingle(),
+   ]);
+   if(!mounted)return;
+   setState(() {
+    balance=(results[0]?['balance'] as num?)?.toInt()??0;
+    history=(results[1] as List).map((e)=>Map<String,dynamic>.from(e)).toList();
+    callExpiry=DateTime.tryParse(results[2]?['expires_at']?.toString()??'');
+    loading=false;error=null;
+   });
+  }catch(e){if(mounted)setState((){loading=false;error=e.toString();});}
+ }
+ Future<void> _redeem()async{
+  if(busy)return;setState(()=>busy=true);
+  try{await Supabase.instance.client.rpc('redeem_ai_call_month');await _load();if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('AI Call Assistant का एक महीना रिडीम हो गया।')));}
+  catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('रिडीम नहीं हुआ: $e')));}
+  finally{if(mounted)setState(()=>busy=false);}
+ }
+ @override Widget build(BuildContext context)=>Scaffold(
+  bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:const Text('Coin Wallet')),
+  body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
+   if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Text('Coin Wallet के लिए पहले लॉगिन करें।'),
+   if(error!=null)Text('वॉलेट लोड नहीं हुआ: $error',style:TextStyle(color:red)),
+   Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF24345B),Color(0xFF52628A)]),borderRadius:BorderRadius.circular(20)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    const Text('आपका Coin Balance',style:TextStyle(color:Colors.white70)),const SizedBox(height:7),
+    Text('$balance Coins',style:const TextStyle(color:gold,fontSize:30,fontWeight:FontWeight.w900)),
+    const SizedBox(height:8),const Text('एक ही वॉलेट से AI फोटो, AI वीडियो और Call Assistant के कॉइन इस्तेमाल होंगे।',style:TextStyle(color:Colors.white70,fontSize:12))
+   ])),
+   const SizedBox(height:12),
+   Card(color:surfaceColor,child:const ListTile(leading:Icon(Icons.ondemand_video),title:Text('विज्ञापन देखकर कॉइन कमाएँ'),subtitle:Text('Rewarded Ad की सर्वर-साइड पुष्टि जोड़ने के बाद यह विकल्प चालू होगा।'))),
+   Card(color:surfaceColor,child:const ListTile(leading:Icon(Icons.card_giftcard),title:Text('Refer & Earn'),subtitle:Text('हर सफल रेफरल पर 10 कॉइन।'))),
+   Card(color:surfaceColor,child:const ListTile(leading:Icon(Icons.shopping_cart_outlined),title:Text('कॉइन खरीदें'),subtitle:Text('पेमेंट गेटवे जुड़ने के बाद कॉइन पैक खरीद सकेंगे।'))),
+   Card(color:surfaceColor,child:ListTile(leading:const Icon(Icons.support_agent),title:const Text('AI Call Assistant — 1 महीना'),subtitle:Text(callExpiry!=null&&callExpiry!.isAfter(DateTime.now())?'सक्रिय: '+callExpiry!.toLocal().toString().substring(0,16):'100 कॉइन में एक महीना रिडीम करें'),trailing:FilledButton(onPressed:balance>=100&&!busy?_redeem:null,child:Text(busy?'...':'100 कॉइन')))),
+   const SizedBox(height:12),Text('कॉइन हिस्ट्री',style:TextStyle(color:navy,fontSize:17,fontWeight:FontWeight.w900)),
+   if(history.isEmpty)const Padding(padding:EdgeInsets.all(12),child:Text('अभी कोई कॉइन ट्रांजैक्शन नहीं है।')),
+   ...history.map((row){final credit=row['direction']=='credit';final amount=(row['amount'] as num).toInt();return Card(color:surfaceColor,child:ListTile(leading:Icon(credit?Icons.add_circle_outline:Icons.remove_circle_outline,color:credit?green:red),title:Text(row['description']?.toString()??row['reason'].toString()),subtitle:Text((row['created_at']?.toString()??'').replaceFirst('T',' ').substring(0,(row['created_at']?.toString()??'').length>16?16:(row['created_at']?.toString()??'').length)),trailing:Text((credit?'+':'−')+amount.toString(),style:TextStyle(color:credit?green:red,fontWeight:FontWeight.w900))));})
+  ])
+ );
+}
 class ReferralPage extends StatefulWidget{
  final bool supabaseAvailable;const ReferralPage({super.key,required this.supabaseAvailable});
  @override State<ReferralPage> createState()=>_ReferralPageState();
@@ -1381,10 +1435,10 @@ class _ReferralPageState extends State<ReferralPage>{
   if(error!=null)Text(error!,style:TextStyle(color:red)),
   Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपका Referral Code',style:TextStyle(color:Colors.white70)),SizedBox(height:8),Text(code.isEmpty?'—':code,style:TextStyle(color:gold,fontSize:27,fontWeight:FontWeight.w900)),SizedBox(height:12),Row(children:[Expanded(child:OutlinedButton(onPressed:code.isEmpty?null:()=>Clipboard.setData(ClipboardData(text:code)),child:Text('Copy Code'))),SizedBox(width:8),Expanded(child:FilledButton(onPressed:code.isEmpty?null:()=>Share.share('Bharat Saathi से जुड़ें। मेरा Referral Code: $code'),child:Text('Share')))])])),
   const SizedBox(height:12),OutlinedButton(onPressed:_apply,child:const Text('किसी का Referral Code लगाएँ')),
-  Card(color:surfaceColor,child:Padding(padding:EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-   Text('₹10 First Successful Referral Reward',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
-   SizedBox(height:5),Text('आपके Referral से जुड़ा यूज़र पहली सफल Recharge या Bill Payment पूरी करेगा, तो आपको ₹10 एक बार मिलेंगे।'),
-   SizedBox(height:8),Text('इसके बाद उस यूज़र की योग्य सर्विस ट्रांजैक्शन पर आपको केवल Direct Referral Service Commission मिलेगा।')
+  Card(color:surfaceColor,child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+   Text('10 कॉइन प्रति सफल रेफरल',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
+   const SizedBox(height:5),const Text('आपका रेफरल कोड लगाकर नया यूज़र अकाउंट जोड़ेगा तो आपके Coin Wallet में 10 कॉइन जुड़ेंगे। खुद का कोड इस्तेमाल नहीं किया जा सकता।'),
+   const SizedBox(height:8),const Text('100 कॉइन से AI Call Assistant का 1 महीने का सब्सक्रिप्शन रिडीम करें।')
   ])))
  ]));
 }
