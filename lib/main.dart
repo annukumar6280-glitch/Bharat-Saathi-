@@ -43,7 +43,7 @@ class LocalStore {
  static Future<Database> get database async {
   if(_db!=null)return _db!;
   final root=await databaseFactory.getDatabasesPath();
-  _db=await databaseFactory.openDatabase(p.join(root,'bharat_saathi.db'),version:2,onCreate:(db,version)async{
+  _db=await databaseFactory.openDatabase(p.join(root,'bharat_saathi.db'),options:OpenDatabaseOptions(version:2,onCreate:(db,version)async{
    await db.execute('CREATE TABLE app_state (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
    await db.execute('CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
   },onUpgrade:(db,oldVersion,newVersion)async{
@@ -52,7 +52,7 @@ class LocalStore {
     await db.execute('CREATE TABLE app_state (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
     await db.execute('CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
    }
-  });
+  }));
   return _db!;
  }
  static Future<bool> hasUnassignedLegacyData(String? preferencesLegacy)async{
