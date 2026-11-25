@@ -9,12 +9,15 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 
 Future<void> pumpApp(WidgetTester tester) async {
   await tester.pumpWidget(const BharatSaathiApp());
-  await tester.runAsync(() async { await Future<void>.delayed(const Duration(seconds: 5)); });
-  // runAsync advances real time, not the widget test's FakeAsync clock. Advance
-  // fake time as well so bounded startup operations (for example Future.timeout)
-  // can complete before assertions inspect the first screen.
+  // Complete the bounded SharedPreferences timeout on the widget-test clock
+  // before yielding to real async work such as SQLite FFI initialization.
   await tester.pump(const Duration(seconds: 3));
+  await tester.runAsync(() async {
+    await Future<void>.delayed(const Duration(seconds: 3));
+  });
+  // Flush continuations scheduled by the real async storage operations.
   await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
 }
 
 Future<void> pumpDashboardPhone(WidgetTester tester) async {
