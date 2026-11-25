@@ -756,7 +756,7 @@ class _BillListPageState extends State<BillListPage>{
  @override Widget build(BuildContext context){
   return Scaffold(appBar:AppBar(title:const Text('बिल / सामान लिस्ट')),body:!_started?ListView(padding:const EdgeInsets.all(18),children:[
    const Text('किस तरह इस्तेमाल करना है?',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
-   const SizedBox(height:12),SegmentedButton<bool>(segments:const [ButtonSegment(value:false,label:Text('दुकानदार')),ButtonSegment(value:true,label:Text('घर के लिए'))],selected:{_homeUse},onSelectionChanged:(v)=>setState((){_homeUse=v.first;if(_homeUse)_mode='list';else if(_mode=='list')_mode='bill';})),
+   const SizedBox(height:12),SegmentedButton<bool>(segments:const [ButtonSegment(value:false,label:Text('दुकानदार')),ButtonSegment(value:true,label:Text('घर के लिए'))],selected:{_homeUse},onSelectionChanged:(v)=>setState((){_homeUse=v.first;if(_homeUse){_mode='list';}else if(_mode=='list'){_mode='bill';}})),
    const SizedBox(height:14),if(!_homeUse)TextField(controller:_name,decoration:const InputDecoration(labelText:'ग्राहक / दुकान का नाम',border:OutlineInputBorder())),
    if(!_homeUse)const SizedBox(height:12),TextField(controller:_phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर',hintText:'10 अंकों का नंबर',border:OutlineInputBorder())),
    const SizedBox(height:18),FilledButton(onPressed:(){if((!_homeUse&&_name.text.trim().isEmpty)||_phoneForWhatsApp().length<11){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('सही जानकारी और WhatsApp नंबर भरें।')));return;}setState(()=>_started=true);},child:const Text('आगे बढ़ें'))
