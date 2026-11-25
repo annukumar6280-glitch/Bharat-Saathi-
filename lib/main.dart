@@ -834,7 +834,7 @@ class _ExpenseOnlyPageState extends State<ExpenseOnlyPage>{
   final years=widget.items.where((e)=>e.createdAt!=null).map((e)=>e.createdAt!.year).toSet()..add(DateTime.now().year);
   final sortedYears=years.toList()..sort((a,b)=>b.compareTo(a));
   return Scaffold(appBar:AppBar(title:const Text('महीने का खर्च')),body:ListView(padding:const EdgeInsets.all(16),children:[
-   Row(children:[const Expanded(child:Text('साल चुनें',style:TextStyle(fontWeight:FontWeight.w800))),DropdownButton<int>(value:selectedYear,items:sortedYears.map((y)=>DropdownMenuItem(value:y,child:Text('$y'))).toList(),onChanged:(y){if(y!=null)setState(()=>selectedYear=y);})]),
+   Row(children:[const Text('साल चुनें',style:TextStyle(fontWeight:FontWeight.w800)),const SizedBox(width:12),SizedBox(width:120,child:DropdownButton<int>(isExpanded:true,value:selectedYear,items:sortedYears.map((y)=>DropdownMenuItem(value:y,child:Text('$y'))).toList(),onChanged:(y){if(y!=null)setState(()=>selectedYear=y);}))]),
    FilledButton.icon(onPressed:()async{await widget.onAdd();if(mounted)setState((){});},icon:const Icon(Icons.add),label:const Text('खर्च जोड़ें')),
    const SizedBox(height:10),
    Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(17)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('${months[selectedMonth-1]} $selectedYear का खर्च',style:const TextStyle(color:Colors.white70)),Text('₹${money(total)}',style:const TextStyle(color:Colors.white,fontSize:25,fontWeight:FontWeight.w900))])),
