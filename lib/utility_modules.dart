@@ -203,8 +203,45 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
   });
  }
  void _clear(){setState((){display='0';expression='';first=null;operator=null;fresh=true;});}
- void _choose(String op){final value=double.tryParse(display);if(value==null)return;setState((){first=value;operator=op;expression='$display $op';fresh=true;});}
- void _equals(){final second=double.tryParse(display);if(first==null||operator==null||second==null)return;double result;switch(operator){case '+':result=first!+second;break;case '−':result=first!-second;break;case '×':result=first!*second;break;case '÷':result=second==0?double.nan:first!/second;break;default:return;}setState((){expression='$expression $display =';display=result.isFinite?_fmt(result):'Error';first=null;operator=null;fresh=true;});}
+ double _calculate(double left,double right,String op){
+  switch(op){
+   case '+':return left+right;
+   case '−':return left-right;
+   case '×':return left*right;
+   case '÷':return right==0?double.nan:left/right;
+   default:return double.nan;
+  }
+ }
+ void _choose(String op){
+  final value=double.tryParse(display);
+  if(value==null||!value.isFinite)return;
+  setState((){
+   var next=value;
+   // Complete the pending operation before accepting another operator.
+   // This supports unlimited chains such as 5 + 5 + 5 + 5.
+   if(first!=null&&operator!=null&&!fresh){
+    next=_calculate(first!,value,operator!);
+    if(!next.isFinite){display='Error';first=null;operator=null;expression='';fresh=true;return;}
+    display=_fmt(next);
+   }
+   first=next;
+   operator=op;
+   expression='${_fmt(next)} $op';
+   fresh=true;
+  });
+ }
+ void _equals(){
+  final second=double.tryParse(display);
+  if(first==null||operator==null||second==null)return;
+  final result=_calculate(first!,second,operator!);
+  setState((){
+   expression='$expression $display =';
+   display=result.isFinite?_fmt(result):'Error';
+   first=null;
+   operator=null;
+   fresh=true;
+  });
+ }
  String _fmt(double v)=>v==v.roundToDouble()?v.toInt().toString():v.toStringAsFixed(8).replaceFirst(RegExp(r'0+$'),'').replaceFirst(RegExp(r'\.$'),'');
  void _delete(){setState((){if(display.length<=1){display='0';}else{display=display.substring(0,display.length-1);}});}
  void _percent(){final v=double.tryParse(display);if(v!=null)setState(()=>display=_fmt(v/100));}
