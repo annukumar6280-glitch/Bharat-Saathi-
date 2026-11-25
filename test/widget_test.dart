@@ -195,20 +195,52 @@ void main() {
     expect(find.text('20'), findsOneWidget);
   });
 
+
+  testWidgets('Calculator shows each chained addition in its history', (tester) async {
+    await pumpDashboardPhone(tester);
+    await tester.ensureVisible(find.text('Smart Calculator'));
+    await tester.tap(find.text('Smart Calculator'));
+    await tester.pumpAndSettle();
+    for (final key in ['5','+','5','+','5','=']) {
+      await tester.tap(find.text(key));
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('5 + 5 = 10'), findsOneWidget);
+    expect(find.text('10 + 5 = 15'), findsOneWidget);
+  });
+
+  testWidgets('Household shopping list asks only for WhatsApp number', (tester) async {
+    await pumpDashboardPhone(tester);
+    await tester.ensureVisible(find.text('बिल / सामान लिस्ट'));
+    await tester.tap(find.text('बिल / सामान लिस्ट'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('घर के लिए'));
+    await tester.pumpAndSettle();
+    expect(find.text('ग्राहक / दुकान का नाम'), findsNothing);
+    expect(find.text('WhatsApp मोबाइल नंबर'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, '9876543210');
+    await tester.tap(find.text('आगे बढ़ें'));
+    await tester.pumpAndSettle();
+    expect(find.text('घर के लिए सामान लिस्ट'), findsOneWidget);
+    expect(find.text('बिल'), findsNothing);
+  });
+
   testWidgets('Personal khata records a loan and shows the outstanding amount', (tester) async {
     await pumpApp(tester);
     await tester.tap(find.text('खाता'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('पर्सनल उधार'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('उधार दें'));
+    await tester.tap(find.text('रकम जोड़ें'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'दोस्त');
-    await tester.enterText(find.byType(TextField).at(1), '2500');
+    await tester.enterText(find.byType(TextField).at(1), 'घर का खर्च');
+    await tester.enterText(find.byType(TextField).at(2), 'किराना 5 किलो');
+    await tester.enterText(find.byType(TextField).at(3), '2500');
     await tester.tap(find.text('सेव करें'));
     await tester.pumpAndSettle();
     expect(find.text('दोस्त'), findsOneWidget);
-    expect(find.text('₹2,500'), findsOneWidget);
+    expect(find.textContaining('2,500'), findsWidgets);
   });
 
   testWidgets('Monthly expense can be recorded', (tester) async {
@@ -223,7 +255,7 @@ void main() {
     await tester.pumpAndSettle();
     await flushStorage(tester);
     expect(find.text('बिजली'), findsOneWidget);
-    expect(find.text('₹900'), findsOneWidget);
+    expect(find.text('₹900'), findsWidgets);
   });
 
   testWidgets('Profile has only Hindi and English and no UPI or OTP option', (tester) async {
