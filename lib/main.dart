@@ -394,7 +394,7 @@ final serviceTransactions=<Record>[];
  final accountName=metadataName is String&&metadataName.trim().isNotEmpty?metadataName.trim():(currentUser?.email?.split('@').first??'').trim();
  final pages=<Widget>[
   Dashboard(english:english,accountName:accountName,onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>UtilityModulePage(kind:kind,title:const {'qr':'QR Code Tools','poster':'Poster Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator','soundbox':'Payment Sound Box','calling':'AI Calling Assistant'}[kind]??'Tools')))),
-  KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onCredit:()=>entry(),onPayment:()=>entry(true),onEditRecord:(r)=>editLedgerRecord(r,khata),onRenamePerson:(n)=>renameLedgerPerson(n,khata)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onCredit:()=>personalLoanEntry(),onPayment:()=>personalLoanEntry(true),onEditRecord:(r)=>editLedgerRecord(r,personalKhata),onRenamePerson:(n)=>renameLedgerPerson(n,personalKhata)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
+  KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onCreditForPerson:(n)=>entry(false,n),onPaymentForPerson:(n)=>entry(true,n),onEditRecord:(r)=>editLedgerRecord(r,khata),onRenamePerson:(n)=>renameLedgerPerson(n,khata)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onCreditForPerson:(n)=>personalLoanEntry(false,n),onPaymentForPerson:(n)=>personalLoanEntry(true,n),onEditRecord:(r)=>editLedgerRecord(r,personalKhata),onRenamePerson:(n)=>renameLedgerPerson(n,personalKhata)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
   ExpenseOnlyPage(items:expensesList,onAdd:expense,onEdit:editExpense),
    ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,darkMode:darkMode,onDarkMode:(v){setState(()=>darkMode=v);_persist();},onLanguage:(v){setState(()=>english=v);_persist();},expensesList:expensesList,khata:khata,personalTransactions:personalTransactions)
  ];
@@ -746,21 +746,64 @@ class KhataHubPage extends StatelessWidget{
  Widget _card(String a,String b,String c,VoidCallback f)=>Card(color:surfaceColor,child:ListTile(title:Text(a,style:TextStyle(color:navy,fontWeight:FontWeight.w900)),subtitle:Text(b),trailing:c.isEmpty?Icon(Icons.chevron_right):Text(c),onTap:f));
 }
 class LocalLedgerPage extends StatefulWidget{
- final String title;final List<Record> items;final Future<void> Function() onCredit,onPayment;
+ final String title;final List<Record> items;
+ final Future<void> Function(String) onCreditForPerson,onPaymentForPerson;
  final Future<void> Function(Record) onEditRecord;final Future<void> Function(String) onRenamePerson;
- const LocalLedgerPage({super.key,required this.title,required this.items,required this.onCredit,required this.onPayment,required this.onEditRecord,required this.onRenamePerson});
+ const LocalLedgerPage({super.key,required this.title,required this.items,required this.onCreditForPerson,required this.onPaymentForPerson,required this.onEditRecord,required this.onRenamePerson});
  @override State<LocalLedgerPage> createState()=>_LocalLedgerPageState();
 }
 class _LocalLedgerPageState extends State<LocalLedgerPage>{
  @override Widget build(BuildContext context){
   final people=<String,List<Record>>{};for(final e in widget.items){people.putIfAbsent(e.name,()=>[]).add(e);}
-  final personal=widget.title.contains('पर्सनल');
   return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(widget.title)),body:ListView(padding:const EdgeInsets.all(16),children:[
    Text('कुल बकाया: ₹${money(widget.items.fold<double>(0,(s,e)=>s+e.amount))}',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:21)),
-   Row(children:[Expanded(child:FilledButton(onPressed:()async{await widget.onCredit();if(mounted)setState((){});},child:Text(personal?'रकम जोड़ें':'उधार दें'))),const SizedBox(width:8),Expanded(child:OutlinedButton(onPressed:()async{await widget.onPayment();if(mounted)setState((){});},child:Text(personal?'रकम घटाएँ':'वापसी दर्ज करें')))]),
-   const SizedBox(height:10),
+   const SizedBox(height:12),
    if(people.isEmpty)const Padding(padding:EdgeInsets.all(20),child:Text('अभी कोई नाम नहीं जोड़ा गया है।')),
-   ...people.entries.map((entry){final due=entry.value.fold<double>(0,(sum,r)=>sum+r.amount);return Card(color:surfaceColor,child:ExpansionTile(title:Text(entry.key,style:TextStyle(color:navy,fontWeight:FontWeight.w900)),subtitle:Text('बकाया / शेष: ₹${money(due)}'),trailing:Row(mainAxisSize:MainAxisSize.min,children:[Text('₹${money(due)}',style:TextStyle(color:due>0?red:green,fontWeight:FontWeight.w900)),IconButton(tooltip:'नाम एडिट करें',onPressed:()async{await widget.onRenamePerson(entry.key);if(mounted)setState((){});},icon:const Icon(Icons.edit_outlined))]),children:entry.value.map((record)=>ListTile(title:Text(record.detail.isEmpty?'लेन-देन':record.detail),subtitle:Text(record.createdAt?.toLocal().toString().substring(0,16)??''),leading:Icon(record.amount<0?Icons.call_received:Icons.call_made,color:record.amount<0?green:red),trailing:Row(mainAxisSize:MainAxisSize.min,children:[Text('${record.amount<0?'−':'+'} ₹${money(record.amount.abs())}',style:TextStyle(fontWeight:FontWeight.w900,color:record.amount<0?green:red)),IconButton(tooltip:'एंट्री एडिट करें',onPressed:()async{await widget.onEditRecord(record);if(mounted)setState((){});},icon:const Icon(Icons.edit_note))]))).toList()));})
+   ...people.entries.map((entry){
+    final due=entry.value.fold<double>(0,(sum,r)=>sum+r.amount);
+    return Card(color:surfaceColor,child:ListTile(
+     title:Text(entry.key,style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
+     subtitle:Text('बकाया / शेष: ₹${money(due)}'),
+     trailing:Wrap(crossAxisAlignment:WrapCrossAlignment.center,spacing:2,children:[
+      IconButton(tooltip:'नाम एडिट करें',onPressed:()=>widget.onRenamePerson(entry.key),icon:const Icon(Icons.edit_outlined)),
+      TextButton(onPressed:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CustomerLedgerPage(
+       name:entry.key,items:widget.items,onCredit:()=>widget.onCreditForPerson(entry.key),onPayment:()=>widget.onPaymentForPerson(entry.key),onEditRecord:widget.onEditRecord,
+      ))),child:const Text('हिसाब')),
+     ]),
+    ));
+   })
+  ]));
+ }
+}
+class CustomerLedgerPage extends StatefulWidget{
+ final String name;final List<Record> items;final Future<void> Function() onCredit,onPayment;final Future<void> Function(Record) onEditRecord;
+ const CustomerLedgerPage({super.key,required this.name,required this.items,required this.onCredit,required this.onPayment,required this.onEditRecord});
+ @override State<CustomerLedgerPage> createState()=>_CustomerLedgerPageState();
+}
+class _CustomerLedgerPageState extends State<CustomerLedgerPage>{
+ @override Widget build(BuildContext context){
+  final records=widget.items.where((r)=>r.name==widget.name).toList()..sort((a,b)=>(b.createdAt??DateTime(2000)).compareTo(a.createdAt??DateTime(2000)));
+  final due=records.fold<double>(0,(sum,r)=>sum+r.amount);
+  return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(widget.name)),body:ListView(padding:const EdgeInsets.all(16),children:[
+   Card(color:surfaceColor,child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    const Text('कुल बकाया',style:TextStyle(color:muted)),Text('₹${money(due)}',style:TextStyle(color:navy,fontSize:26,fontWeight:FontWeight.w900)),
+   ]))),
+   Row(children:[
+    Expanded(child:FilledButton.icon(onPressed:()async{await widget.onCredit();if(mounted)setState((){});},icon:const Icon(Icons.add),label:const Text('उधार जोड़ें'))),
+    const SizedBox(width:8),
+    Expanded(child:OutlinedButton.icon(onPressed:()async{await widget.onPayment();if(mounted)setState((){});},icon:const Icon(Icons.remove),label:const Text('पैसे घटाएँ'))),
+   ]),
+   const SizedBox(height:12),
+   if(records.isEmpty)const Padding(padding:EdgeInsets.all(20),child:Text('इस ग्राहक का अभी कोई लेन-देन नहीं है।')),
+   ...records.map((record)=>Card(color:surfaceColor,child:ListTile(
+    title:Text(record.detail.isEmpty?'लेन-देन':record.detail),
+    subtitle:Text(record.createdAt?.toLocal().toString().substring(0,16)??''),
+    leading:Icon(record.amount<0?Icons.call_received:Icons.call_made,color:record.amount<0?green:red),
+    trailing:Row(mainAxisSize:MainAxisSize.min,children:[
+     Text('${record.amount<0?'−':'+'} ₹${money(record.amount.abs())}',style:TextStyle(fontWeight:FontWeight.w900,color:record.amount<0?green:red)),
+     IconButton(tooltip:'एंट्री एडिट करें',onPressed:()=>widget.onEditRecord(record),icon:const Icon(Icons.edit_note)),
+    ]),
+   ))),
   ]));
  }
 }
