@@ -254,7 +254,7 @@ void main() {
     await tester.tap(find.text('सेव करें'));
     await tester.pumpAndSettle();
     await flushStorage(tester);
-    await tester.scrollUntilVisible(find.text('बिजली'), 250, scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(find.text('बिजली'), 250, scrollable: find.descendant(of: find.byType(ExpenseOnlyPage), matching: find.byType(Scrollable)).first);
     expect(find.text('बिजली'), findsOneWidget);
     expect(find.text('₹900'), findsWidgets);
   });
