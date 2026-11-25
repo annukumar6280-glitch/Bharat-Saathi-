@@ -786,7 +786,7 @@ class _CustomerLedgerPageState extends State<CustomerLedgerPage>{
   final due=records.fold<double>(0,(sum,r)=>sum+r.amount);
   return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(widget.name)),body:ListView(padding:const EdgeInsets.all(16),children:[
    Card(color:surfaceColor,child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    const Text('कुल बकाया',style:TextStyle(color:muted)),Text('₹${money(due)}',style:TextStyle(color:navy,fontSize:26,fontWeight:FontWeight.w900)),
+    Text('कुल बकाया',style:TextStyle(color:muted)),Text('₹${money(due)}',style:TextStyle(color:navy,fontSize:26,fontWeight:FontWeight.w900)),
    ]))),
    Row(children:[
     Expanded(child:FilledButton.icon(onPressed:()async{await widget.onCredit();if(mounted)setState((){});},icon:const Icon(Icons.add),label:const Text('उधार जोड़ें'))),
@@ -1277,7 +1277,7 @@ class ProfilePage extends StatelessWidget{
    setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const PrivacyPolicyPage(english:false)))),
    Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
-   setting(Icons.account_balance_wallet_outlined,english?'Coin Wallet':'कॉइन वॉलेट',english?'Balance, history and AI Call redemption':'कॉइन बैलेंस, हिस्ट्री और AI Call सब्सक्रिप्शन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const AiCoinWalletPage(supabaseAvailable:supabaseAvailable)))),
+   setting(Icons.account_balance_wallet_outlined,english?'Coin Wallet':'कॉइन वॉलेट',english?'Balance, history and AI Call redemption':'कॉइन बैलेंस, हिस्ट्री और AI Call सब्सक्रिप्शन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AiCoinWalletPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.card_giftcard,english?'Refer & Earn':'रेफर एंड अर्न',english?'Earn coins and unlock AI Call Assistant':'सफल रेफरल पर 10 कॉइन पाएँ; 100 कॉइन पर AI Call Assistant का 1 महीना',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
     setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),
@@ -1378,9 +1378,12 @@ class _AiCoinWalletPageState extends State<AiCoinWalletPage>{
    ]);
    if(!mounted)return;
    setState(() {
-    balance=(results[0]?['balance'] as num?)?.toInt()??0;
-    history=(results[1] as List).map((e)=>Map<String,dynamic>.from(e)).toList();
-    callExpiry=DateTime.tryParse(results[2]?['expires_at']?.toString()??'');
+    final wallet=results[0] as Map<String,dynamic>?;
+    final transactions=results[1] as List;
+    final subscription=results[2] as Map<String,dynamic>?;
+    balance=(wallet?['balance'] as num?)?.toInt()??0;
+    history=transactions.map((e)=>Map<String,dynamic>.from(e as Map)).toList();
+    callExpiry=DateTime.tryParse(subscription?['expires_at']?.toString()??'');
     loading=false;error=null;
    });
   }catch(e){if(mounted)setState((){loading=false;error=e.toString();});}
@@ -1398,7 +1401,7 @@ class _AiCoinWalletPageState extends State<AiCoinWalletPage>{
    if(error!=null)Text('वॉलेट लोड नहीं हुआ: $error',style:TextStyle(color:red)),
    Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF24345B),Color(0xFF52628A)]),borderRadius:BorderRadius.circular(20)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     const Text('आपका Coin Balance',style:TextStyle(color:Colors.white70)),const SizedBox(height:7),
-    Text('$balance Coins',style:const TextStyle(color:gold,fontSize:30,fontWeight:FontWeight.w900)),
+    Text('$balance Coins',style:TextStyle(color:gold,fontSize:30,fontWeight:FontWeight.w900)),
     const SizedBox(height:8),const Text('एक ही वॉलेट से AI फोटो, AI वीडियो और Call Assistant के कॉइन इस्तेमाल होंगे।',style:TextStyle(color:Colors.white70,fontSize:12))
    ])),
    const SizedBox(height:12),
