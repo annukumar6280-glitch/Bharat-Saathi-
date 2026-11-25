@@ -629,7 +629,7 @@ class _BillListPageState extends State<BillListPage>{
  final _name=TextEditingController(),_phone=TextEditingController();
  final List<_BillRow> _rows=[_BillRow()];
  String _mode='bill';bool _started=false,_pdfBusy=false,_homeUse=false;
- static const Map<String,String> _units={'kg':'किलो','g':'ग्राम','packet':'पैकेट','piece':'पीस'};
+ static const Map<String,String> _units={'kg':'किलो','g':'ग्राम','packet':'पैकेट','piece':'पीस','ft':'फिट','m':'मीटर'};
  @override void initState(){super.initState();_watch(_rows.first);}
  void _watch(_BillRow r){r.item.addListener(_refresh);r.qty.addListener(_refresh);r.price.addListener(_refresh);}
  void _refresh(){if(mounted)setState((){});}
