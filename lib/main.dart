@@ -170,19 +170,72 @@ class LocalStore {
 final ValueNotifier<bool> appDarkMode=ValueNotifier<bool>(false);
 final ValueNotifier<int> homeTabRequest=ValueNotifier<int>(0);
 bool get darkModeEnabled=>appDarkMode.value;
-Color get navy=>darkModeEnabled?Color(0xFFEAF1FF):Color(0xFF25345B);
-Color get blue=>darkModeEnabled?Color(0xFF9CC3FF):Color(0xFF5276D8);
-Color get gold=>Color(0xFFF2A93B);
-Color get bg=>darkModeEnabled?Color(0xFF26364D):Color(0xFFEEF2FF);
-Color get muted=>darkModeEnabled?Color(0xFFA9B8CC):Color(0xFF7D879F);
-Color get green=>darkModeEnabled?Color(0xFF62C99A):Color(0xFF159B78);
-Color get red=>darkModeEnabled?Color(0xFFFF8585):Color(0xFFD95454);
-Color get surfaceColor=>darkModeEnabled?Color(0xFF17263B):Color(0xFFFFFFFF);
-Color get appBgColor=>darkModeEnabled?Color(0xFF0D1728):Color(0xFFF1F4FF);
-Color get borderColor=>darkModeEnabled?Color(0xFF30435D):Color(0xFFDCE3F5);
+Color get navy=>darkModeEnabled?const Color(0xFFEAF1FF):const Color(0xFF172B4D);
+Color get blue=>darkModeEnabled?const Color(0xFF9CC3FF):const Color(0xFF4F46E5);
+Color get gold=>const Color(0xFFF59E0B);
+Color get bg=>darkModeEnabled?const Color(0xFF26364D):const Color(0xFFF3F5FC);
+Color get muted=>darkModeEnabled?const Color(0xFFA9B8CC):const Color(0xFF74809A);
+Color get green=>darkModeEnabled?const Color(0xFF62C99A):const Color(0xFF0F9D78);
+Color get red=>darkModeEnabled?const Color(0xFFFF8585):const Color(0xFFDC4C64);
+Color get surfaceColor=>darkModeEnabled?const Color(0xFF17263B):const Color(0xFFFFFFFF);
+Color get appBgColor=>darkModeEnabled?const Color(0xFF0D1728):const Color(0xFFF3F5FC);
+Color get borderColor=>darkModeEnabled?const Color(0xFF30435D):const Color(0xFFE1E6F0);
 ThemeData buildAppTheme(bool dark){
- final scheme=ColorScheme.fromSeed(seedColor:dark?const Color(0xFF6FA4E8):const Color(0xFF5276D8),brightness:dark?Brightness.dark:Brightness.light).copyWith(primary:dark?const Color(0xFF9CC3FF):const Color(0xFF4568C7),secondary:dark?const Color(0xFF64C9C1):const Color(0xFF18A58C),tertiary:dark?const Color(0xFFFFCE78):const Color(0xFFE99A38),surface:dark?const Color(0xFF17263B):const Color(0xFFFFFFFF),onSurface:dark?const Color(0xFFE5EEFF):const Color(0xFF25345B));
- return ThemeData(useMaterial3:true,brightness:dark?Brightness.dark:Brightness.light,scaffoldBackgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF1F4FF),colorScheme:scheme,appBarTheme:AppBarTheme(backgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF1F4FF),foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF25345B),elevation:0,scrolledUnderElevation:0,centerTitle:false,titleTextStyle:TextStyle(color:dark?const Color(0xFFE5EEFF):const Color(0xFF25345B),fontSize:19,fontWeight:FontWeight.w800),iconTheme:IconThemeData(color:dark?const Color(0xFFE5EEFF):const Color(0xFF5276D8)),toolbarHeight:62),cardTheme:CardThemeData(color:dark?const Color(0xFF17263B):Colors.white,elevation:2,shadowColor:dark?Colors.black26:const Color(0x1A526FC4),margin:const EdgeInsets.symmetric(vertical:6),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(18),side:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE4E9F7)))), inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:dark?const Color(0xFF17263B):const Color(0xFFF9FAFF),contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:15),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFF6FA4E8),width:1.5))),filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:dark?const Color(0xFF315A8A):const Color(0xFF5276D8),foregroundColor:Colors.white,minimumSize:const Size(0,49),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),textStyle:const TextStyle(fontWeight:FontWeight.w800),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15)))), outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),minimumSize:const Size(0,46),side:BorderSide(color:dark?const Color(0xFF526985):const Color(0xFFCCD6E4)),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating,backgroundColor:Color(0xFF26345B),contentTextStyle:TextStyle(color:Colors.white,fontWeight:FontWeight.w600)),dividerColor:dark?const Color(0xFF30435D):const Color(0xFFE3E8F5),navigationBarTheme:NavigationBarThemeData(backgroundColor:dark?const Color(0xFF17263B):Colors.white,indicatorColor:dark?const Color(0xFF29496D):const Color(0xFFE5EAFF),labelTextStyle:WidgetStateProperty.resolveWith((s)=>TextStyle(fontSize:11,fontWeight:s.contains(WidgetState.selected)?FontWeight.w800:FontWeight.w500,color:s.contains(WidgetState.selected)?(dark?const Color(0xFFBBD5FF):const Color(0xFF4568C7)):(dark?const Color(0xFFA9B8CC):const Color(0xFF8993A9))))));
+ final scheme=ColorScheme.fromSeed(seedColor:dark?const Color(0xFF6FA4E8):const Color(0xFF4F46E5),brightness:dark?Brightness.dark:Brightness.light).copyWith(
+  primary:dark?const Color(0xFF9CC3FF):const Color(0xFF4F46E5),
+  secondary:dark?const Color(0xFF64C9C1):const Color(0xFF0D9488),
+  tertiary:dark?const Color(0xFFFFCE78):const Color(0xFFF59E0B),
+  surface:dark?const Color(0xFF17263B):Colors.white,
+  onSurface:dark?const Color(0xFFE5EEFF):const Color(0xFF172B4D),
+ );
+ return ThemeData(
+  useMaterial3:true,
+  brightness:dark?Brightness.dark:Brightness.light,
+  scaffoldBackgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF3F5FC),
+  colorScheme:scheme,
+  appBarTheme:AppBarTheme(
+   backgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF3F5FC),
+   foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF172B4D),
+   elevation:0,scrolledUnderElevation:0,centerTitle:false,toolbarHeight:62,
+   titleTextStyle:TextStyle(color:dark?const Color(0xFFE5EEFF):const Color(0xFF172B4D),fontSize:19,fontWeight:FontWeight.w800),
+   iconTheme:IconThemeData(color:dark?const Color(0xFFE5EEFF):const Color(0xFF4F46E5)),
+  ),
+  cardTheme:CardThemeData(
+   color:dark?const Color(0xFF17263B):Colors.white,elevation:2,
+   shadowColor:dark?Colors.black26:const Color(0x16514F9D),
+   margin:const EdgeInsets.symmetric(vertical:6),
+   shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(18),side:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE6E9F2))),
+  ),
+  inputDecorationTheme:InputDecorationTheme(
+   filled:true,fillColor:dark?const Color(0xFF17263B):const Color(0xFFFAFBFF),
+   contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:15),
+   border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E6F0))),
+   enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E6F0))),
+   focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFF4F46E5),width:1.6)),
+  ),
+  filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(
+   backgroundColor:dark?const Color(0xFF315A8A):const Color(0xFF4F46E5),foregroundColor:Colors.white,
+   minimumSize:const Size(0,49),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),
+   textStyle:const TextStyle(fontWeight:FontWeight.w800),
+   shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15)),
+  )),
+  outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(
+   foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF172B4D),
+   minimumSize:const Size(0,46),
+   side:BorderSide(color:dark?const Color(0xFF526985):const Color(0xFFCCD6E4)),
+   shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)),
+  )),
+  snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating,backgroundColor:Color(0xFF26345B),contentTextStyle:TextStyle(color:Colors.white,fontWeight:FontWeight.w600)),
+  dividerColor:dark?const Color(0xFF30435D):const Color(0xFFE3E8F5),
+  navigationBarTheme:NavigationBarThemeData(
+   backgroundColor:dark?const Color(0xFF17263B):Colors.white,
+   indicatorColor:dark?const Color(0xFF29496D):const Color(0xFFE9E7FF),
+   labelTextStyle:WidgetStateProperty.resolveWith((s)=>TextStyle(
+    fontSize:11,fontWeight:s.contains(WidgetState.selected)?FontWeight.w800:FontWeight.w500,
+    color:s.contains(WidgetState.selected)?(dark?const Color(0xFFBBD5FF):const Color(0xFF4F46E5)):(dark?const Color(0xFFA9B8CC):const Color(0xFF8993A9)),
+   )),
+  ),
+ );
 }
 class BharatSaathiApp extends StatelessWidget{
  final bool supabaseAvailable,requireAuth,testModeSkipRestore;
