@@ -173,6 +173,28 @@ void main() {
     expect(find.text('18%'), findsOneWidget);
   });
 
+  testWidgets('Business calculator supports unlimited chained additions and continues after equals', (tester) async {
+    await pumpDashboardPhone(tester);
+    await tester.ensureVisible(find.text('Smart Calculator'));
+    await tester.tap(find.text('Smart Calculator'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('5'));
+    await tester.tap(find.text('+'));
+    await tester.tap(find.text('5'));
+    await tester.tap(find.text('+'));
+    await tester.tap(find.text('5'));
+    await tester.tap(find.text('='));
+    await tester.pumpAndSettle();
+    expect(find.text('15'), findsOneWidget);
+
+    await tester.tap(find.text('+'));
+    await tester.tap(find.text('5'));
+    await tester.tap(find.text('='));
+    await tester.pumpAndSettle();
+    expect(find.text('20'), findsOneWidget);
+  });
+
   testWidgets('Personal khata records a loan and shows the outstanding amount', (tester) async {
     await pumpApp(tester);
     await tester.tap(find.text('खाता'));
