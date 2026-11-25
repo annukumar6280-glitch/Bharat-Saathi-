@@ -1168,7 +1168,7 @@ class ProfilePage extends StatelessWidget{
  final List<Record> expensesList,khata,personalTransactions;
  const ProfilePage({super.key,required this.supabaseAvailable,required this.onRestore,required this.expensesList,required this.khata,required this.personalTransactions,required this.english,required this.onLanguage,required this.darkMode,required this.onDarkMode});
  @override Widget build(BuildContext context){
-  final user=supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
+  
   return ListView(padding:const EdgeInsets.all(17),children:[
    heading(english?'Profile & Settings':'प्रोफाइल और सेटिंग',english?'Manage your account':'अपने अकाउंट को मैनेज करें'),
    setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
