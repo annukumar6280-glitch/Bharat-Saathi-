@@ -375,6 +375,24 @@ final serviceTransactions=<Record>[];
  }
  Future<void> entry([bool payment=false,String? customer])=>_ledgerEntry(khata,payment:payment,personal:false,fixedPerson:customer);
  Future<void> personalLoanEntry([bool payment=false,String? customer])=>_ledgerEntry(personalKhata,payment:payment,personal:true,fixedPerson:customer);
+ Future<void> addLedgerPerson(List<Record> target)async{
+  final name=TextEditingController();
+  await showDialog<void>(context:context,builder:(c)=>AlertDialog(
+   title:const Text('नया ग्राहक जोड़ें'),
+   content:TextField(controller:name,autofocus:true,decoration:const InputDecoration(labelText:'ग्राहक का नाम')),
+   actions:[
+    TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),
+    FilledButton(onPressed:(){
+     final value=name.text.trim();
+     if(value.isEmpty){msg('ग्राहक का नाम लिखें');return;}
+     if(target.any((r)=>r.name.toLowerCase()==value.toLowerCase())){msg('यह नाम पहले से मौजूद है');return;}
+     setState(()=>target.add(Record(value,'खाता बनाया गया',0,Icons.person_outline)));
+     _persist();Navigator.pop(c);msg('ग्राहक जोड़ दिया गया');
+    },child:const Text('ग्राहक जोड़ें'))
+   ],
+  ));
+  WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();});
+ }
  Future<void> renameLedgerPerson(String oldName,List<Record> target)async{
   final name=TextEditingController(text:oldName);
   await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('नाम एडिट करें'),content:TextField(controller:name,decoration:const InputDecoration(labelText:'नया नाम')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:(){final value=name.text.trim();if(value.isEmpty){msg('नाम खाली नहीं हो सकता');return;}setState((){for(final r in target){if(r.name==oldName)r.name=value;}});_persist();Navigator.pop(c);msg('नाम अपडेट हो गया');},child:const Text('सेव करें'))]));
@@ -394,7 +412,7 @@ final serviceTransactions=<Record>[];
  final accountName=metadataName is String&&metadataName.trim().isNotEmpty?metadataName.trim():(currentUser?.email?.split('@').first??'').trim();
  final pages=<Widget>[
   Dashboard(english:english,accountName:accountName,onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>UtilityModulePage(kind:kind,title:const {'qr':'QR Code Tools','poster':'Poster Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator','soundbox':'Payment Sound Box','calling':'AI Calling Assistant'}[kind]??'Tools')))),
-  KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onCreditForPerson:(n)=>entry(false,n),onPaymentForPerson:(n)=>entry(true,n),onEditRecord:(r)=>editLedgerRecord(r,khata),onRenamePerson:(n)=>renameLedgerPerson(n,khata)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onCreditForPerson:(n)=>personalLoanEntry(false,n),onPaymentForPerson:(n)=>personalLoanEntry(true,n),onEditRecord:(r)=>editLedgerRecord(r,personalKhata),onRenamePerson:(n)=>renameLedgerPerson(n,personalKhata)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
+  KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onAddPerson:()=>addLedgerPerson(khata),onCreditForPerson:(n)=>entry(false,n),onPaymentForPerson:(n)=>entry(true,n),onEditRecord:(r)=>editLedgerRecord(r,khata),onRenamePerson:(n)=>renameLedgerPerson(n,khata)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onAddPerson:()=>addLedgerPerson(personalKhata),onCreditForPerson:(n)=>personalLoanEntry(false,n),onPaymentForPerson:(n)=>personalLoanEntry(true,n),onEditRecord:(r)=>editLedgerRecord(r,personalKhata),onRenamePerson:(n)=>renameLedgerPerson(n,personalKhata)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
   ExpenseOnlyPage(items:expensesList,onAdd:expense,onEdit:editExpense),
    ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,darkMode:darkMode,onDarkMode:(v){setState(()=>darkMode=v);_persist();},onLanguage:(v){setState(()=>english=v);_persist();},expensesList:expensesList,khata:khata,personalTransactions:personalTransactions)
  ];
@@ -746,10 +764,10 @@ class KhataHubPage extends StatelessWidget{
  Widget _card(String a,String b,String c,VoidCallback f)=>Card(color:surfaceColor,child:ListTile(title:Text(a,style:TextStyle(color:navy,fontWeight:FontWeight.w900)),subtitle:Text(b),trailing:c.isEmpty?Icon(Icons.chevron_right):Text(c),onTap:f));
 }
 class LocalLedgerPage extends StatefulWidget{
- final String title;final List<Record> items;
+ final String title;final List<Record> items;final Future<void> Function() onAddPerson;
  final Future<void> Function(String) onCreditForPerson,onPaymentForPerson;
  final Future<void> Function(Record) onEditRecord;final Future<void> Function(String) onRenamePerson;
- const LocalLedgerPage({super.key,required this.title,required this.items,required this.onCreditForPerson,required this.onPaymentForPerson,required this.onEditRecord,required this.onRenamePerson});
+ const LocalLedgerPage({super.key,required this.title,required this.items,required this.onAddPerson,required this.onCreditForPerson,required this.onPaymentForPerson,required this.onEditRecord,required this.onRenamePerson});
  @override State<LocalLedgerPage> createState()=>_LocalLedgerPageState();
 }
 class _LocalLedgerPageState extends State<LocalLedgerPage>{
@@ -758,6 +776,7 @@ class _LocalLedgerPageState extends State<LocalLedgerPage>{
   return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(widget.title)),body:ListView(padding:const EdgeInsets.all(16),children:[
    Text('कुल बकाया: ₹${money(widget.items.fold<double>(0,(s,e)=>s+e.amount))}',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:21)),
    const SizedBox(height:12),
+   SizedBox(width:double.infinity,child:OutlinedButton.icon(onPressed:widget.onAddPerson,icon:const Icon(Icons.person_add_alt_1),label:const Text('ग्राहक जोड़ें'))),
    if(people.isEmpty)const Padding(padding:EdgeInsets.all(20),child:Text('अभी कोई नाम नहीं जोड़ा गया है।')),
    ...people.entries.map((entry){
     final due=entry.value.fold<double>(0,(sum,r)=>sum+r.amount);
@@ -782,8 +801,9 @@ class CustomerLedgerPage extends StatefulWidget{
 }
 class _CustomerLedgerPageState extends State<CustomerLedgerPage>{
  @override Widget build(BuildContext context){
-  final records=widget.items.where((r)=>r.name==widget.name).toList()..sort((a,b)=>(b.createdAt??DateTime(2000)).compareTo(a.createdAt??DateTime(2000)));
-  final due=records.fold<double>(0,(sum,r)=>sum+r.amount);
+  final allRecords=widget.items.where((r)=>r.name==widget.name).toList();
+  final records=allRecords.where((r)=>r.amount!=0).toList()..sort((a,b)=>(b.createdAt??DateTime(2000)).compareTo(a.createdAt??DateTime(2000)));
+  final due=allRecords.fold<double>(0,(sum,r)=>sum+r.amount);
   return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(widget.name)),body:ListView(padding:const EdgeInsets.all(16),children:[
    Card(color:surfaceColor,child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Text('कुल बकाया',style:TextStyle(color:muted)),Text('₹${money(due)}',style:TextStyle(color:navy,fontSize:26,fontWeight:FontWeight.w900)),
