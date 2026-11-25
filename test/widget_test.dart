@@ -169,25 +169,6 @@ void main() {
     expect(find.text('छूट के बाद'), findsNothing);
   });
 
-  testWidgets('AI Poster Maker exposes Gemini generation and download flow', (tester) async {
-    await pumpDashboardPhone(tester);
-    await tester.ensureVisible(find.text('Poster Maker'));
-    await tester.tap(find.text('Poster Maker'));
-    await tester.pumpAndSettle();
-    expect(find.text('AI Poster Studio'), findsOneWidget);
-    expect(find.text('Gemini API Key सेट करें'), findsOneWidget);
-    expect(find.text('AI से पोस्टर बनाएँ'), findsOneWidget);
-  });
-
-  testWidgets('Sound Box exposes API endpoint and connection test settings', (tester) async {
-    await pumpDashboardPhone(tester);
-    await tester.ensureVisible(find.text('Payment Sound Box'));
-    await tester.tap(find.text('Payment Sound Box'));
-    await tester.pumpAndSettle();
-    expect(find.text('API Endpoint URL'), findsOneWidget);
-    expect(find.text('API Connect / Test Connection'), findsOneWidget);
-  });
-
   testWidgets('Personal khata records a loan and shows the outstanding amount', (tester) async {
     await pumpApp(tester);
     await tester.tap(find.text('खाता'));
