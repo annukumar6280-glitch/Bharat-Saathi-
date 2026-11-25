@@ -776,7 +776,7 @@ class _LocalLedgerPageState extends State<LocalLedgerPage>{
   return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(widget.title)),body:ListView(padding:const EdgeInsets.all(16),children:[
    Text('कुल बकाया: ₹${money(widget.items.fold<double>(0,(s,e)=>s+e.amount))}',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:21)),
    const SizedBox(height:12),
-   SizedBox(width:double.infinity,child:OutlinedButton.icon(onPressed:widget.onAddPerson,icon:const Icon(Icons.person_add_alt_1),label:const Text('ग्राहक जोड़ें'))),
+   SizedBox(width:double.infinity,child:OutlinedButton.icon(onPressed:()async{await widget.onAddPerson();if(mounted)setState((){});},icon:const Icon(Icons.person_add_alt_1),label:const Text('ग्राहक जोड़ें'))),
    if(people.isEmpty)const Padding(padding:EdgeInsets.all(20),child:Text('अभी कोई नाम नहीं जोड़ा गया है।')),
    ...people.entries.map((entry){
     final due=entry.value.fold<double>(0,(sum,r)=>sum+r.amount);
