@@ -241,6 +241,7 @@ void main() {
     await tester.enterText(find.byType(TextField).last, 'दोस्त');
     await tester.tap(find.widgetWithText(FilledButton, 'ग्राहक जोड़ें'));
     await tester.pumpAndSettle();
+    await flushStorage(tester);
     expect(find.text('दोस्त'), findsOneWidget);
 
     await tester.tap(find.text('हिसाब'));
@@ -253,6 +254,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(2), '2500');
     await tester.tap(find.text('सेव करें'));
     await tester.pumpAndSettle();
+    await flushStorage(tester);
 
     expect(find.text('दोस्त'), findsOneWidget);
     expect(find.textContaining('2,500'), findsWidgets);
