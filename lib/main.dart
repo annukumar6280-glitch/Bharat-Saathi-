@@ -354,15 +354,15 @@ final serviceTransactions=<Record>[];
   WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();detail.dispose();amount.dispose();});
  }
  Future<void> _ledgerEntry(List<Record> target,{required bool payment,required bool personal,String? fixedPerson})async{
-  final person=TextEditingController(),reason=TextEditingController(),items=TextEditingController(),amount=TextEditingController();
+  final person=TextEditingController(text:fixedPerson??''),reason=TextEditingController(),items=TextEditingController(),amount=TextEditingController();
   await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(c)=>Padding(padding:EdgeInsets.fromLTRB(18,20,18,20+MediaQuery.of(c).viewInsets.bottom),child:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
    Text(payment?(personal?'रकम घटाएँ / वापसी':'भुगतान दर्ज करें'):(personal?'रकम जोड़ें':'उधार दर्ज करें'),style:TextStyle(fontSize:20,fontWeight:FontWeight.w900,color:navy)),
-   const SizedBox(height:12),TextField(controller:person,decoration:InputDecoration(labelText:personal?'व्यक्ति का नाम':'ग्राहक का नाम')),
+   const SizedBox(height:12),if(fixedPerson==null)TextField(controller:person,decoration:InputDecoration(labelText:personal?'व्यक्ति का नाम':'ग्राहक का नाम')),
    const SizedBox(height:9),TextField(controller:reason,decoration:const InputDecoration(labelText:'किस वजह से? (जरूरी)')),
    const SizedBox(height:9),TextField(controller:items,maxLines:2,decoration:const InputDecoration(labelText:'सामान की लिस्ट (वैकल्पिक)',hintText:'जैसे चावल 5 किलो, तेल 2 लीटर')),
    const SizedBox(height:9),TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:InputDecoration(labelText:'राशि (₹)')),
    const SizedBox(height:14),SizedBox(width:double.infinity,child:FilledButton(onPressed:(){
-    final n=person.text.trim(),why=reason.text.trim(),value=double.tryParse(amount.text);
+    final n=(fixedPerson??person.text).trim(),why=reason.text.trim(),value=double.tryParse(amount.text);
     if(n.isEmpty||why.isEmpty||value==null||value<=0){msg('नाम, वजह और सही राशि भरें');return;}
     final due=target.where((e)=>e.name.toLowerCase()==n.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);
     if(payment&&(due<=0||value>due)){msg('घटाई जाने वाली रकम मौजूदा बकाया से अधिक नहीं हो सकती');return;}
