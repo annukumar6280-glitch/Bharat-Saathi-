@@ -299,14 +299,13 @@ void main() {
     expect(find.byType(BannerAdSlot), findsOneWidget);
   });
 
-  testWidgets('Dark theme switch changes the app theme', (tester) async {
+  testWidgets('Premium light theme stays enabled and dark mode is not offered', (tester) async {
     await pumpDashboardPhone(tester);
+    expect(Theme.of(tester.element(find.byType(NavigationBar))).brightness, Brightness.light);
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
-    expect(find.text('डार्क थीम'), findsOneWidget);
-    await tester.tap(find.byType(Switch));
-    await tester.pumpAndSettle();
-    expect(Theme.of(tester.element(find.byType(NavigationBar))).brightness, Brightness.dark);
+    expect(find.text('डार्क थीम'), findsNothing);
+    expect(find.text('रेफर एंड अर्न'), findsOneWidget);
   });
 
   testWidgets('Account and Security is first in profile and exposes login and register', (tester) async {
