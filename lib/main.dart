@@ -403,7 +403,7 @@ class Dashboard extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF142B49), Color(0xFF294D73)],
+                colors: [Color(0xFFDDE8FF), Color(0xFFE8E1FF), Color(0xFFDDF7F0)],
               ),
               borderRadius: BorderRadius.circular(22),
             ),
@@ -415,7 +415,7 @@ class Dashboard extends StatelessWidget {
                       ? (english ? 'Account: $accountName' : 'खाता: $accountName')
                       : (english ? 'Your account' : 'आपका खाता'),
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFF25345B),
                     fontSize: 21,
                     fontWeight: FontWeight.w900,
                   ),
@@ -428,7 +428,7 @@ class Dashboard extends StatelessWidget {
                       ? 'Your daily business at a glance'
                       : 'आपके रोज़ के कारोबार का साफ़ और आसान हिसाब',
                   style: const TextStyle(
-                    color: Color(0xFFD5DFEA),
+                    color: Color(0xFF5F6D91),
                     fontSize: 12,
                   ),
                 ),
@@ -442,20 +442,20 @@ class Dashboard extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.52,
+            childAspectRatio: 1.42,
             children: [
               _tile(
                 english ? 'Khata Book' : 'खाता बुक',
                 english ? 'Shop and personal ledger' : 'दुकान और पर्सनल हिसाब',
                 Icons.menu_book_rounded,
-                const Color(0xFFE8F0FF),
+                const Color(0xFFE3ECFF),
                 onKhata,
               ),
               _tile(
                 english ? 'Bill / Item List' : 'बिल / सामान लिस्ट',
                 english ? 'Create bill or shopping list' : 'बिल या सामान की पर्ची बनाएँ',
                 Icons.receipt_long_rounded,
-                const Color(0xFFFFF2DE),
+                const Color(0xFFFFE9D8),
                 onDocument,
               ),
             ],
@@ -493,10 +493,10 @@ class Dashboard extends StatelessWidget {
               _tile('Poster Maker', 'ऑफर पोस्टर बनाएँ', Icons.palette_outlined,
                   const Color(0xFFFFF2DE), () => onTools('poster')),
               _tile('Reminders & Notes', 'काम और भुगतान याद रखें',
-                  Icons.notifications_active_outlined, const Color(0xFFE6F7F0),
+                  Icons.notifications_active_outlined, const Color(0xFFDDF6EB),
                   () => onTools('reminders')),
               _tile('Smart Calculator', 'GST, छूट और मुनाफा',
-                  Icons.calculate_outlined, const Color(0xFFF1EAFE),
+                  Icons.calculate_outlined, const Color(0xFFEAE3FF),
                   () => onTools('calculator')),
               _tile('Payment Sound Box', 'पेमेंट सूचना सेटअप',
                   Icons.volume_up_outlined, const Color(0xFFE8F0FF),
@@ -525,26 +525,22 @@ class Dashboard extends StatelessWidget {
     Color iconBg,
     VoidCallback tap,
   ) {
+    final accent = Color.lerp(iconBg, const Color(0xFF354F9D), .52)!;
     return Material(
       color: surfaceColor,
-      borderRadius: BorderRadius.circular(17),
+      elevation: 2.5,
+      shadowColor: const Color(0x24526FC4),
+      borderRadius: BorderRadius.circular(19),
       child: InkWell(
         onTap: tap,
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(19),
         child: Container(
           padding: const EdgeInsets.all(13),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(17),
-            border: Border.all(color: borderColor),
-            boxShadow: darkModeEnabled
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: .16),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : [],
+            borderRadius: BorderRadius.circular(19),
+            gradient: LinearGradient(begin: Alignment.topLeft,end: Alignment.bottomRight,colors: darkModeEnabled ? [const Color(0xFF1C2D47),const Color(0xFF17263B)] : [Colors.white,Color.lerp(iconBg,Colors.white,.72)!]),
+            border: Border.all(color: darkModeEnabled ? borderColor : Color.lerp(iconBg,accent,.35)!),
+            boxShadow: [BoxShadow(color: darkModeEnabled ? Colors.black.withValues(alpha:.16) : accent.withValues(alpha:.07),blurRadius:12,offset:const Offset(0,5))],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,7 +563,7 @@ class Dashboard extends StatelessWidget {
                   icon,
                   color: darkModeEnabled
                       ? const Color(0xFF9CCBFF)
-                      : navy,
+                      : accent,
                   size: 25,
                 ),
               ),
