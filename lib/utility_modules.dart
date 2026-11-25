@@ -186,7 +186,7 @@ class _ReminderToolState extends State<_ReminderTool>{
 
 class _BusinessCalculator extends StatefulWidget{const _BusinessCalculator();@override State<_BusinessCalculator> createState()=>_BusinessCalculatorState();}
 class _BusinessCalculatorState extends State<_BusinessCalculator>{
- String display='0',expression='';double? first;String? operator;bool fresh=true;
+ String display='0',expression='';double? first;String? operator;bool fresh=true;final List<String> history=[];
  void _digit(String value){
   setState((){
    if(fresh||display=='0'){
@@ -199,7 +199,7 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
    }
   });
  }
- void _clear(){setState((){display='0';expression='';first=null;operator=null;fresh=true;});}
+ void _clear(){setState((){display='0';expression='';first=null;operator=null;fresh=true;history.clear();});}
  double _calculate(double left,double right,String op){
   switch(op){
    case '+':return left+right;
@@ -219,6 +219,7 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
    if(first!=null&&operator!=null&&!fresh){
     next=_calculate(first!,value,operator!);
     if(!next.isFinite){display='Error';first=null;operator=null;expression='';fresh=true;return;}
+    history.add('${expression} ${_fmt(value)} = ${_fmt(next)}');
     display=_fmt(next);
    }
    first=next;
@@ -232,6 +233,8 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
   if(first==null||operator==null||second==null)return;
   final result=_calculate(first!,second,operator!);
   setState((){
+   final completed='$expression $display = ${result.isFinite?_fmt(result):'Error'}';
+   history.add(completed);
    expression='$expression $display =';
    display=result.isFinite?_fmt(result):'Error';
    first=null;
@@ -269,7 +272,7 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
   ];
   return Container(decoration:const BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFFF1F4FF),Color(0xFFE8E7FF),Color(0xFFE1F6F1)])),child:SafeArea(child:Column(children:[
    Padding(padding:const EdgeInsets.fromLTRB(18,22,18,14),child:Row(children:[const Icon(Icons.calculate_rounded,color:Color(0xFF5D6FC6),size:26),const SizedBox(width:9),const Text('कैलकुलेटर',style:TextStyle(color:_ink,fontSize:20,fontWeight:FontWeight.w900)),const Spacer(),Container(padding:const EdgeInsets.symmetric(horizontal:12,vertical:7),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(20)),child:const Text('GST Ready',style:TextStyle(color:Color(0xFF9A6A12),fontWeight:FontWeight.w800,fontSize:11)))])),
-   Expanded(child:Container(width:double.infinity,margin:const EdgeInsets.fromLTRB(14,6,14,14),padding:const EdgeInsets.fromLTRB(20,18,20,20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(26),border:Border.all(color:const Color(0xFFDDE4F5)),boxShadow:const [BoxShadow(color:Color(0x18536FC4),blurRadius:18,offset:Offset(0,7))]),child:Column(mainAxisAlignment:MainAxisAlignment.end,crossAxisAlignment:CrossAxisAlignment.end,children:[Text(expression,style:const TextStyle(color:Color(0xFF8993AC),fontSize:16),maxLines:1),const SizedBox(height:12),FittedBox(fit:BoxFit.scaleDown,child:Text(display,style:const TextStyle(color:_ink,fontSize:48,fontWeight:FontWeight.w900)))]))),
+   Expanded(child:Container(width:double.infinity,margin:const EdgeInsets.fromLTRB(14,6,14,14),padding:const EdgeInsets.fromLTRB(20,18,20,20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(26),border:Border.all(color:const Color(0xFFDDE4F5)),boxShadow:const [BoxShadow(color:Color(0x18536FC4),blurRadius:18,offset:Offset(0,7))]),child:Column(mainAxisAlignment:MainAxisAlignment.end,crossAxisAlignment:CrossAxisAlignment.end,children:[if(history.isNotEmpty)SizedBox(height:118,width:double.infinity,child:ListView.builder(reverse:true,itemCount:history.length,itemBuilder:(context,index){final line=history[history.length-1-index];return Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Text(line,textAlign:TextAlign.right,style:const TextStyle(color:Color(0xFF66728D),fontSize:13,fontWeight:FontWeight.w600),maxLines:1,overflow:TextOverflow.ellipsis));})),Text(expression,style:const TextStyle(color:Color(0xFF8993AC),fontSize:16),maxLines:1),const SizedBox(height:12),FittedBox(fit:BoxFit.scaleDown,child:Text(display,style:const TextStyle(color:_ink,fontSize:48,fontWeight:FontWeight.w900)))]))),
    Padding(padding:const EdgeInsets.fromLTRB(10,0,10,14),child:Column(children:rows))
   ])));
  }
