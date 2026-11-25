@@ -395,7 +395,7 @@ final serviceTransactions=<Record>[];
  }
  Future<void> renameLedgerPerson(String oldName,List<Record> target)async{
   final name=TextEditingController(text:oldName);
-  await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('नाम एडिट करें'),content:TextField(controller:name,decoration:const InputDecoration(labelText:'नया नाम')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:(){final value=name.text.trim();if(value.isEmpty){msg('नाम खाली नहीं हो सकता');return;}setState((){for(final r in target){if(r.name==oldName)r.name=value;}});_persist();Navigator.pop(c);msg('नाम अपडेट हो गया');},child:const Text('सेव करें'))]));
+  await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('नाम एडिट करें'),content:TextField(controller:name,decoration:const InputDecoration(labelText:'नया नाम')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:(){final value=name.text.trim();if(value.isEmpty){msg('नाम खाली नहीं हो सकता');return;}if(value.toLowerCase()!=oldName.toLowerCase()&&target.any((r)=>r.name.toLowerCase()==value.toLowerCase())){msg('यह नाम पहले से मौजूद है');return;}setState((){for(final r in target){if(r.name==oldName)r.name=value;}});_persist();Navigator.pop(c);msg('नाम अपडेट हो गया');},child:const Text('सेव करें'))]));
   WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();});
  }
  Future<void> editLedgerRecord(Record record,List<Record> target)async{
