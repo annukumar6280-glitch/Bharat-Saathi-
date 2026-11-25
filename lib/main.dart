@@ -783,7 +783,7 @@ class _LocalLedgerPageState extends State<LocalLedgerPage>{
     return Card(color:surfaceColor,child:ListTile(
      title:Text(entry.key,style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
      subtitle:Text('बकाया / शेष: ₹${money(due)}'),
-     trailing:Wrap(crossAxisAlignment:WrapCrossAlignment.center,spacing:2,children:[
+     trailing:Row(mainAxisSize:MainAxisSize.min,children:[
       IconButton(tooltip:'नाम एडिट करें',onPressed:()=>widget.onRenamePerson(entry.key),icon:const Icon(Icons.edit_outlined)),
       TextButton(onPressed:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CustomerLedgerPage(
        name:entry.key,items:widget.items,onCredit:()=>widget.onCreditForPerson(entry.key),onPayment:()=>widget.onPaymentForPerson(entry.key),onEditRecord:widget.onEditRecord,
