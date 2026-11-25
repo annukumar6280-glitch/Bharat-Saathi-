@@ -425,7 +425,7 @@ final serviceTransactions=<Record>[];
     _persist();Navigator.pop(c);msg('खाता रिकॉर्ड सेव हो गया');
    },child:const Text('सेव करें')))
   ]))));
-  person.dispose();reason.dispose();items.dispose();amount.dispose();
+  WidgetsBinding.instance.addPostFrameCallback((_) {person.dispose();reason.dispose();items.dispose();amount.dispose();});
  }
  Future<void> entry([bool payment=false])=>_ledgerEntry(khata,payment:payment,personal:false);
  Future<void> personalLoanEntry([bool payment=false])=>_ledgerEntry(personalKhata,payment:payment,personal:true);
@@ -756,7 +756,7 @@ class _BillListPageState extends State<BillListPage>{
  @override Widget build(BuildContext context){
   return Scaffold(appBar:AppBar(title:const Text('बिल / सामान लिस्ट')),body:!_started?ListView(padding:const EdgeInsets.all(18),children:[
    const Text('किस तरह इस्तेमाल करना है?',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
-   const SizedBox(height:12),SegmentedButton<bool>(segments:const [ButtonSegment(value:false,label:Text('दुकानदार')),ButtonSegment(value:true,label:Text('घर के लिए'))],selected:{_homeUse},onSelectionChanged:(v)=>setState((){_homeUse=v.first;if(_homeUse){_mode='list';}else if(_mode=='list'){_mode='bill';}})),
+   const SizedBox(height:12),Wrap(spacing:10,children:[ChoiceChip(label:const Text('दुकानदार'),selected:!_homeUse,onSelected:(_)=>setState(()=>_homeUse=false)),ChoiceChip(label:const Text('घर के लिए'),selected:_homeUse,onSelected:(_)=>setState((){_homeUse=true;_mode='list';}))]),
    const SizedBox(height:14),if(!_homeUse)TextField(controller:_name,decoration:const InputDecoration(labelText:'ग्राहक / दुकान का नाम',border:OutlineInputBorder())),
    if(!_homeUse)const SizedBox(height:12),TextField(controller:_phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर',hintText:'10 अंकों का नंबर',border:OutlineInputBorder())),
    const SizedBox(height:18),FilledButton(onPressed:(){if((!_homeUse&&_name.text.trim().isEmpty)||_phoneForWhatsApp().length<11){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('सही जानकारी और WhatsApp नंबर भरें।')));return;}setState(()=>_started=true);},child:const Text('आगे बढ़ें'))
@@ -835,10 +835,11 @@ class _ExpenseOnlyPageState extends State<ExpenseOnlyPage>{
   final sortedYears=years.toList()..sort((a,b)=>b.compareTo(a));
   return Scaffold(appBar:AppBar(title:const Text('महीने का खर्च')),body:ListView(padding:const EdgeInsets.all(16),children:[
    Row(children:[const Expanded(child:Text('साल चुनें',style:TextStyle(fontWeight:FontWeight.w800))),DropdownButton<int>(value:selectedYear,items:sortedYears.map((y)=>DropdownMenuItem(value:y,child:Text('$y'))).toList(),onChanged:(y){if(y!=null)setState(()=>selectedYear=y);})]),
+   FilledButton.icon(onPressed:()async{await widget.onAdd();if(mounted)setState((){});},icon:const Icon(Icons.add),label:const Text('खर्च जोड़ें')),
+   const SizedBox(height:10),
    Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(17)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('${months[selectedMonth-1]} $selectedYear का खर्च',style:const TextStyle(color:Colors.white70)),Text('₹${money(total)}',style:const TextStyle(color:Colors.white,fontSize:25,fontWeight:FontWeight.w900))])),
    const SizedBox(height:14),const Text('महीने के अनुसार खर्च',style:TextStyle(fontSize:16,fontWeight:FontWeight.w900)),
    ...List.generate(12,(i){final month=i+1;final amount=_totalFor(month);final active=selectedMonth==month;return Card(color:active?const Color(0xFFE9EDFF):surfaceColor,child:ListTile(onTap:()=>setState(()=>selectedMonth=month),title:Text(months[i],style:TextStyle(fontWeight:active?FontWeight.w900:FontWeight.w600,color:navy)),subtitle:Text('${widget.items.where((e)=>e.createdAt!=null&&e.createdAt!.year==selectedYear&&e.createdAt!.month==month).length} एंट्री'),trailing:Text('₹${money(amount)}',style:TextStyle(color:active?blue:navy,fontWeight:FontWeight.w900))));}),
-   const SizedBox(height:12),FilledButton.icon(onPressed:()async{await widget.onAdd();if(mounted)setState((){});},icon:const Icon(Icons.add),label:const Text('खर्च जोड़ें')),
    const SizedBox(height:10),Text('${months[selectedMonth-1]} की एंट्री',style:const TextStyle(fontSize:16,fontWeight:FontWeight.w900)),
    if(rows.isEmpty)const Padding(padding:EdgeInsets.all(18),child:Text('इस महीने कोई खर्च दर्ज नहीं है।')),
    ...rows.map((e)=>Card(color:surfaceColor,child:ListTile(title:Text(e.name,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(e.detail),leading:const Icon(Icons.payments_outlined),trailing:Row(mainAxisSize:MainAxisSize.min,children:[Text('₹${money(e.amount)}',style:TextStyle(color:red,fontWeight:FontWeight.w900)),IconButton(tooltip:'एडिट करें',onPressed:()async{await widget.onEdit(e);if(mounted)setState((){});},icon:const Icon(Icons.edit_outlined))]))))
