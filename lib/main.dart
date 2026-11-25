@@ -362,7 +362,7 @@ final serviceTransactions=<Record>[];
  final metadataName=currentUser?.userMetadata?['full_name'];
  final accountName=metadataName is String&&metadataName.trim().isNotEmpty?metadataName.trim():(currentUser?.email?.split('@').first??'').trim();
  final pages=<Widget>[
-  Dashboard(english:english,supabaseAvailable:widget.supabaseAvailable,accountName:accountName,onWallet:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommerceWalletPage(supabaseAvailable:widget.supabaseAvailable))),shopDue:khata.fold<double>(0,(s,e)=>s+e.amount),personalDue:personalKhata.fold<double>(0,(s,e)=>s+e.amount),monthExpense:expensesList.where((e)=>e.createdAt!=null&&e.createdAt!.year==DateTime.now().year&&e.createdAt!.month==DateTime.now().month).fold<double>(0,(s,e)=>s+e.amount),onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onExpense:()=>setState(()=>tab=2),onRecharge:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'recharge',english:english))),onBills:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'bills',english:english))),onChallan:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'challan',english:english))),onInsurance:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'insurance',english:english))),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>UtilityModulePage(kind:kind,title:const {'qr':'QR Code Tools','poster':'Poster Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator','soundbox':'Payment Sound Box','calling':'AI Calling Assistant'}[kind]??'Tools')))),
+  Dashboard(english:english,accountName:accountName,onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>UtilityModulePage(kind:kind,title:const {'qr':'QR Code Tools','poster':'Poster Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator','soundbox':'Payment Sound Box','calling':'AI Calling Assistant'}[kind]??'Tools')))),
   KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onCredit:()=>entry(),onPayment:()=>entry(true)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onCredit:()=>personalLoanEntry(),onPayment:()=>personalLoanEntry(true)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
   ExpenseOnlyPage(items:expensesList,onAdd:expense),
   TransactionHistoryPage(items:serviceTransactions,english:english),
@@ -373,21 +373,9 @@ final serviceTransactions=<Record>[];
  Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:Icon(Icons.add),label:Text(s));
 }
 
-class HomeServiceWalletCard extends StatelessWidget{
- final bool supabaseAvailable,english;final VoidCallback onTap;
- const HomeServiceWalletCard({super.key,required this.supabaseAvailable,required this.onTap,required this.english});
- @override Widget build(BuildContext context)=>Material(color:Colors.transparent,child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(19),child:Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF176B72),Color(0xFF203F69)]),borderRadius:BorderRadius.circular(19),boxShadow:[BoxShadow(color:const Color(0xFF173B5B).withValues(alpha:.13),blurRadius:16,offset:const Offset(0,7))]),child:Row(children:[
-  const Icon(Icons.account_balance_wallet_rounded,color:Color(0xFFFFD58A),size:25),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-   Text(english?'Commission Wallet':'कमीशन वॉलेट',style:const TextStyle(color:Colors.white,fontSize:16,fontWeight:FontWeight.w900)),
-   const SizedBox(height:4),Text(english?'Your service and referral earnings':'आपकी सेल्फ और रेफरल कमीशन की कमाई',style:const TextStyle(color:Colors.white70,fontSize:11)),
-   const SizedBox(height:5),Text(english?'Use earned commission as a discount on services':'कमाई हुई कमीशन राशि अगली सर्विस पर छूट बनेगी',style:const TextStyle(color:Color(0xFFFFD58A),fontSize:10,fontWeight:FontWeight.w700))
-  ])),const Icon(Icons.chevron_right,color:Colors.white70)
- ]))));
-}
-
 class Dashboard extends StatelessWidget{
- final bool english,supabaseAvailable;final String accountName;final double shopDue,personalDue,monthExpense;final VoidCallback onKhata,onDocument,onExpense,onRecharge,onBills,onChallan,onInsurance,onWallet;final ValueChanged<String> onTools;
- const Dashboard({super.key,required this.english,required this.supabaseAvailable,required this.accountName,required this.onWallet,required this.shopDue,required this.personalDue,required this.monthExpense,required this.onKhata,required this.onDocument,required this.onExpense,required this.onRecharge,required this.onBills,required this.onChallan,required this.onInsurance,required this.onTools});
+ final bool english;final String accountName;final VoidCallback onKhata,onDocument;final ValueChanged<String> onTools;
+ const Dashboard({super.key,required this.english,required this.accountName,required this.onKhata,required this.onDocument,required this.onTools});
  @override Widget build(BuildContext context)=>Container(color:appBgColor,child:ListView(padding:const EdgeInsets.fromLTRB(16,14,16,24),children:[
   Container(padding:const EdgeInsets.fromLTRB(18,20,18,20),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF142B49),Color(0xFF294D73)]),borderRadius:BorderRadius.circular(22)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
    Text(accountName.isNotEmpty?(english?'Account: $accountName':'खाता: $accountName'):(english?'Your account':'आपका खाता'),style:const TextStyle(color:Colors.white,fontSize:21,fontWeight:FontWeight.w900),maxLines:2,overflow:TextOverflow.ellipsis),
