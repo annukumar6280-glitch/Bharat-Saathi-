@@ -284,6 +284,7 @@ final serviceTransactions=<Record>[];
    }finally{_cloudSyncBusy=false;}
   }
  Future<void> _restore({bool syncCloud=true})async{
+  debugPrint('RESTORE: started');
   if(mounted)setState(()=>loaded=false);
   cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';
   expensesList.clear();khata.clear();personalTransactions.clear();serviceTransactions.clear();
@@ -291,9 +292,12 @@ final serviceTransactions=<Record>[];
   try{
    final userId=_localUserId;
    var legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
+   debugPrint('RESTORE: preferences read');
    legacyPrefs=await LocalStore.sanitizeLegacyInventoryData(legacyPrefs);
+   debugPrint('RESTORE: legacy sanitized');
    if(legacyPrefs!=null)await _prefs.setString('bharat_saathi_store_v1',legacyPrefs);
    final legacyDeclined=await LocalStore.wasLegacyDeclinedForUser(userId);
+   debugPrint('RESTORE: legacy flags read');
    final hasLegacy=await LocalStore.hasUnassignedLegacyData(legacyPrefs);
    if(hasLegacy&&!legacyDeclined&&widget.supabaseAvailable){
     if(!mounted)return;
@@ -326,12 +330,15 @@ final serviceTransactions=<Record>[];
     if(migrated&&legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
    }
    var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
+   debugPrint('RESTORE: local snapshot read');
    if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
+   debugPrint('RESTORE: cloud reconcile complete');
    if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));shouldSanitizeSnapshot=true;}
   }catch(error,stackTrace){
    debugPrint('Bharat Saathi restore failed: $error');
    debugPrintStack(stackTrace:stackTrace);
   }
+  debugPrint('RESTORE: setting loaded=true');
   if(mounted)setState(()=>loaded=true);
   if(shouldSanitizeSnapshot){await _persist();}else if(syncCloud){_scheduleCloudSync();}
  }
