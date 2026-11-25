@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart';
@@ -247,7 +245,7 @@ final serviceTransactions=<Record>[];
   Future<void> _uploadCloudSnapshot(User user,String raw,DateTime localUpdatedAt)async{
    final decoded=jsonDecode(raw);
    if(decoded is! Map<String,dynamic>)throw const FormatException('स्थानीय रिकॉर्ड का प्रारूप सही नहीं है।');
-   for(final key in const ['products','sales','purchases','supplierLedger','salesReturns','stockAdjustments']){decoded.remove(key);}
+   for(final key in const ['products','sales','purchases','supplierLedger','salesReturns','stockAdjustments']){ decoded.remove(key); }
    await Supabase.instance.client.from('user_backups').upsert({'user_id':user.id,'payload':decoded,'schema_version':1,'updated_at':localUpdatedAt.toUtc().toIso8601String()});
   }
   Future<String?> _reconcileCloudSnapshot(String? raw)async{
@@ -737,7 +735,6 @@ class _ExpenseOnlyPageState extends State<ExpenseOnlyPage>{
 class ServiceCategoryPage extends StatelessWidget{
  final String kind;final bool english;const ServiceCategoryPage({super.key,required this.kind,required this.english});
  @override Widget build(BuildContext context){
-  final insurance=kind=='insurance';
   final opts=kind=='recharge'?(english?['Prepaid mobile recharge','Postpaid mobile bill']:['प्रीपेड मोबाइल रिचार्ज','पोस्टपेड मोबाइल बिल']):kind=='bills'?(english?['Electricity bill','Water bill','Gas bill','DTH recharge','Broadband / internet bill','Landline bill','FASTag recharge (Coming Soon)']:['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल','FASTag रिचार्ज (Coming Soon)']):kind=='challan'?(english?['Traffic challan','Vehicle challan status']:['ट्रैफिक चालान','वाहन चालान की स्थिति']):(english?['Bike Insurance','Car Insurance']:['बाइक इंश्योरेंस','कार इंश्योरेंस']);
   final title=kind=='recharge'?(english?'Mobile Recharge':'मोबाइल रिचार्ज'):kind=='bills'?(english?'Bill Payment':'बिल पेमेंट'):kind=='challan'?(english?'Challan Payment':'चालान पेमेंट'):(english?'Bike / Car Insurance':'बाइक / कार इंश्योरेंस');
   return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(title)),body:ListView(padding:EdgeInsets.all(16),children:opts.map((x)=>Card(color:surfaceColor,child:ListTile(title:Text(x),trailing:Chip(label:Text('COMING SOON')),onTap:()=>openComingSoon(context,x)))).toList()));
@@ -1177,7 +1174,7 @@ class ProfilePage extends StatelessWidget{
    heading(english?'Profile & Settings':'प्रोफाइल और सेटिंग',english?'Manage your account':'अपने अकाउंट को मैनेज करें'),
    setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const PrivacyPolicyPage(english:false)))),
-   Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
+   Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(initialValue:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
    SwitchListTile(secondary:Icon(Icons.dark_mode_outlined,color:blue),title:Text(english?'Dark theme':'डार्क थीम',style:TextStyle(color:navy,fontWeight:FontWeight.w800)),subtitle:Text(english?'Professional deep-blue appearance':'ऑन करने पर पूरे ऐप में प्रोफेशनल ब्लू डार्क थीम लागू होगी',style:TextStyle(color:muted,fontSize:11)),value:darkMode,onChanged:onDarkMode,activeThumbColor:blue,contentPadding:EdgeInsets.symmetric(horizontal:14)),
     setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),
