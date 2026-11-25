@@ -8,10 +8,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _ink=Color(0xFF25345B), _teal=Color(0xFF159B88), _gold=Color(0xFFF2B544);
+const _ink=Color(0xFF25345B), _teal=Color(0xFF159B88);
 const _vault=FlutterSecureStorage();
 const _geminiModel='gemini-3.1-flash-lite-image';
 
@@ -191,7 +190,18 @@ class _ReminderToolState extends State<_ReminderTool>{
 class _BusinessCalculator extends StatefulWidget{const _BusinessCalculator();@override State<_BusinessCalculator> createState()=>_BusinessCalculatorState();}
 class _BusinessCalculatorState extends State<_BusinessCalculator>{
  String display='0',expression='';double? first;String? operator;bool fresh=true;
- void _digit(String value){setState((){if(fresh||display=='0'){display=value=='.'?'0.':value;fresh=false;}else if(value=='.'&&display.contains('.'))return;else{display+=value;}});}
+ void _digit(String value){
+  setState((){
+   if(fresh||display=='0'){
+    display=value=='.'?'0.':value;
+    fresh=false;
+   }else if(value=='.'&&display.contains('.')){
+    return;
+   }else{
+    display+=value;
+   }
+  });
+ }
  void _clear(){setState((){display='0';expression='';first=null;operator=null;fresh=true;});}
  void _choose(String op){final value=double.tryParse(display);if(value==null)return;setState((){first=value;operator=op;expression='$display $op';fresh=true;});}
  void _equals(){final second=double.tryParse(display);if(first==null||operator==null||second==null)return;double result;switch(operator){case '+':result=first!+second;break;case '−':result=first!-second;break;case '×':result=first!*second;break;case '÷':result=second==0?double.nan:first!/second;break;default:return;}setState((){expression='$expression $display =';display=result.isFinite?_fmt(result):'Error';first=null;operator=null;fresh=true;});}
@@ -225,7 +235,7 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
   ];
   return Container(decoration:const BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFFF1F4FF),Color(0xFFE8E7FF),Color(0xFFE1F6F1)])),child:SafeArea(child:Column(children:[
    Padding(padding:const EdgeInsets.fromLTRB(18,22,18,14),child:Row(children:[const Icon(Icons.calculate_rounded,color:Color(0xFF5D6FC6),size:26),const SizedBox(width:9),const Text('कैलकुलेटर',style:TextStyle(color:_ink,fontSize:20,fontWeight:FontWeight.w900)),const Spacer(),Container(padding:const EdgeInsets.symmetric(horizontal:12,vertical:7),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(20)),child:const Text('GST Ready',style:TextStyle(color:Color(0xFF9A6A12),fontWeight:FontWeight.w800,fontSize:11)))])),
-   Expanded(child:Container(width:double.infinity,margin:const EdgeInsets.fromLTRB(14,6,14,14),padding:const EdgeInsets.fromLTRB(20,18,20,20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(26),border:Border.all(color:const Color(0xFFDDE4F5)),boxShadow:[BoxShadow(color:const Color(0x18536FC4),blurRadius:18,offset:const Offset(0,7))]),child:Column(mainAxisAlignment:MainAxisAlignment.end,crossAxisAlignment:CrossAxisAlignment.end,children:[Text(expression,style:const TextStyle(color:Color(0xFF8993AC),fontSize:16),maxLines:1),const SizedBox(height:12),FittedBox(fit:BoxFit.scaleDown,child:Text(display,style:const TextStyle(color:_ink,fontSize:48,fontWeight:FontWeight.w900)))]))),
+   Expanded(child:Container(width:double.infinity,margin:const EdgeInsets.fromLTRB(14,6,14,14),padding:const EdgeInsets.fromLTRB(20,18,20,20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(26),border:Border.all(color:const Color(0xFFDDE4F5)),boxShadow:const [BoxShadow(color:Color(0x18536FC4),blurRadius:18,offset:Offset(0,7))]),child:Column(mainAxisAlignment:MainAxisAlignment.end,crossAxisAlignment:CrossAxisAlignment.end,children:[Text(expression,style:const TextStyle(color:Color(0xFF8993AC),fontSize:16),maxLines:1),const SizedBox(height:12),FittedBox(fit:BoxFit.scaleDown,child:Text(display,style:const TextStyle(color:_ink,fontSize:48,fontWeight:FontWeight.w900)))]))),
    Padding(padding:const EdgeInsets.fromLTRB(10,0,10,14),child:Column(children:rows))
   ])));
  }
