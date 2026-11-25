@@ -9,6 +9,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _ink=Color(0xFF25345B), _teal=Color(0xFF159B88);
 const _vault=FlutterSecureStorage();
@@ -76,100 +78,97 @@ class _QrScanner extends StatelessWidget{final ValueChanged<String> onValue;cons
 
 class _PosterTool extends StatefulWidget{const _PosterTool();@override State<_PosterTool> createState()=>_PosterToolState();}
 class _PosterToolState extends State<_PosterTool>{
- final shop=TextEditingController(),phone=TextEditingController(),brief=TextEditingController(text:'दुकान के लिए आकर्षक ऑफर पोस्टर');
- final keyInput=TextEditingController();
+ final shop=TextEditingController(),phone=TextEditingController(),brief=TextEditingController();
  final posterKey=GlobalKey();
- Uint8List? background;
+ final picker=ImagePicker();
+ Uint8List? referenceImage,generatedImage;
+ String imageMime='image/jpeg',creativeMode='creative',generationType='image';
  bool generating=false;
- String? error;
- @override void initState(){super.initState();_loadKey();}
- Future<void> _loadKey()async{keyInput.text=await _vault.read(key:'gemini_api_key')??'';if(mounted)setState((){});}
- @override void dispose(){shop.dispose();phone.dispose();brief.dispose();keyInput.dispose();super.dispose();}
- Future<void> _saveKey()async{
-  final value=keyInput.text.trim();
-  if(value.isEmpty){await _vault.delete(key:'gemini_api_key');}
-  else{await _vault.write(key:'gemini_api_key',value:value);}
-  if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Gemini API Key सुरक्षित रूप से सेव हो गई।')));
- }
- Future<void> _configureKey()async{
-  await showDialog<void>(context:context,builder:(context)=>AlertDialog(
-   title:const Text('Gemini API Key'),
-   content:TextField(controller:keyInput,obscureText:true,decoration:const InputDecoration(labelText:'Google AI Studio API Key',hintText:'AIza...')),
-   actions:[TextButton(onPressed:()=>Navigator.pop(context),child:const Text('रद्द करें')),FilledButton(onPressed:()async{await _saveKey();if(context.mounted)Navigator.pop(context);},child:const Text('सेव करें'))],
-  ));
+ String? error,usageMessage;
+ @override void dispose(){shop.dispose();phone.dispose();brief.dispose();super.dispose();}
+ Future<void> _pickImage()async{
+  final file=await picker.pickImage(source:ImageSource.gallery,imageQuality:88,maxWidth:1800,maxHeight:1800);
+  if(file==null)return;
+  final bytes=await file.readAsBytes();
+  if(!mounted)return;
+  setState((){referenceImage=bytes;imageMime=file.mimeType??'image/jpeg';error=null;});
  }
  Future<void> _generate()async{
-  final apiKey=await _vault.read(key:'gemini_api_key');
-  if(apiKey==null||apiKey.isEmpty){await _configureKey();return;}
-  if(shop.text.trim().isEmpty||phone.text.trim().isEmpty||brief.text.trim().isEmpty){
-   setState(()=>error='दुकान का नाम, मोबाइल नंबर और पोस्टर का विषय भरें।');return;
+  if(brief.text.trim().isEmpty){setState(()=>error='बताएँ कि किस तरह की इमेज बनानी है।');return;}
+  if(generationType=='video'){
+   setState(()=>error='AI वीडियो के लिए Google Veo का सर्वर-साइड प्रोजेक्ट और Cloud Storage सेटअप अभी बाकी है। ग्राहक को API Key नहीं डालनी होगी।');
+   return;
   }
-  setState((){generating=true;error=null;});
+  setState((){generating=true;error=null;generatedImage=null;usageMessage=null;});
   try{
-   final prompt='Create one beautiful, premium, colorful vertical 4:5 Indian small-business promotional poster BACKGROUND image. Do not draw any words, letters, numbers, logos, watermarks, QR codes or phone numbers. Leave a clean, high-contrast central area for text overlay. Theme based on this brief: ${brief.text.trim()}. Use professional Indian retail advertising art direction, rich gradients, attractive product/celebration motifs, crisp composition.';
-   final uri=Uri.https('generativelanguage.googleapis.com','/v1beta/models/$_geminiModel:generateContent');
-   final response=await http.post(uri,headers:{'Content-Type':'application/json','x-goog-api-key':apiKey},body:jsonEncode({
-    'contents':[{'parts':[{'text':prompt}]}],
-    'generationConfig':{'responseModalities':['IMAGE','TEXT'],'imageConfig':{'aspectRatio':'4:5','imageSize':'1K'}}
-   })).timeout(const Duration(seconds:90));
-   if(response.statusCode<200||response.statusCode>=300){
-    final data=jsonDecode(response.body);
-    final message=(data is Map&&data['error'] is Map)?data['error']['message']?.toString():'Gemini API request failed';
-    throw Exception(message);
-   }
-   final data=jsonDecode(response.body) as Map<String,dynamic>;
-   final candidates=data['candidates'] as List? ?? [];
-   if(candidates.isEmpty)throw Exception('Gemini ने कोई इमेज नहीं लौटाई।');
-   final parts=((candidates.first as Map)['content'] as Map)['parts'] as List? ?? [];
-   String? encoded;
-   for(final part in parts){
-    if(part is Map&&part['inlineData'] is Map){encoded=(part['inlineData'] as Map)['data']?.toString();if(encoded!=null)break;}
-   }
-   if(encoded==null)throw Exception('Gemini response में image data नहीं मिला।');
-   final bytes=base64Decode(encoded);
+   final prompt=creativeMode=='shop'
+    ? 'Create a premium, polished Indian business advertising design. Business/shop name: ${shop.text.trim()}. Contact number: ${phone.text.trim()}. Design brief: ${brief.text.trim()}. Make it suitable for a shop, service, product promotion or offer. Compose a visually striking vertical 4:5 poster. Render any short requested text legibly; do not invent phone numbers or prices.'
+    : 'Create an original high-quality creative image based on this brief: ${brief.text.trim()}. This is general-purpose creative work, not necessarily a shop advertisement. It may be a personal portrait concept, birthday or wedding design, festival greeting, social media creative, wallpaper, illustration, artwork or any other safe creative idea. Use a polished professional composition and vertical 4:5 format.';
+   final response=await Supabase.instance.client.functions.invoke(
+    'ai-creative-studio',
+    body:{
+     'generationType':'image',
+     'mode':creativeMode,
+     'prompt':prompt,
+     'imageBase64':referenceImage==null?null:base64Encode(referenceImage!),
+     'imageMimeType':referenceImage==null?null:imageMime,
+    },
+   );
+   final data=response.data;
+   if(data is! Map)throw Exception('AI सर्वर से सही response नहीं मिला।');
+   if(data['error']!=null)throw Exception(data['error'].toString());
+   final encoded=data['imageBase64']?.toString();
+   if(encoded==null||encoded.isEmpty)throw Exception('AI ने इमेज डेटा नहीं लौटाया।');
    if(!mounted)return;
-   setState(()=>background=bytes);
-  }catch(e){if(mounted)setState(()=>error='पोस्टर नहीं बन पाया: ${e.toString().replaceFirst('Exception: ','')}');}
-  finally{if(mounted)setState(()=>generating=false);}
+   setState((){
+    generatedImage=base64Decode(encoded);
+    final remaining=data['freeRemaining'];
+    usageMessage=remaining is num?'इस महीने के फ्री जनरेशन बाकी: ${remaining.toInt()}':'आपका AI क्रिएशन तैयार है।';
+   });
+  }catch(e){
+   if(mounted)setState(()=>error='जनरेशन नहीं हो पाया: ${e.toString().replaceFirst('Exception: ','')}');
+  }finally{if(mounted)setState(()=>generating=false);}
  }
  Future<void> _download()async{
   try{
    final boundary=posterKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-   if(boundary==null)throw Exception('पोस्टर प्रीव्यू तैयार नहीं है।');
-   final ui.Image image=await boundary.toImage(pixelRatio:3);
+   if(boundary==null)throw Exception('प्रीव्यू तैयार नहीं है।');
+   final image=await boundary.toImage(pixelRatio:3);
    final data=await image.toByteData(format:ui.ImageByteFormat.png);
    if(data==null)throw Exception('इमेज सेव नहीं हो पाई।');
-   final bytes=data.buffer.asUint8List();
-   await Share.shareXFiles([XFile.fromData(bytes,mimeType:'image/png',name:'bharat-saathi-ai-poster.png')],text:'Bharat Saathi AI Poster');
+   await Share.shareXFiles([XFile.fromData(data.buffer.asUint8List(),mimeType:'image/png',name:'bharat-saathi-ai-creative.png')],text:'Bharat Saathi AI Creative Studio');
   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}
  }
  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
-  Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF5938A8),Color(0xFFDB4B8C),Color(0xFFFF9B54)]),borderRadius:BorderRadius.circular(20)),child:const Row(children:[Icon(Icons.auto_awesome,color:Colors.white,size:30),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('AI Poster Studio',style:TextStyle(color:Colors.white,fontSize:19,fontWeight:FontWeight.w900)),Text('Gemini से अपना पोस्टर बनवाएँ',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
-  const SizedBox(height:14),
-  TextField(controller:shop,decoration:const InputDecoration(labelText:'आपका नाम / दुकान का नाम',prefixIcon:Icon(Icons.storefront))),
-  const SizedBox(height:10),TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'मोबाइल नंबर',prefixIcon:Icon(Icons.phone_android))),
-  const SizedBox(height:10),TextField(controller:brief,maxLines:3,decoration:const InputDecoration(labelText:'किस तरह का पोस्टर चाहिए?',hintText:'जैसे दिवाली ऑफर, किराना दुकान, सेल, नई शुरुआत')),
-  const SizedBox(height:10),OutlinedButton.icon(onPressed:_configureKey,icon:const Icon(Icons.key),label:const Text('Gemini API Key सेट करें')),
-  const SizedBox(height:12),FilledButton.icon(onPressed:generating?null:_generate,icon:generating?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.auto_awesome),label:Text(generating?'AI पोस्टर बना रहा है...':'AI से पोस्टर बनाएँ')),
-  if(error!=null)Padding(padding:const EdgeInsets.only(top:10),child:Text(error!,style:const TextStyle(color:Colors.red))),
-  if(background!=null)...[
-   const SizedBox(height:18),const Text('आपका पोस्टर',style:TextStyle(fontSize:17,fontWeight:FontWeight.w900)),
-   const SizedBox(height:10),
-   RepaintBoundary(key:posterKey,child:AspectRatio(aspectRatio:4/5,child:ClipRRect(borderRadius:BorderRadius.circular(18),child:Stack(fit:StackFit.expand,children:[
-    Image.memory(background!,fit:BoxFit.cover),
-    DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Colors.black.withValues(alpha:.15),Colors.black.withValues(alpha:.70)]))),
-    Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
-     Text(shop.text,style:const TextStyle(color:Colors.white,fontSize:25,fontWeight:FontWeight.w900,shadows:[Shadow(color:Colors.black54,blurRadius:8)]),textAlign:TextAlign.center),
-     Text(brief.text,style:const TextStyle(color:Colors.white,fontSize:27,fontWeight:FontWeight.w900,shadows:[Shadow(color:Colors.black54,blurRadius:8)]),textAlign:TextAlign.center),
-     Container(padding:const EdgeInsets.symmetric(horizontal:16,vertical:10),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(30)),child:Text(phone.text,style:const TextStyle(color:_ink,fontSize:18,fontWeight:FontWeight.w900)))
-    ]))
-   ])))),
-   const SizedBox(height:12),FilledButton.icon(onPressed:_download,icon:const Icon(Icons.download_rounded),label:const Text('पोस्टर डाउनलोड / शेयर करें'))
+  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF4338CA),Color(0xFF9333EA),Color(0xFFEC4899)]),borderRadius:BorderRadius.circular(22)),child:const Row(children:[Icon(Icons.auto_awesome,color:Colors.white,size:32),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('AI Creative Studio',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),Text('पोस्टर, फोटो और क्रिएटिव डिजाइन',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
+  const SizedBox(height:16),
+  SegmentedButton<String>(segments:const [ButtonSegment(value:'creative',label:Text('अपनी पसंद का')),ButtonSegment(value:'shop',label:Text('दुकान / बिजनेस'))],selected:{creativeMode},onSelectionChanged:(v)=>setState(()=>creativeMode=v.first)),
+  const SizedBox(height:12),
+  SegmentedButton<String>(segments:const [ButtonSegment(value:'image',label:Text('AI फोटो / पोस्टर')),ButtonSegment(value:'video',label:Text('AI वीडियो'))],selected:{generationType},onSelectionChanged:(v)=>setState(()=>generationType=v.first)),
+  if(creativeMode=='shop')...[
+   const SizedBox(height:10),TextField(controller:shop,decoration:const InputDecoration(labelText:'दुकान / बिजनेस का नाम (वैकल्पिक)',prefixIcon:Icon(Icons.storefront))),
+   const SizedBox(height:10),TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'पोस्टर पर मोबाइल नंबर (वैकल्पिक)',prefixIcon:Icon(Icons.phone))),
   ],
-  const SizedBox(height:10),Text('नोट: Gemini API इस्तेमाल करने के लिए आपकी अपनी Google AI Studio API Key और इंटरनेट कनेक्शन जरूरी है। इमेज जनरेशन पर Google की दरों के अनुसार शुल्क लग सकता है।',style:TextStyle(color:Colors.blueGrey,fontSize:11))
+  const SizedBox(height:10),
+  TextField(controller:brief,maxLines:4,decoration:InputDecoration(labelText:generationType=='video'?'किस तरह का वीडियो चाहिए?':'किस तरह की फोटो / डिजाइन चाहिए?',hintText:creativeMode=='shop'?'जैसे दिवाली ऑफर, प्रोडक्ट विज्ञापन, दुकान का बैनर...':'जैसे जन्मदिन, शादी, त्योहार, फोटो एडिट, वॉलपेपर, सोशल मीडिया आर्ट...')),
+  const SizedBox(height:10),
+  OutlinedButton.icon(onPressed:generating?_nullPick:_pickImage,icon:const Icon(Icons.add_photo_alternate_outlined),label:Text(referenceImage==null?'अपनी फोटो जोड़ें (वैकल्पिक)':'फोटो चुनी गई — बदलने के लिए टैप करें')),
+  if(referenceImage!=null)Padding(padding:const EdgeInsets.only(top:8),child:ClipRRect(borderRadius:BorderRadius.circular(14),child:Image.memory(referenceImage!,height:130,fit:BoxFit.contain))),
+  const SizedBox(height:12),
+  FilledButton.icon(onPressed:generating?null:_generate,icon:generating?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.auto_awesome),label:Text(generating?'AI तैयार कर रहा है...':generationType=='video'?'AI वीडियो बनाएँ':'AI फोटो / पोस्टर बनाएँ')),
+  if(error!=null)Padding(padding:const EdgeInsets.only(top:10),child:Text(error!,style:const TextStyle(color:Colors.red,fontSize:12))),
+  if(usageMessage!=null)Padding(padding:const EdgeInsets.only(top:10),child:Text(usageMessage!,style:const TextStyle(color:Color(0xFF0F8A69),fontWeight:FontWeight.w700))),
+  if(generatedImage!=null)...[
+   const SizedBox(height:18),const Text('आपका AI क्रिएशन',style:TextStyle(fontSize:17,fontWeight:FontWeight.w900)),
+   const SizedBox(height:10),
+   RepaintBoundary(key:posterKey,child:ClipRRect(borderRadius:BorderRadius.circular(18),child:Image.memory(generatedImage!,fit:BoxFit.contain))),
+   const SizedBox(height:12),FilledButton.icon(onPressed:_download,icon:const Icon(Icons.download_rounded),label:const Text('डाउनलोड / शेयर करें')),
+  ],
+  const SizedBox(height:12),
+  const Text('आप अपनी फोटो से नया डिजाइन या एडिट बनवा सकते हैं। सामान्य क्रिएटिव डिजाइन के लिए दुकान का नाम या मोबाइल नंबर देना जरूरी नहीं है। AI सेवा की API Key ऐप में नहीं दिखाई जाएगी।',style:TextStyle(color:Colors.blueGrey,fontSize:11)),
  ]);
+ VoidCallback? get _nullPick=>null;
 }
-
 class _ReminderTool extends StatefulWidget{const _ReminderTool();@override State<_ReminderTool> createState()=>_ReminderToolState();}
 class _ReminderToolState extends State<_ReminderTool>{
  final title=TextEditingController();List<Map<String,dynamic>> items=[];DateTime due=DateTime.now().add(const Duration(days:1));bool loading=true;
