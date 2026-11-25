@@ -7,12 +7,13 @@ create table if not exists public.ai_generation_quota (
 );
 
 alter table public.ai_generation_quota enable row level security;
+grant select, insert, update on public.ai_generation_quota to service_role;
 revoke all on public.ai_generation_quota from anon, authenticated;
 
 create or replace function public.consume_ai_generation_credit(p_user_id uuid)
 returns jsonb
 language plpgsql
-security definer
+security invoker
 set search_path = public
 as $$
 declare
@@ -48,7 +49,7 @@ $$;
 create or replace function public.refund_ai_generation_credit(p_user_id uuid, p_source text)
 returns void
 language plpgsql
-security definer
+security invoker
 set search_path = public
 as $$
 declare
