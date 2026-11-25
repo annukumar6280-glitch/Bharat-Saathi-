@@ -179,17 +179,17 @@ void main() {
     await tester.tap(find.text('Smart Calculator'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('5'));
+    await tester.tap(find.text('5').last);
     await tester.tap(find.text('+'));
-    await tester.tap(find.text('5'));
+    await tester.tap(find.text('5').last);
     await tester.tap(find.text('+'));
-    await tester.tap(find.text('5'));
+    await tester.tap(find.text('5').last);
     await tester.tap(find.text('='));
     await tester.pumpAndSettle();
     expect(find.text('15'), findsOneWidget);
 
     await tester.tap(find.text('+'));
-    await tester.tap(find.text('5'));
+    await tester.tap(find.text('5').last);
     await tester.tap(find.text('='));
     await tester.pumpAndSettle();
     expect(find.text('20'), findsOneWidget);
