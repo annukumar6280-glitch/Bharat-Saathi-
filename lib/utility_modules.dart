@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:pdf/pdf.dart' as pdf;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -70,7 +71,7 @@ class _PosterTool extends StatefulWidget{const _PosterTool();@override State<_Po
 class _PosterToolState extends State<_PosterTool>{
  final shop=TextEditingController(),headline=TextEditingController(text:'आज की खास ऑफर'),offer=TextEditingController(text:'खरीदारी पर विशेष छूट'),phone=TextEditingController();
  @override void dispose(){shop.dispose();headline.dispose();offer.dispose();phone.dispose();super.dispose();}
- Future<void> export()async{final doc=pw.Document();doc.addPage(pw.Page(build:(_)=>pw.Container(color:PdfColor.fromInt(0xFF14233B),padding:const pw.EdgeInsets.all(28),child:pw.Center(child:pw.Column(mainAxisAlignment:pw.MainAxisAlignment.center,children:[pw.Text(shop.text.isEmpty?'आपकी दुकान':shop.text,style:pw.TextStyle(color:PdfColor.fromInt(0xFFFFD58A),fontSize:25,fontWeight:pw.FontWeight.bold)),pw.SizedBox(height:32),pw.Text(headline.text,style:pw.TextStyle(color:PdfColors.white,fontSize:32,fontWeight:pw.FontWeight.bold),textAlign:pw.TextAlign.center),pw.SizedBox(height:20),pw.Text(offer.text,style:const pw.TextStyle(color:PdfColors.white,fontSize:20),textAlign:pw.TextAlign.center),pw.SizedBox(height:35),pw.Text(phone.text,style:const pw.TextStyle(color:PdfColors.white,fontSize:16))]))));await Printing.sharePdf(bytes:await doc.save(),filename:'bharat_saathi_poster.pdf');}
+ Future<void> export()async{final doc=pw.Document();doc.addPage(pw.Page(build:(_)=>pw.Container(color:pdf.PdfColor.fromInt(0xFF14233B),padding:const pw.EdgeInsets.all(28),child:pw.Center(child:pw.Column(mainAxisAlignment:pw.MainAxisAlignment.center,children:[pw.Text(shop.text.isEmpty?'आपकी दुकान':shop.text,style:pw.TextStyle(color:PdfColor.fromInt(0xFFFFD58A),fontSize:25,fontWeight:pw.FontWeight.bold)),pw.SizedBox(height:32),pw.Text(headline.text,style:pw.TextStyle(color:pdf.PdfColors.white,fontSize:32,fontWeight:pw.FontWeight.bold),textAlign:pw.TextAlign.center),pw.SizedBox(height:20),pw.Text(offer.text,style:const pw.TextStyle(color:PdfColors.white,fontSize:20),textAlign:pw.TextAlign.center),pw.SizedBox(height:35),pw.Text(phone.text,style:const pw.TextStyle(color:PdfColors.white,fontSize:16))]))));await Printing.sharePdf(bytes:await doc.save(),filename:'bharat_saathi_poster.pdf');}
  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:[
   TextField(controller:shop,decoration:const InputDecoration(labelText:'दुकान का नाम')),
   const SizedBox(height:10),TextField(controller:headline,decoration:const InputDecoration(labelText:'पोस्टर हेडलाइन')),
