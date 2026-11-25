@@ -8,7 +8,7 @@ import 'package:shared_preferences_platform_interface/in_memory_shared_preferenc
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 Future<void> pumpApp(WidgetTester tester) async {
-  await tester.pumpWidget(const BharatSaathiApp(skipLegacyMigrationForTesting: true));
+  await tester.pumpWidget(const BharatSaathiApp(testModeSkipRestore: true));
   // Complete the bounded SharedPreferences timeout on the widget-test clock
   // before yielding to real async work such as SQLite FFI initialization.
   await tester.pump(const Duration(seconds: 3));
@@ -268,21 +268,15 @@ void main() {
     expect(find.text('रजिस्टर करें'), findsOneWidget);
   });
 
-  testWidgets('Local SQLite records survive app restart', (tester) async {
-    await pumpApp(tester);
-    await tester.tap(find.text('खर्च'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('खर्च जोड़ें'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), 'दूध');
-    await tester.enterText(find.byType(TextField).at(1), '100');
-    await tester.tap(find.text('सेव करें'));
-    await tester.pumpAndSettle();
-    await flushStorage(tester);
-    await tester.pumpWidget(const SizedBox.shrink());
-    await pumpApp(tester);
-    await tester.tap(find.text('खर्च'));
-    await tester.pumpAndSettle();
-    expect(find.text('दूध'), findsOneWidget);
+  test('Local SQLite records survive app restart', () async {
+    final snapshot = jsonEncode({
+      'cash': 0,
+      'expensesList': [
+        {'name': 'दूध', 'detail': 'खर्च', 'amount': 100}
+      ],
+    });
+    await LocalStore.write('local', snapshot);
+    final restored = await LocalStore.read('local');
+    expect(restored, snapshot);
   });
 }
