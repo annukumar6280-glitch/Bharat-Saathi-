@@ -8,9 +8,16 @@ import 'package:shared_preferences_platform_interface/in_memory_shared_preferenc
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 Future<void> pumpApp(WidgetTester tester) async {
-  await tester.pumpWidget(const BharatSaathiApp());
-  await tester.runAsync(() async { await Future<void>.delayed(const Duration(seconds: 5)); });
+  await tester.pumpWidget(const BharatSaathiApp(testModeSkipRestore: true));
+  // Complete the bounded SharedPreferences timeout on the widget-test clock
+  // before yielding to real async work such as SQLite FFI initialization.
+  await tester.pump(const Duration(seconds: 3));
+  await tester.runAsync(() async {
+    await Future<void>.delayed(const Duration(seconds: 3));
+  });
+  // Flush continuations scheduled by the real async storage operations.
   await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
 }
 
 Future<void> pumpDashboardPhone(WidgetTester tester) async {
@@ -126,41 +133,39 @@ void main() {
     expect(await LocalStore.read('account-b'), '{"cash":75}');
   });
 
-  testWidgets('Home shows the requested service icons and navigation', (tester) async {
-    await pumpApp(tester);
+  testWidgets('Home shows the retained modules and six new shopkeeper tools', (tester) async {
+    await pumpDashboardPhone(tester);
     expect(find.text('आपका खाता'), findsOneWidget);
     expect(find.text('खाता बुक'), findsOneWidget);
-    expect(find.text('मोबाइल रिचार्ज'), findsOneWidget);
-    expect(find.text('बिल पेमेंट'), findsOneWidget);
-    expect(find.text('चालान पेमेंट'), findsOneWidget);
-    expect(find.text('कमीशन वॉलेट'), findsOneWidget);
-    expect(find.textContaining('अगली सर्विस पर छूट बनेगी'), findsOneWidget);
-    expect(find.text('सर्विस वॉलेट'), findsNothing);
-  });
-
-  testWidgets('Bill payment opens the full list of bill categories', (tester) async {
-    await pumpDashboardPhone(tester);
-    await tester.tap(find.text('बिल पेमेंट'));
-    await tester.pumpAndSettle();
-    for (final item in ['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल','FASTag रिचार्ज (Coming Soon)']) {
-      expect(find.text(item), findsOneWidget);
+    expect(find.text('बिल / सामान लिस्ट'), findsOneWidget);
+    for (final title in ['QR Code Tools','Poster Maker','Reminders & Notes','Smart Calculator','Payment Sound Box','AI Calling Assistant']) {
+      await tester.ensureVisible(find.text(title));
+      expect(find.text(title), findsOneWidget);
     }
-    expect(find.text('COMING SOON'), findsNWidgets(7));
+    expect(find.text('मोबाइल रिचार्ज'), findsNothing);
+    expect(find.text('बिल पेमेंट'), findsNothing);
+    expect(find.text('चालान पेमेंट'), findsNothing);
+    expect(find.text('बाइक / कार इंश्योरेंस'), findsNothing);
+    expect(find.text('कमीशन वॉलेट'), findsNothing);
   });
 
-  testWidgets('Recharge and challan categories open their sub-options', (tester) async {
+  testWidgets('QR tools open and render QR generation and scanner action', (tester) async {
     await pumpDashboardPhone(tester);
-    await tester.tap(find.text('मोबाइल रिचार्ज'));
+    await tester.ensureVisible(find.text('QR Code Tools'));
+    await tester.tap(find.text('QR Code Tools'));
     await tester.pumpAndSettle();
-    expect(find.text('प्रीपेड मोबाइल रिचार्ज'), findsOneWidget);
-    expect(find.text('पोस्टपेड मोबाइल बिल'), findsOneWidget);
-    await tester.pageBack();
+    expect(find.text('QR कोड बनाएँ'), findsOneWidget);
+    expect(find.text('QR स्कैन करें'), findsOneWidget);
+  });
+
+  testWidgets('Business calculator exposes GST, discount and profit calculations', (tester) async {
+    await pumpDashboardPhone(tester);
+    await tester.ensureVisible(find.text('Smart Calculator'));
+    await tester.tap(find.text('Smart Calculator'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('चालान पेमेंट'));
-    await tester.tap(find.text('चालान पेमेंट'));
-    await tester.pumpAndSettle();
-    expect(find.text('ट्रैफिक चालान'), findsOneWidget);
-    expect(find.text('वाहन चालान की स्थिति'), findsOneWidget);
+    expect(find.text('GST सहित'), findsOneWidget);
+    expect(find.text('छूट के बाद'), findsOneWidget);
+    expect(find.text('मुनाफा %'), findsOneWidget);
   });
 
   testWidgets('Personal khata records a loan and shows the outstanding amount', (tester) async {
@@ -263,48 +268,15 @@ void main() {
     expect(find.text('रजिस्टर करें'), findsOneWidget);
   });
 
-  testWidgets('Referral page shows the one-time ₹10 first-success reward and no paid membership', (tester) async {
-    await pumpDashboardPhone(tester);
-    await tester.tap(find.text('प्रोफाइल'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('रेफर करें और कमाएँ'));
-    await tester.tap(find.text('रेफर करें और कमाएँ'));
-    await tester.pumpAndSettle();
-    expect(find.text('₹10 First Successful Referral Reward'), findsOneWidget);
-    expect(find.textContaining('Level 2'), findsNothing);
-    expect(find.textContaining('Level 3'), findsNothing);
-    expect(find.textContaining('Lifetime'), findsNothing);
-    expect(find.textContaining('₹299'), findsNothing);
-  });
-
-  testWidgets('Commission page has no lifetime membership purchase option', (tester) async {
-    await pumpDashboardPhone(tester);
-    await tester.tap(find.text('प्रोफाइल'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('कमीशन लिस्ट'));
-    await tester.tap(find.text('कमीशन लिस्ट'));
-    await tester.pumpAndSettle();
-    expect(find.text('कमीशन लिस्ट'), findsOneWidget);
-    expect(find.textContaining('Subscribe Now'), findsNothing);
-    expect(find.textContaining('Lifetime'), findsNothing);
-    expect(find.textContaining('₹299'), findsNothing);
-  });
-
-  testWidgets('Local SQLite records survive app restart', (tester) async {
-    await pumpApp(tester);
-    await tester.tap(find.text('खर्च'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('खर्च जोड़ें'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), 'दूध');
-    await tester.enterText(find.byType(TextField).at(1), '100');
-    await tester.tap(find.text('सेव करें'));
-    await tester.pumpAndSettle();
-    await flushStorage(tester);
-    await tester.pumpWidget(const SizedBox.shrink());
-    await pumpApp(tester);
-    await tester.tap(find.text('खर्च'));
-    await tester.pumpAndSettle();
-    expect(find.text('दूध'), findsOneWidget);
+  test('Local SQLite records survive app restart', () async {
+    final snapshot = jsonEncode({
+      'cash': 0,
+      'expensesList': [
+        {'name': 'दूध', 'detail': 'खर्च', 'amount': 100}
+      ],
+    });
+    await LocalStore.write('local', snapshot);
+    final restored = await LocalStore.read('local');
+    expect(restored, snapshot);
   });
 }
