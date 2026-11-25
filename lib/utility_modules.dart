@@ -172,8 +172,8 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
 class _SoundboxInfo extends StatefulWidget{const _SoundboxInfo();@override State<_SoundboxInfo> createState()=>_SoundboxInfoState();}
 class _SoundboxInfoState extends State<_SoundboxInfo>{
  bool permission=false;
- @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:[
-  const Icon(Icons.volume_up_rounded,size:64,color:_teal),const SizedBox(height:12),
+ @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:const [
+  Icon(Icons.volume_up_rounded,size:64,color:_teal),const SizedBox(height:12),
   const Text('भुगतान की सही पुष्टि ज़रूरी है',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900,color:_ink)),
   const SizedBox(height:8),const Text('यह ऐप अभी किसी UPI ऐप या बैंक से verified payment feed से जुड़ा नहीं है। इसलिए यह नकली “पेमेंट प्राप्त हुआ” आवाज़ नहीं चलाएगा। SMS या स्क्रीन नोटिफिकेशन अकेले बैंक-स्तर की पुष्टि नहीं होते।'),
   const SizedBox(height:14),const ListTile(leading:Icon(Icons.verified_user_outlined),title:Text('Verified bank / payment partner integration'),subtitle:Text('सर्वर से सत्यापित भुगतान मिलने के बाद ही रकम की घोषणा सक्षम होगी।')),
@@ -181,8 +181,8 @@ class _SoundboxInfoState extends State<_SoundboxInfo>{
   const Chip(label:Text('LIVE PAYMENT ANNOUNCEMENTS: NOT CONNECTED'))
  ]);
 }
-class _CallingInfo extends StatelessWidget{const _CallingInfo();@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:[
- const Icon(Icons.support_agent,size:64,color:_teal),const SizedBox(height:12),
+class _CallingInfo extends StatelessWidget{const _CallingInfo();@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:const [
+ Icon(Icons.support_agent,size:64,color:_teal),const SizedBox(height:12),
  const Text('AI Calling Assistant',style:TextStyle(fontSize:20,fontWeight:FontWeight.w900,color:_ink)),
  const Text('इस सुविधा को बाकी मॉड्यूल के बाद सक्रिय किया जाएगा। इसके लिए Android Default Dialer role, conditional call forwarding, सुरक्षित telephony provider और AI voice backend की ज़रूरत होगी।'),
  const SizedBox(height:12),const ListTile(leading:Icon(Icons.phone_android),title:Text('SIM और कॉल अनुमति'),subtitle:Text('किसी कॉल को अपने आप forward या answer नहीं किया जाएगा।')),
