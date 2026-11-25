@@ -163,9 +163,10 @@ void main() {
     await tester.ensureVisible(find.text('Smart Calculator'));
     await tester.tap(find.text('Smart Calculator'));
     await tester.pumpAndSettle();
-    expect(find.text('GST सहित'), findsOneWidget);
-    expect(find.text('छूट के बाद'), findsOneWidget);
-    expect(find.text('मुनाफा %'), findsOneWidget);
+    expect(find.text('कैलकुलेटर'), findsOneWidget);
+    expect(find.text('GST'), findsOneWidget);
+    expect(find.text('GST सहित'), findsNothing);
+    expect(find.text('छूट के बाद'), findsNothing);
   });
 
   testWidgets('Personal khata records a loan and shows the outstanding amount', (tester) async {
@@ -224,23 +225,20 @@ void main() {
   });
 
 
-  testWidgets('Banner ads are excluded from Home and placed on History and Profile', (tester) async {
+  testWidgets('Unused History tab is removed and Profile remains accessible', (tester) async {
+    await pumpDashboardPhone(tester);
+    expect(find.text('इतिहास'), findsNothing);
+    await tester.tap(find.text('प्रोफाइल'));
+    await tester.pumpAndSettle();
+    expect(find.text('भाषा / Language'), findsOneWidget);
+  });
+
+  testWidgets('Banner ads are excluded from Home and placed on Profile', (tester) async {
     await pumpDashboardPhone(tester);
     expect(find.byType(BannerAdSlot), findsNothing);
-    await tester.tap(find.text('इतिहास'));
-    await tester.pumpAndSettle();
-    expect(find.byType(BannerAdSlot), findsOneWidget);
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
     expect(find.byType(BannerAdSlot), findsOneWidget);
-  });
-
-  testWidgets('Transaction History is available in the bottom navigation', (tester) async {
-    await pumpDashboardPhone(tester);
-    await tester.tap(find.text('इतिहास'));
-    await tester.pumpAndSettle();
-    expect(find.text('ट्रांजैक्शन हिस्ट्री'), findsOneWidget);
-    expect(find.text('अभी कोई ट्रांजैक्शन नहीं है'), findsOneWidget);
   });
 
   testWidgets('Dark theme switch changes the app theme', (tester) async {
