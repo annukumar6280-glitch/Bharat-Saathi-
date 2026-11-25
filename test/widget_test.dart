@@ -10,6 +10,10 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 Future<void> pumpApp(WidgetTester tester) async {
   await tester.pumpWidget(const BharatSaathiApp());
   await tester.runAsync(() async { await Future<void>.delayed(const Duration(seconds: 5)); });
+  // runAsync advances real time, not the widget test's FakeAsync clock. Advance
+  // fake time as well so bounded startup operations (for example Future.timeout)
+  // can complete before assertions inspect the first screen.
+  await tester.pump(const Duration(seconds: 3));
   await tester.pump();
 }
 
