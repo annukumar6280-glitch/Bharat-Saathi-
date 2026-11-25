@@ -239,7 +239,7 @@ void main() {
     await tester.tap(find.text('ग्राहक जोड़ें'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).last, 'दोस्त');
-    await tester.tap(find.text('ग्राहक जोड़ें').last);
+    await tester.tap(find.widgetWithText(FilledButton, 'ग्राहक जोड़ें'));
     await tester.pumpAndSettle();
     expect(find.text('दोस्त'), findsOneWidget);
 
