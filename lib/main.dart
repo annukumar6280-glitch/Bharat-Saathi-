@@ -187,15 +187,15 @@ ThemeData buildAppTheme(bool dark){
  return ThemeData(useMaterial3:true,brightness:dark?Brightness.dark:Brightness.light,scaffoldBackgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF4F6FB),colorScheme:scheme,appBarTheme:AppBarTheme(backgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF4F6FB),foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),elevation:0,centerTitle:false),cardTheme:CardThemeData(color:dark?const Color(0xFF17263B):Colors.white),inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:dark?const Color(0xFF17263B):Colors.white,contentPadding:const EdgeInsets.symmetric(horizontal:14,vertical:14),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFF6FA4E8),width:1.5))),filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:dark?const Color(0xFF315A8A):const Color(0xFF14233B),foregroundColor:Colors.white,minimumSize:const Size(0,48),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),minimumSize:const Size(0,46),side:BorderSide(color:dark?const Color(0xFF526985):const Color(0xFFCCD6E4)),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating));
 }
 class BharatSaathiApp extends StatelessWidget{
- final bool supabaseAvailable,requireAuth;
- const BharatSaathiApp({super.key,this.supabaseAvailable=false,this.requireAuth=false});
+ final bool supabaseAvailable,requireAuth,skipLegacyMigrationForTesting;
+ const BharatSaathiApp({super.key,this.supabaseAvailable=false,this.requireAuth=false,this.skipLegacyMigrationForTesting=false});
  @override Widget build(BuildContext context)=>ValueListenableBuilder<bool>(
   valueListenable:appDarkMode,
   builder:(context,isDark,_)=>MaterialApp(
    title:'Bharat Saathi',debugShowCheckedModeBanner:false,
    theme:buildAppTheme(false),darkTheme:buildAppTheme(true),
    themeMode:isDark?ThemeMode.dark:ThemeMode.light,
-   home:requireAuth?AuthGate(supabaseAvailable:supabaseAvailable):RetailerHome(supabaseAvailable:supabaseAvailable)
+   home:requireAuth?AuthGate(supabaseAvailable:supabaseAvailable):RetailerHome(supabaseAvailable:supabaseAvailable,skipLegacyMigrationForTesting:skipLegacyMigrationForTesting)
   )
  );
 }
@@ -225,7 +225,7 @@ class _AuthGateState extends State<AuthGate>{
  }
 }
 class Record{String name,detail;double amount;IconData icon;DateTime? createdAt;Record(this.name,this.detail,this.amount,this.icon,[DateTime? timestamp]):createdAt=timestamp??DateTime.now();Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint,'createdAt':createdAt?.toIso8601String()};factory Record.fromJson(Map<String,dynamic> j){final timestamp=j['createdAt'] is String?DateTime.tryParse(j['createdAt'] as String):null;return Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long,timestamp)..createdAt=timestamp;}}
-class RetailerHome extends StatefulWidget{final bool supabaseAvailable;const RetailerHome({super.key,this.supabaseAvailable=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
+class RetailerHome extends StatefulWidget{final bool supabaseAvailable,skipLegacyMigrationForTesting;const RetailerHome({super.key,this.supabaseAvailable=false,this.skipLegacyMigrationForTesting=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
 class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver{
  Timer? _autoSyncDebounce;
  Timer? _autoSyncRetry;
@@ -293,6 +293,7 @@ final serviceTransactions=<Record>[];
   var shouldSanitizeSnapshot=false;
   try{
    final userId=_localUserId;
+   if(!widget.skipLegacyMigrationForTesting){
    var legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
    debugPrint('RESTORE: preferences read');
    legacyPrefs=await LocalStore.sanitizeLegacyInventoryData(legacyPrefs);
@@ -333,6 +334,7 @@ final serviceTransactions=<Record>[];
    }else if(!legacyDeclined&&!hasLegacy){
     final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
     if(migrated&&legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
+   }
    }
    var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
    debugPrint('RESTORE: local snapshot read');
