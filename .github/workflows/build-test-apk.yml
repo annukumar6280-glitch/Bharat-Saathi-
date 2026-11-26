@@ -29,6 +29,21 @@ jobs:
           cache: true
       - name: Generate Android platform files
         run: flutter create --platforms=android --org com.bharatsaathi --project-name bharat_saathi .
+      - name: Add Maven Central mirror fallback
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          settings = Path("android/settings.gradle.kts")
+          content = settings.read_text()
+          mirror = 'maven { url = uri("https://maven-central.storage-download.googleapis.com/maven2/") }'
+          if mirror not in content:
+              if "mavenCentral()" not in content:
+                  raise SystemExit("Gradle plugin repositories do not expose Maven Central")
+              content = content.replace("mavenCentral()", mirror + "\n        mavenCentral()")
+              settings.write_text(content)
+          print("Configured Google-hosted Maven Central mirror before Maven Central")
+          PY
       - name: Install Bharat Saathi Sound Box Android service
         run: |
           python3 - <<'PY'
