@@ -59,9 +59,15 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun hasNotificationAccess(): Boolean {
-        val enabledListeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners") ?: return false
-        val component = ComponentName(this, SoundBoxNotificationListener::class.java).flattenToString()
-        return enabledListeners.split(":").any { it.equals(component, ignoreCase = true) }
+        val enabledListeners = Settings.Secure.getString(
+            contentResolver,
+            "enabled_notification_listeners"
+        ) ?: return false
+        val expected = ComponentName(this, SoundBoxNotificationListener::class.java)
+        return enabledListeners.split(':')
+            .asSequence()
+            .mapNotNull { ComponentName.unflattenFromString(it.trim()) }
+            .any { it == expected }
     }
 
     private fun speakTest(result: MethodChannel.Result) {
