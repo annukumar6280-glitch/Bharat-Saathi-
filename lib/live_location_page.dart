@@ -315,8 +315,13 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
     final time = DateTime.tryParse('$raw')?.toLocal();
     if (time == null) return t('लोकेशन उपलब्ध नहीं', 'Location unavailable');
     final age = DateTime.now().difference(time);
-    if (age.inMinutes < 2) return t('लाइव • अभी अपडेट', 'Live • just updated');
-    return t('आखिरी अपडेट ', 'Last updated ') + age.inMinutes.toString() + t(' मिनट पहले', ' min ago');
+    final accuracy = (friend['accuracy_m'] as num?)?.toDouble();
+    final accuracyText = accuracy != null && accuracy.isFinite
+        ? ' • ±${accuracy.round()} m'
+        : '';
+    if (age.inMinutes < 2) return t('लाइव • अभी अपडेट', 'Live • just updated') + accuracyText;
+    return t('आखिरी अपडेट ', 'Last updated ') + age.inMinutes.toString() +
+        t(' मिनट पहले', ' min ago') + accuracyText;
   }
 
   List<Marker> _markers() {
@@ -455,6 +460,14 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
                 TextSourceAttribution('Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'),
               ]),
             ]))),
+        if (_tracker.lastError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              t('GPS/नेटवर्क अपडेट: ', 'GPS/network update: ') + _tracker.lastError!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+            ),
+          ),
         _heading(t('मेरे Family & Friends', 'My Family & Friends')),
         if (_friends.isEmpty) Card(child: Padding(padding: const EdgeInsets.all(18),
           child: Text(t('अभी कोई सदस्य नहीं जुड़ा। ऊपर मोबाइल नंबर डालकर अनुरोध भेजें।',
