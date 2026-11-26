@@ -31,6 +31,7 @@ void main() {
           case 'getSpeechRate':
             return 1.0;
           case 'openNotificationSettings':
+            return true;
           case 'setEnabled':
             soundEnabled = (call.arguments as Map)['enabled'] as bool;
             return true;
