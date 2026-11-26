@@ -29,6 +29,40 @@ jobs:
           cache: true
       - name: Generate Android platform files
         run: flutter create --platforms=android --org com.bharatsaathi --project-name bharat_saathi .
+      - name: Install Bharat Saathi Sound Box Android service
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+
+          source = Path("tooling/android")
+          target = Path("android/app/src/main/kotlin/com/bharatsaathi/bharat_saathi")
+          target.mkdir(parents=True, exist_ok=True)
+          for file in source.glob("*.kt"):
+              shutil.copy2(file, target / file.name)
+
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          content = manifest.read_text()
+          marker = 'android:name=".SoundBoxNotificationListener"'
+          if marker not in content:
+              service = """
+                  <service
+                      android:name=".SoundBoxNotificationListener"
+                      android:label="Bharat Saathi Sound Box"
+                      android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.service.notification.NotificationListenerService" />
+                      </intent-filter>
+                  </service>
+              """
+              closing = content.find("</application>")
+              if closing < 0:
+                  raise SystemExit("Android application closing tag missing")
+              content = content[:closing] + service + content[closing:]
+              manifest.write_text(content)
+          print("Installed Sound Box NotificationListenerService and MethodChannel host")
+          PY
       - name: Set Android target API 36
         run: |
           python3 - <<'PY'
