@@ -345,6 +345,9 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
     return result;
   }
 
+  bool get _hasAnyLocation => _myPosition != null || _friends.any((friend) =>
+      friend['latitude'] is num && friend['longitude'] is num);
+
   LatLng _center() {
     if (_myPosition != null) return LatLng(_myPosition!.latitude, _myPosition!.longitude);
     for (final friend in _friends) {
@@ -435,7 +438,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
         _heading(t('लाइव मैप', 'Live map')),
         ClipRRect(borderRadius: BorderRadius.circular(18), child: SizedBox(height: 360,
           child: FlutterMap(mapController: _mapController,
-            options: MapOptions(initialCenter: _center(), initialZoom: _myPosition != null ? 16 : 5),
+            options: MapOptions(initialCenter: _center(), initialZoom: _hasAnyLocation ? 16 : 5),
             children: [
               TileLayer(
                 urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
