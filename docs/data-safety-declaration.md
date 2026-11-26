@@ -19,7 +19,8 @@ Internal preparation note only. Re-check the exact release APK, all included SDK
 - Google Mobile Ads SDK may process/share IP address, ad interactions, diagnostics and identifiers for advertising, analytics and fraud prevention. Current development source uses Google's test App ID and test banner unit ID only.
 - Ordinary financial and shop records are saved locally first. When signed in and internet is available, an account-specific snapshot is automatically synchronized to Supabase; it is not a user-triggered manual backup.
 - Local snapshots are separated by signed-in Supabase user ID on the same device. On upgrade, a legacy unassigned snapshot is imported only after the user confirms the correct account and only if that account has no existing local snapshot; existing account data is never overwritten.
-- Location is collected only after in-app sharing is enabled and the relevant Android location permission is granted. The user can stop sharing at any time. The latest location is stored; a location-history trail is not intentionally retained.\n- Data is transmitted over HTTPS/TLS. The SQLite database is not separately encrypted at the application layer.
+- Location is collected only after in-app sharing is enabled and the relevant Android location permission is granted. The user can stop sharing at any time. The latest location is stored; a location-history trail is not intentionally retained. 
+- Data is transmitted over HTTPS/TLS. The SQLite database is not separately encrypted at the application layer.
 - Account deletion is requested through the external deletion page/WhatsApp support and is processed after ownership verification; there is no in-app deletion button in the current source.
 
 ## Play Console answers to verify
