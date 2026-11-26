@@ -98,7 +98,16 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       final enabled = share?['enabled'] == true;
       if (!mounted) return;
       setState(() { _friends = friends; _requests = requests; _sharing = enabled; _loading = false; });
-      if (enabled && !_tracker.isRunning) await _tracker.start(_db);
+      if (enabled && !_tracker.isRunning) {
+        try {
+          await _tracker.start(_db);
+        } catch (error) {
+          // A location permission/GPS failure must not be misreported as a
+          // Supabase or internet data-loading failure.
+          _tracker.setError(error.toString());
+          if (mounted) setState(() {});
+        }
+      }
       if (!enabled && _tracker.isRunning) await _tracker.stop();
     } catch (error) {
       if (mounted) {
@@ -512,6 +521,7 @@ class LiveLocationTracker {
   final Set<void Function(Position?)> _listeners = {};
   String? _lastError;
   String? get lastError => _lastError;
+  void setError(String error) => _lastError = error;
   bool get isRunning => _subscription != null;
   void addListener(void Function(Position?) listener) => _listeners.add(listener);
   void removeListener(void Function(Position?) listener) => _listeners.remove(listener);
