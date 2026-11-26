@@ -59,7 +59,7 @@ class SoundBoxNotificationListener : NotificationListenerService() {
                 tts?.setSpeechRate(prefs().getFloat("speech_rate", 1.0f))
                 tts?.setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build()
                 )
@@ -72,6 +72,17 @@ class SoundBoxNotificationListener : NotificationListenerService() {
                 Log.w(TAG, "TextToSpeech initialization failed: " + status)
             }
         }
+    }
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        Log.i(TAG, "Notification listener connected and ready")
+    }
+
+    override fun onListenerDisconnected() {
+        Log.w(TAG, "Notification listener disconnected by Android")
+        super.onListenerDisconnected()
+        requestRebind(android.content.ComponentName(this, SoundBoxNotificationListener::class.java))
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
