@@ -21,7 +21,7 @@ const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
 const privacyPolicyUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/privacy-policy.html';
 const termsConditionsUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/terms-and-conditions.html';
 const termsVersion='1.0';
-Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));}
+Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;try{await LiveLocationTracker.instance.resumeIfEnabled(Supabase.instance.client);}catch(_){}}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));}
 
 bool bannerAdsEnabled=true;
 const String _bannerAdUnitId='ca-app-pub-3940256099942544/6300978111';
@@ -1076,7 +1076,7 @@ class _AuthPageState extends State<AuthPage>{
     emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'
    );
    if(response.session==null){if(mounted)setState(()=>signUp=false);message('रजिस्ट्रेशन हो गया। ईमेल पर आए लिंक से अकाउंट कन्फर्म करें। उसके बाद मोबाइल नंबर और पासवर्ड से लॉगिन करें।');}
-   else{await _ensureProfileAndAccounts(nameOverride:enteredName,mobileOverride:mobile);returnToHome=true;}
+   else{await _ensureProfileAndAccounts(nameOverride:enteredName,mobileOverride:mobile);try{await LiveLocationTracker.instance.resumeIfEnabled(client);}catch(_){}returnToHome=true;}
   }else{
    final response=await client.functions.invoke('phone-password-login',body:{'phone':mobile,'password':password.text});
    final payload=response.data;
@@ -1086,6 +1086,7 @@ class _AuthPageState extends State<AuthPage>{
    }
    await client.auth.setSession(payload['refresh_token'] as String);
    await _ensureProfileAndAccounts(mobileOverride:mobile);
+   try{await LiveLocationTracker.instance.resumeIfEnabled(client);}catch(_){}
    returnToHome=true;
   }
  }on AuthException catch(e){message(e.message,error:true);}
@@ -1135,7 +1136,7 @@ class _AuthPageState extends State<AuthPage>{
  on AuthException catch(e){message(e.message,error:true);}catch(_){message('रीसेट ईमेल नहीं भेजा जा सका। ईमेल और SMTP सेटिंग जाँचें।',error:true);}
  if(mounted)setState(()=>busy=false);
 }
- Future<void> signOut()async{setState(()=>busy=true);try{await client.auth.signOut();if(mounted)Navigator.of(context).popUntil((route)=>route.isFirst);}catch(_){message('लॉगआउट पूरा नहीं हुआ।',error:true);}if(mounted)setState(()=>busy=false);}
+ Future<void> signOut()async{setState(()=>busy=true);try{try{await client.rpc('set_location_sharing',params:{'p_enabled':false});}catch(_){}await LiveLocationTracker.instance.stop();await client.auth.signOut();if(mounted)Navigator.of(context).popUntil((route)=>route.isFirst);}catch(_){message('लॉगआउट पूरा नहीं हुआ।',error:true);}if(mounted)setState(()=>busy=false);}
  @override void dispose(){email.dispose();password.dispose();fullName.dispose();phone.dispose();super.dispose();}
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
