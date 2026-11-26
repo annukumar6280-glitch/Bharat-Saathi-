@@ -103,6 +103,22 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
   }
 
   Future<bool> _permission() async {
+    final consent = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t('लाइव लोकेशन की अनुमति', 'Live location disclosure')),
+        content: Text(t(
+          'Bharat Saathi आपकी सटीक GPS लोकेशन और अपडेट का समय Supabase पर सेव करेगा। यह केवल आपके स्वीकार किए गए Family/Friends को दिखेगा। बैकग्राउंड में शेयरिंग चालू रहने पर Android की स्थायी Location सूचना दिखेगी। आप कभी भी Stop Sharing कर सकते हैं।',
+          'Bharat Saathi will store your precise GPS location and update time in Supabase. It is visible only to your accepted Family/Friends. Android will show an ongoing location notification while background sharing is active. You can stop sharing at any time.',
+        )),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t('अभी नहीं', 'Not now'))),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(t('जारी रखें', 'Continue'))),
+        ],
+      ),
+    );
+    if (consent != true) return false;
+
     if (!await Geolocator.isLocationServiceEnabled()) {
       _message(t('फोन की Location/GPS सेटिंग चालू करें।', 'Turn on Location/GPS in phone settings.'));
       await Geolocator.openLocationSettings();
@@ -114,6 +130,30 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       _message(t('लोकेशन परमिशन जरूरी है। ऐप सेटिंग में अनुमति दें।',
           'Location permission is required. Allow it in app settings.'));
       if (permission == LocationPermission.deniedForever) await Geolocator.openAppSettings();
+      return false;
+    }
+    if (permission != LocationPermission.always) {
+      final openSettings = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(t('बैकग्राउंड लोकेशन जरूरी है', 'Background location is required')),
+          content: Text(t(
+            'लोकेशन लगातार शेयर रखने के लिए App Permissions में Location को “Allow all the time” चुनें। केवल “While using the app” से बैकग्राउंड अपडेट रुक सकते हैं।',
+            'For continuous sharing, open App permissions and set Location to “Allow all the time”. “While using the app” may stop background updates.',
+          )),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t('रद्द करें', 'Cancel'))),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(t('सेटिंग खोलें', 'Open settings'))),
+          ],
+        ),
+      );
+      if (openSettings != true) return false;
+      await Geolocator.openAppSettings();
+      permission = await Geolocator.checkPermission();
+    }
+    if (permission != LocationPermission.always) {
+      _message(t('लगातार बैकग्राउंड शेयरिंग के लिए “Allow all the time” चुनना जरूरी है।',
+          'Choose “Allow all the time” to enable continuous background sharing.'));
       return false;
     }
     return true;
