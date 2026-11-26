@@ -489,7 +489,7 @@ class Dashboard extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.42,
+            childAspectRatio: 1.10,
             children: [
               _tile(
                 english ? 'Khata Book' : 'खाता बुक',
