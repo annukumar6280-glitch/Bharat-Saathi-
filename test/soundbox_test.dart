@@ -58,6 +58,7 @@ void main() {
     history = '[{"amount":500,"source":"PhonePe","message":"₹500 received from customer","timestamp":1795680000000}]';
     await tester.pumpWidget(const MaterialApp(home: SoundBoxPage()));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('₹500 प्राप्ति अलर्ट'), 300);
     expect(find.text('₹500 प्राप्ति अलर्ट'), findsOneWidget);
     expect(find.textContaining('PhonePe'), findsOneWidget);
   });
