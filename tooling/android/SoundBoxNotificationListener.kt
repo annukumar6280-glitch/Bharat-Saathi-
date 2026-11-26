@@ -82,7 +82,9 @@ class SoundBoxNotificationListener : NotificationListenerService() {
     override fun onListenerDisconnected() {
         Log.w(TAG, "Notification listener disconnected by Android")
         super.onListenerDisconnected()
-        requestRebind(android.content.ComponentName(this, SoundBoxNotificationListener::class.java))
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            requestRebind(android.content.ComponentName(this, SoundBoxNotificationListener::class.java))
+        }
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
