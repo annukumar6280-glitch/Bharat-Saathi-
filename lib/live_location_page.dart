@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -17,6 +18,8 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
   late final SupabaseClient _db;
   final TextEditingController _phone = TextEditingController();
   final LiveLocationTracker _tracker = LiveLocationTracker.instance;
+  final MapController _mapController = MapController();
+  String? _selectedFriendId;
   List<Map<String, dynamic>> _friends = [];
   List<Map<String, dynamic>> _requests = [];
   bool _loading = true, _busy = false, _sharing = false;
@@ -254,6 +257,45 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
     }
   }
 
+  void _selectFriend(Map<String, dynamic> friend) {
+    final lat = (friend['latitude'] as num?)?.toDouble();
+    final lng = (friend['longitude'] as num?)?.toDouble();
+    if (lat == null || lng == null) return;
+    setState(() => _selectedFriendId = friend['id']?.toString());
+    _mapController.move(LatLng(lat, lng), 16);
+  }
+
+  Future<void> _startNavigation(Map<String, dynamic> friend) async {
+    if (friend['status'] != 'accepted' || friend['is_sharing'] != true) {
+      _message(t('इस दोस्त की लाइव लोकेशन उपलब्ध नहीं है।', 'This friend’s live location is not available.'));
+      return;
+    }
+    final lat = (friend['latitude'] as num?)?.toDouble();
+    final lng = (friend['longitude'] as num?)?.toDouble();
+    if (lat == null || lng == null || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      _message(t('दोस्त की सही लोकेशन अभी उपलब्ध नहीं है।', 'The friend’s location is not available yet.'));
+      return;
+    }
+    _selectFriend(friend);
+    final nativeUri = Uri.parse('google.navigation:q=$lat,$lng&mode=d');
+    try {
+      final opened = await launchUrl(nativeUri, mode: LaunchMode.externalApplication);
+      if (!opened) {
+        final webUri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving');
+        if (!await launchUrl(webUri, mode: LaunchMode.externalApplication)) {
+          _message(t('नेविगेशन ऐप नहीं खुल सका।', 'Could not open navigation.'));
+        }
+      }
+    } catch (_) {
+      final webUri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving');
+      try {
+        await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        _message(t('नेविगेशन ऐप नहीं खुल सका।', 'Could not open navigation.'));
+      }
+    }
+  }
+
   void _message(String value) {
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value)));
   }
@@ -282,14 +324,14 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       final lng = (friend['longitude'] as num?)?.toDouble();
       if (lat == null || lng == null) continue;
       result.add(Marker(point: LatLng(lat, lng), width: 130, height: 58,
-        child: Column(children: [
+        child: GestureDetector(onTap: () => _selectFriend(friend), child: Column(children: [
           Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(color: const Color(0xFF17365D), borderRadius: BorderRadius.circular(9)),
             child: Text(friend['display_name']?.toString() ?? 'Family',
               maxLines: 1, overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700))),
-          const Icon(Icons.location_on, color: Color(0xFFDB3D52), size: 30),
-        ])));
+          Icon(Icons.location_on, color: friend['id']?.toString() == _selectedFriendId ? const Color(0xFFFFB000) : const Color(0xFFDB3D52), size: 30),
+        ]))));
     }
     if (_myPosition != null) {
       result.add(Marker(point: LatLng(_myPosition!.latitude, _myPosition!.longitude),
@@ -391,13 +433,19 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
             ])))),
         ],
         _heading(t('लाइव मैप', 'Live map')),
-        ClipRRect(borderRadius: BorderRadius.circular(18), child: SizedBox(height: 340,
-          child: FlutterMap(options: MapOptions(initialCenter: _center(), initialZoom: _myPosition != null ? 14 : 5),
+        ClipRRect(borderRadius: BorderRadius.circular(18), child: SizedBox(height: 360,
+          child: FlutterMap(mapController: _mapController,
+            options: MapOptions(initialCenter: _center(), initialZoom: _myPosition != null ? 16 : 5),
             children: [
-              TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.bharatsaathi.bharat_saathi'),
+              TileLayer(
+                urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                userAgentPackageName: 'com.bharatsaathi.bharat_saathi',
+                maxNativeZoom: 19,
+              ),
               MarkerLayer(markers: _markers()),
-              RichAttributionWidget(attributions: const [TextSourceAttribution('© OpenStreetMap contributors')]),
+              RichAttributionWidget(attributions: const [
+                TextSourceAttribution('Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'),
+              ]),
             ]))),
         _heading(t('मेरे Family & Friends', 'My Family & Friends')),
         if (_friends.isEmpty) Card(child: Padding(padding: const EdgeInsets.all(18),
@@ -418,10 +466,13 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
             title: Text(friend['display_name']?.toString() ?? 'Bharat Saathi User'),
             subtitle: Text(_status(friend) + timeText),
             isThreeLine: time != null,
-            trailing: accepted && !sharing ? IconButton(
-              tooltip: t('लाइव लोकेशन अनुरोध भेजें', 'Request live location'),
-              onPressed: () => _requestLocation(friend),
-              icon: const Icon(Icons.notifications_active_outlined)) : null,
+            trailing: Wrap(spacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+            if (accepted && sharing && friend['latitude'] is num && friend['longitude'] is num)
+              FilledButton.tonal(onPressed: () => _startNavigation(friend), child: const Text('Start')),
+            if (accepted && !sharing)
+              IconButton(tooltip: t('लाइव लोकेशन अनुरोध भेजें', 'Request live location'),
+                onPressed: () => _requestLocation(friend), icon: const Icon(Icons.notifications_active_outlined)),
+          ]),
           ));
         }),
         if (_sharing) Padding(padding: const EdgeInsets.only(top: 8),
