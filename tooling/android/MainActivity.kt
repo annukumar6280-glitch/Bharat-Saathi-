@@ -86,9 +86,19 @@ class MainActivity : FlutterActivity() {
                 return@TextToSpeech
             }
             engine.setSpeechRate(soundPrefs().getFloat("speech_rate", 1.0f))
+            engine.setAudioAttributes(
+                android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build()
+            )
             val message = if (language == "en") "Bharat Saathi Sound Box is ready" else "भारत साथी साउंड बॉक्स की आवाज़ जांच"
-            engine.speak(message, TextToSpeech.QUEUE_FLUSH, null, "soundbox-test")
-            result.success(true)
+            val speakStatus = engine.speak(message, TextToSpeech.QUEUE_FLUSH, null, "soundbox-test")
+            if (speakStatus == TextToSpeech.ERROR) {
+                result.error("TTS_SPEAK_FAILED", "Text to speech engine rejected the test message", null)
+            } else {
+                result.success(true)
+            }
         }
     }
 
