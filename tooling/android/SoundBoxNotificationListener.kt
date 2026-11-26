@@ -29,17 +29,17 @@ class SoundBoxNotificationListener : NotificationListenerService() {
         )
 
         private val incomingPattern = Regex(
-            "(?i)(received|credited|paid\\\\s+you|sent\\\\s+you|payment\\\\s+from|money\\\\s+received|you\\\\s+got|deposited|जमा|प्राप्त|मिला|मिली|आए|आया)"
+            "(?i)(received|credited|paid\\s+you|sent\\s+you|payment\\s+from|money\\s+received|you\\s+got|deposited|जमा|प्राप्त|मिला|मिली|आए|आया)"
         )
         private val outgoingPattern = Regex(
-            "(?i)(you\\\\s+(?:sent|paid)|paid\\\\s+to|debited|withdrawn|payment\\\\s+failed|failed|declined|pending|collect\\\\s+request|request\\\\s+to\\\\s+pay|autopay|mandate)"
+            "(?i)(you\\s+(?:sent|paid)|paid\\s+to|debited|withdrawn|payment\\s+failed|failed|declined|pending|collect\\s+request|request\\s+to\\s+pay|autopay|mandate)"
         )
         private val amountPatterns = listOf(
-            Regex("(?i)(?:₹|rs\\\\.?\\\\s*|inr\\\\s*)([0-9][0-9,]*(?:\\\\.[0-9]{1,2})?)"),
-            Regex("(?i)([0-9][0-9,]*(?:\\\\.[0-9]{1,2})?)\\\\s*(?:rupees|rs\\\\.?|inr)")
+            Regex("(?i)(?:₹|rs\\.?\\s*|inr\\s*)([0-9][0-9,]*(?:\\.[0-9]{1,2})?)"),
+            Regex("(?i)([0-9][0-9,]*(?:\\.[0-9]{1,2})?)\\s*(?:rupees|rs\\.?|inr)")
         )
         private val referencePattern = Regex(
-            "(?i)(?:upi\\\\s*(?:ref(?:erence)?|txn(?:\\\\s*id)?)|utr|transaction\\\\s*id)\\\\s*[:#-]?\\\\s*([A-Z0-9]{8,})"
+            "(?i)(?:upi\\s*(?:ref(?:erence)?|txn(?:\\s*id)?)|utr|transaction\\s*id)\\s*[:#-]?\\s*([A-Z0-9]{8,})"
         )
     }
 
