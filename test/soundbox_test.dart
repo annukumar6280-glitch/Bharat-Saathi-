@@ -9,10 +9,12 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   var hasAccess = false;
+  var soundEnabled = true;
   var history = '[]';
 
   setUp(() {
     hasAccess = false;
+    soundEnabled = true;
     history = '[]';
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
       soundBoxChannel,
@@ -21,7 +23,7 @@ void main() {
           case 'hasNotificationAccess':
             return hasAccess;
           case 'getEnabled':
-            return true;
+            return soundEnabled;
           case 'getHistory':
             return history;
           case 'getLanguage':
@@ -30,6 +32,8 @@ void main() {
             return 1.0;
           case 'openNotificationSettings':
           case 'setEnabled':
+            soundEnabled = (call.arguments as Map)['enabled'] as bool;
+            return true;
           case 'setLanguage':
           case 'setSpeechRate':
           case 'testSpeech':
@@ -51,6 +55,34 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Notification Access की अनुमति दें'), findsOneWidget);
     expect(find.text('पहले Notification Access की अनुमति दें'), findsOneWidget);
+  });
+
+  testWidgets('Sound Box ON/OFF switch stays usable before notification permission is granted', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: SoundBoxPage()));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Switch), findsOneWidget);
+    expect(find.textContaining('Notification Access की अनुमति बाकी'), findsOneWidget);
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(soundEnabled, isFalse);
+    expect(find.textContaining('Sound Box OFF है'), findsOneWidget);
+  });
+
+  testWidgets('refreshes notification permission when app resumes from Android settings', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: SoundBoxPage()));
+    await tester.pumpAndSettle();
+    expect(find.text('Notification Access की अनुमति दें'), findsOneWidget);
+
+    hasAccess = true;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Notification Access सेटिंग खोलें'), findsOneWidget);
+    expect(find.textContaining('Notification Access चालू'), findsOneWidget);
   });
 
   testWidgets('shows locally stored payment alerts', (tester) async {
