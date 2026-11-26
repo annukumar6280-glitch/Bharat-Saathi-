@@ -18,6 +18,7 @@ class _SoundBoxPageState extends State<SoundBoxPage> with WidgetsBindingObserver
   bool _enabled = true;
   bool _loading = true;
   bool _refreshing = false;
+  bool _refreshQueued = false;
   String _language = 'hi';
   double _speechRate = 1.0;
   List<Map<String, dynamic>> _history = <Map<String, dynamic>>[];
@@ -44,7 +45,10 @@ class _SoundBoxPageState extends State<SoundBoxPage> with WidgetsBindingObserver
   }
 
   Future<void> _refresh({bool silent = false}) async {
-    if (_refreshing) return;
+    if (_refreshing) {
+      _refreshQueued = true;
+      return;
+    }
     _refreshing = true;
     try {
       final values = await Future.wait<dynamic>([
@@ -74,6 +78,10 @@ class _SoundBoxPageState extends State<SoundBoxPage> with WidgetsBindingObserver
       if (mounted && !silent) setState(() => _loading = false);
     } finally {
       _refreshing = false;
+      if (_refreshQueued) {
+        _refreshQueued = false;
+        scheduleMicrotask(() => _refresh(silent: true));
+      }
     }
   }
 
@@ -84,8 +92,17 @@ class _SoundBoxPageState extends State<SoundBoxPage> with WidgetsBindingObserver
   }
 
   Future<void> _setEnabled(bool value) async {
-    await _channel.invokeMethod<bool>('setEnabled', <String, dynamic>{'enabled': value});
-    if (mounted) setState(() => _enabled = value);
+    try {
+      await _channel.invokeMethod<bool>('setEnabled', <String, dynamic>{'enabled': value});
+      if (!mounted) return;
+      setState(() => _enabled = value);
+      if (value && !_hasAccess) {
+        _showMessage('Sound Box ON है। आवाज़ पाने के लिए Notification Access की अनुमति भी चालू करें।');
+      }
+    } on PlatformException {
+      if (mounted) _showMessage('Sound Box की सेटिंग सेव नहीं हो सकी।');
+      await _refresh(silent: true);
+    }
   }
 
   Future<void> _setLanguage(String value) async {
@@ -196,8 +213,8 @@ class _SoundBoxPageState extends State<SoundBoxPage> with WidgetsBindingObserver
                           const SizedBox(height: 10),
                           Text(
                             _hasAccess
-                                ? (_enabled ? 'Sound Box चालू है' : 'Sound Box बंद है')
-                                : 'पहले Notification Access की अनुमति दें',
+                                ? (_enabled ? 'Notification Access चालू • Sound Box ON' : 'Notification Access चालू • Sound Box OFF')
+                                : (_enabled ? 'Sound Box ON है • Notification Access की अनुमति बाकी' : 'Sound Box OFF है • Notification Access की अनुमति बाकी'),
                             style: const TextStyle(color: Colors.white70),
                           ),
                           const SizedBox(height: 16),
@@ -245,9 +262,11 @@ class _SoundBoxPageState extends State<SoundBoxPage> with WidgetsBindingObserver
                         SwitchListTile(
                           secondary: const Icon(Icons.volume_up_outlined),
                           title: const Text('Sound Box चालू रखें'),
-                          subtitle: Text(_hasAccess ? 'नए पहचाने गए पेमेंट की आवाज़ सुनाई देगी' : 'पहले ऊपर से Notification Access दें'),
+                          subtitle: Text(_hasAccess
+                              ? 'नए पहचाने गए पेमेंट की आवाज़ सुनाई देगी'
+                              : 'टॉगल ON/OFF कर सकते हैं; आवाज़ के लिए Notification Access भी ON होना चाहिए'),
                           value: _enabled,
-                          onChanged: _hasAccess ? _setEnabled : null,
+                          onChanged: _setEnabled,
                         ),
                         const Divider(height: 1),
                         ListTile(
