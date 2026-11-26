@@ -13,7 +13,8 @@ Bharat Saathi is a Flutter Android app for personal finance, khata and expense m
 - Profile settings include language/theme controls, cloud snapshot restore and Family & Friends Live Location.
 - Transactional on-device SQLite persistence with one-time import of older SharedPreferences records.
 - Google Mobile Ads SDK is included with Google's test ad identifiers in the development build.
-- Family & Friends Live Location supports phone-number invitations, two-way opt-in, live map updates, location pause/resume and re-share requests. Android foreground location notification is used while tracking; force-stop, revoked permission, GPS/network loss or battery restrictions can interrupt updates. Realtime request cards work while the app is connected; push notifications while the app is fully closed still require Firebase Cloud Messaging setup.\n- GitHub Actions runs Flutter analysis, widget tests and an Android debug APK build.
+- Family & Friends Live Location supports phone-number invitations, two-way opt-in, live map updates, location pause/resume and re-share requests. Android foreground location notification is used while tracking; force-stop, revoked permission, GPS/network loss or battery restrictions can interrupt updates. Realtime request cards work while the app is connected; push notifications while the app is fully closed still require Firebase Cloud Messaging setup. 
+- GitHub Actions runs Flutter analysis, widget tests and an Android debug APK build.
 
 ## Data and production status
 
