@@ -434,8 +434,8 @@ class LiveLocationTracker {
   Future<void> start(SupabaseClient client) async {
     if (_subscription != null) return;
     final permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-      throw Exception('Location permission is not granted');
+    if (permission != LocationPermission.always) {
+      throw Exception('Allow all the time location permission is required');
     }
     const settings = AndroidSettings(
       accuracy: LocationAccuracy.high,
