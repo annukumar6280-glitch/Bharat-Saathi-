@@ -23,7 +23,14 @@ class MainActivity : FlutterActivity() {
                 "hasNotificationAccess" -> result.success(hasNotificationAccess())
                 "openNotificationSettings" -> {
                     try {
-                        startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                        val component = ComponentName(this, SoundBoxNotificationListener::class.java)
+                        val detailIntent = Intent("android.settings.NOTIFICATION_LISTENER_DETAIL_SETTINGS")
+                            .putExtra("android.provider.extra.NOTIFICATION_LISTENER_COMPONENT_NAME", component.flattenToString())
+                        try {
+                            startActivity(detailIntent)
+                        } catch (_: Exception) {
+                            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                        }
                         result.success(true)
                     } catch (error: Exception) {
                         result.error("SETTINGS_ERROR", error.message, null)
@@ -59,11 +66,11 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun hasNotificationAccess(): Boolean {
+        val expected = ComponentName(this, SoundBoxNotificationListener::class.java)
         val enabledListeners = Settings.Secure.getString(
             contentResolver,
             "enabled_notification_listeners"
-        ) ?: return false
-        val expected = ComponentName(this, SoundBoxNotificationListener::class.java)
+        ).orEmpty()
         return enabledListeners.split(':')
             .asSequence()
             .mapNotNull { ComponentName.unflattenFromString(it.trim()) }
