@@ -10,10 +10,10 @@ Bharat Saathi is a Flutter Android app for personal finance, khata and expense m
 - Business expense recording and expense history.
 - Service category screens for recharge, bill payment and challan; provider-dependent transactions remain marked Coming Soon.
 - History lists successful service transactions only.
-- Profile settings include language/theme controls and cloud snapshot restore.
+- Profile settings include language/theme controls, cloud snapshot restore and Family & Friends Live Location.
 - Transactional on-device SQLite persistence with one-time import of older SharedPreferences records.
 - Google Mobile Ads SDK is included with Google's test ad identifiers in the development build.
-- GitHub Actions runs Flutter analysis, widget tests and an Android debug APK build.
+- Family & Friends Live Location supports phone-number invitations, two-way opt-in, live map updates, location pause/resume and re-share requests. Android foreground location notification is used while tracking; force-stop, revoked permission, GPS/network loss or battery restrictions can interrupt updates.\n- GitHub Actions runs Flutter analysis, widget tests and an Android debug APK build.
 
 ## Data and production status
 
@@ -21,7 +21,7 @@ The current khata, expense and personal-finance records are stored locally on th
 
 When a user is signed in, Bharat Saathi automatically synchronizes the latest account-specific local snapshot to that user's Supabase cloud-backup record. Changes are queued with a short debounce; sync is retried periodically while the app is running and when it resumes. If the device is offline, records remain stored locally and are synchronized when connectivity returns and the app gets an opportunity to run. Background sync is not guaranteed while the app is fully closed. The current implementation is account-scoped snapshot synchronization, not row-by-row synchronization to a normalized accounting ledger or a conflict-safe multi-device ledger. The cloud snapshot can be restored on another device by signing in to the same account; restore replaces that device's current local snapshot after confirmation.
 
-Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, linked khata, user backups and referral/commission records. The Flutter client initializes Supabase, supports email-confirmed registration and mobile-number/password login, and provisions account memberships. Phone login uses a database-side account lookup (not a first-1,000-users scan) and persistent per-phone/per-IP failed-attempt throttling. The mobile number is not yet verified by SMS OTP; phone-ownership verification is a release gate before treating it as verified identity. Email confirmation depends on the project's Auth email settings and production SMTP configuration. Never place a Supabase secret/service-role key in the mobile app; only the publishable key is included.
+Supabase project schema includes account membership, personal finance transactions and budgets, parties/khata, linked khata, user backups, referral/commission records and RLS-protected Family & Friends location-sharing records. Location is visible only to accepted connections when the owner has enabled sharing. The Flutter client initializes Supabase, supports email-confirmed registration and mobile-number/password login, and provisions account memberships. Phone login uses a database-side account lookup (not a first-1,000-users scan) and persistent per-phone/per-IP failed-attempt throttling. The mobile number is not yet verified by SMS OTP; phone-ownership verification is a release gate before treating it as verified identity. Email confirmation depends on the project's Auth email settings and production SMTP configuration. Never place a Supabase secret/service-role key in the mobile app; only the publishable key is included.
 
 ## Provider-dependent services
 
@@ -47,9 +47,9 @@ GitHub Actions workflow: `.github/workflows/flutter-android.yml`
 
 ## Next implementation priorities
 
-1. Strengthen and test account-scoped automatic cloud snapshot sync/restore, account switching, offline retry behavior and recovery from interrupted writes.
-2. Complete Auth hardening: enable leaked-password protection where the Supabase plan supports it, configure production SMTP, verify password recovery and document an MFA strategy.
-3. Move from whole-snapshot backup toward a normalized, conflict-aware server-side transaction ledger with audit history before relying on multi-device financial workflows.
-4. Improve current khata and expense workflows, account statements and Hindi PDF export.
-5. Complete signed Android release configuration, real-device testing and Play Store declarations.
-6. Integrate recharge, BBPS, UPI or other external services only after approved providers, credentials, webhook verification, reconciliation and compliance checks are available.
+1. Complete device-level testing of Family & Friends background location, permission flows, battery restrictions and Play Store background-location disclosures.\n2. Strengthen and test account-scoped automatic cloud snapshot sync/restore, account switching, offline retry behavior and recovery from interrupted writes.
+3. Complete Auth hardening: enable leaked-password protection where the Supabase plan supports it, configure production SMTP, verify password recovery and document an MFA strategy.
+4. Move from whole-snapshot backup toward a normalized, conflict-aware server-side transaction ledger with audit history before relying on multi-device financial workflows.
+5. Improve current khata and expense workflows, account statements and Hindi PDF export.
+6. Complete signed Android release configuration, real-device testing and Play Store declarations.
+7. Integrate recharge, BBPS, UPI or other external services only after approved providers, credentials, webhook verification, reconciliation and compliance checks are available.
