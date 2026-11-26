@@ -461,6 +461,7 @@ class LiveLocationTracker {
         notificationText: 'Location is shared with accepted Family & Friends.',
         notificationChannelName: 'Live location sharing',
         enableWakeLock: true,
+        setOngoing: true,
       ),
     );
     _subscription = Geolocator.getPositionStream(locationSettings: settings).listen((position) async {
