@@ -100,12 +100,15 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       setState(() { _friends = friends; _requests = requests; _sharing = enabled; _loading = false; });
       if (enabled && !_tracker.isRunning) await _tracker.start(_db);
       if (!enabled && _tracker.isRunning) await _tracker.stop();
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
+        final detail = error.toString();
+        final conciseDetail = detail.length > 280 ? '${detail.substring(0, 280)}…' : detail;
         setState(() {
           _loading = false;
-          _error = t('डेटा लोड नहीं हुआ। इंटरनेट जाँचकर फिर कोशिश करें।',
-              'Could not load data. Check the internet and try again.');
+          _error = t('डेटा लोड नहीं हुआ। इंटरनेट कनेक्शन और Supabase सेटिंग जाँचें।',
+              'Could not load data. Check the internet connection and Supabase settings.') +
+              '\n\n' + conciseDetail;
         });
       }
     }
@@ -444,6 +447,8 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
                 urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
                 userAgentPackageName: 'com.bharatsaathi.bharat_saathi',
                 maxNativeZoom: 19,
+                maxZoom: 20,
+                keepBuffer: 4,
               ),
               MarkerLayer(markers: _markers()),
               RichAttributionWidget(attributions: const [
@@ -492,6 +497,8 @@ class LiveLocationTracker {
   static final LiveLocationTracker instance = LiveLocationTracker._();
   StreamSubscription<Position>? _subscription;
   final Set<void Function(Position?)> _listeners = {};
+  String? _lastError;
+  String? get lastError => _lastError;
   bool get isRunning => _subscription != null;
   void addListener(void Function(Position?) listener) => _listeners.add(listener);
   void removeListener(void Function(Position?) listener) => _listeners.remove(listener);
@@ -511,9 +518,9 @@ class LiveLocationTracker {
       throw Exception('Allow all the time location permission is required');
     }
     final settings = AndroidSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 15,
-      intervalDuration: const Duration(seconds: 10),
+      accuracy: LocationAccuracy.bestForNavigation,
+      distanceFilter: 5,
+      intervalDuration: const Duration(seconds: 5),
       foregroundNotificationConfig: const ForegroundNotificationConfig(
         notificationTitle: 'Bharat Saathi Live Location',
         notificationText: 'Location is shared with accepted Family & Friends.',
@@ -526,18 +533,39 @@ class LiveLocationTracker {
       for (final listener in List<void Function(Position?)>.from(_listeners)) {
         listener(position);
       }
+
+      // Reject inaccurate or stale fixes so poor GPS data is not shared as live.
+      final age = DateTime.now().toUtc().difference(position.timestamp.toUtc());
+      final validCoordinates = position.latitude.isFinite &&
+          position.longitude.isFinite &&
+          position.latitude >= -90 && position.latitude <= 90 &&
+          position.longitude >= -180 && position.longitude <= 180;
+      final accurateFix = position.accuracy.isFinite &&
+          position.accuracy > 0 && position.accuracy <= 50;
+      if (!validCoordinates || !accurateFix || age.isNegative || age > const Duration(minutes: 2)) {
+        _lastError = 'Waiting for an accurate GPS fix (accuracy must be 50 m or better).';
+        return;
+      }
+
       try {
+        final user = client.auth.currentUser;
+        if (user == null) {
+          _lastError = 'Your session expired. Sign in again to share location.';
+          return;
+        }
         await client.from('active_locations').upsert({
-          'user_id': client.auth.currentUser!.id,
+          'user_id': user.id,
           'latitude': position.latitude,
           'longitude': position.longitude,
           'accuracy_m': position.accuracy,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
+          'updated_at': position.timestamp.toUtc().toIso8601String(),
         });
-      } catch (_) {
-        // The next GPS fix retries after a temporary network interruption.
+        _lastError = null;
+      } catch (error) {
+        _lastError = error.toString();
       }
-    }, onError: (_) {
+    }, onError: (error) {
+      _lastError = error.toString();
       _subscription?.cancel();
       _subscription = null;
     });
