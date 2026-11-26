@@ -1,0 +1,128 @@
+name: Bharat Saathi Android Validation
+on:
+  push:
+    branches:
+      - feature/ai-poster-calculator-soundbox
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Android platform files
+        run: flutter create --platforms=android --org com.bharatsaathi --project-name bharat_saathi .
+      - name: Add Maven Central mirror fallback
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          settings = Path("android/settings.gradle.kts")
+          content = settings.read_text()
+          mirror = 'maven { url = uri("https://maven-central.storage-download.googleapis.com/maven2/") }'
+          if mirror not in content:
+              if "mavenCentral()" not in content:
+                  raise SystemExit("Gradle plugin repositories do not expose Maven Central")
+              content = content.replace("mavenCentral()", mirror + "\n        mavenCentral()")
+              settings.write_text(content)
+          print("Configured Google-hosted Maven Central mirror before Maven Central")
+          PY
+      - name: Install Bharat Saathi Sound Box Android service
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+
+          source = Path("tooling/android")
+          target = Path("android/app/src/main/kotlin/com/bharatsaathi/bharat_saathi")
+          target.mkdir(parents=True, exist_ok=True)
+          for file in source.glob("*.kt"):
+              shutil.copy2(file, target / file.name)
+
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          content = manifest.read_text()
+          marker = 'android:name=".SoundBoxNotificationListener"'
+          if marker not in content:
+              service = """
+                  <service
+                      android:name=".SoundBoxNotificationListener"
+                      android:label="Bharat Saathi Sound Box"
+                      android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.service.notification.NotificationListenerService" />
+                      </intent-filter>
+                  </service>
+              """
+              closing = content.find("</application>")
+              if closing < 0:
+                  raise SystemExit("Android application closing tag missing")
+              content = content[:closing] + service + content[closing:]
+              manifest.write_text(content)
+          print("Installed Sound Box NotificationListenerService and MethodChannel host")
+          PY
+      - name: Set Android target API 36
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          candidates = [Path("android/app/build.gradle.kts"), Path("android/app/build.gradle")]
+          gradle = next((p for p in candidates if p.exists()), None)
+          if gradle is None:
+              raise SystemExit("Android Gradle file missing")
+          text = gradle.read_text()
+          text, count = re.subn(r"targetSdk\s*=\s*flutter\.targetSdkVersion", "targetSdk = 36", text)
+          if not count:
+              text, count = re.subn(r"targetSdkVersion\s+flutter\.targetSdkVersion", "targetSdkVersion 36", text)
+          if not count and not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", text):
+              raise SystemExit("Could not set targetSdk 36")
+          gradle.write_text(text)
+          if not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", gradle.read_text()):
+              raise SystemExit("Target API 36 verification failed")
+          PY
+      - name: Configure Google Mobile Ads test App ID
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          text = manifest.read_text()
+          if "com.google.android.gms.ads.APPLICATION_ID" not in text:
+              start = text.find("<application")
+              end = text.find(">", start)
+              if start < 0 or end < 0:
+                  raise SystemExit("Android application tag missing")
+              meta = '\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3940256099942544~3347511713" />'
+              text = text[:end + 1] + meta + text[end + 1:]
+              manifest.write_text(text)
+          PY
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Analyze Dart code
+        run: flutter analyze
+      - name: Run widget tests
+        run: flutter test
+      - name: Build debug APK
+        run: flutter build apk --debug
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: bharat-saathi-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error

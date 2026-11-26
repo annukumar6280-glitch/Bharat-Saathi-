@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart';
@@ -16,6 +14,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'utility_modules.dart';
+import 'soundbox_page.dart';
 const supabaseUrl='https://nlfdqkkrwthobvwqfepl.supabase.co';
 const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
 const privacyPolicyUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/privacy-policy.html';
@@ -43,8 +43,8 @@ class LocalStore {
  static Database? _db;
  static Future<Database> get database async {
   if(_db!=null)return _db!;
-  final root=await getDatabasesPath();
-  _db=await openDatabase(p.join(root,'bharat_saathi.db'),version:2,onCreate:(db,version)async{
+  final root=await databaseFactory.getDatabasesPath();
+  _db=await databaseFactory.openDatabase(p.join(root,'bharat_saathi.db'),options:OpenDatabaseOptions(version:2,onCreate:(db,version)async{
    await db.execute('CREATE TABLE app_state (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
    await db.execute('CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
   },onUpgrade:(db,oldVersion,newVersion)async{
@@ -53,7 +53,7 @@ class LocalStore {
     await db.execute('CREATE TABLE app_state (user_id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated_at TEXT NOT NULL)');
     await db.execute('CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
    }
-  });
+  }));
   return _db!;
  }
  static Future<bool> hasUnassignedLegacyData(String? preferencesLegacy)async{
@@ -168,35 +168,34 @@ class LocalStore {
   });
  }
 }
-final ValueNotifier<bool> appDarkMode=ValueNotifier<bool>(false);
 final ValueNotifier<int> homeTabRequest=ValueNotifier<int>(0);
-bool get darkModeEnabled=>appDarkMode.value;
-Color get navy=>darkModeEnabled?Color(0xFFE5EEFF):Color(0xFF14233B);
-Color get blue=>darkModeEnabled?Color(0xFF8FB8F0):Color(0xFF29496D);
-Color get gold=>Color(0xFFF2A93B);
-Color get bg=>darkModeEnabled?Color(0xFF26364D):Color(0xFFE7EBF1);
-Color get muted=>darkModeEnabled?Color(0xFFA9B8CC):Color(0xFF788596);
-Color get green=>darkModeEnabled?Color(0xFF62C99A):Color(0xFF16845B);
-Color get red=>darkModeEnabled?Color(0xFFFF8585):Color(0xFFD95454);
-Color get surfaceColor=>darkModeEnabled?Color(0xFF17263B):Colors.white;
-Color get appBgColor=>darkModeEnabled?Color(0xFF0D1728):Color(0xFFF4F6FB);
-Color get borderColor=>darkModeEnabled?Color(0xFF30435D):Color(0xFFE1E7F0);
+bool get darkModeEnabled=>false;
+Color get navy=>darkModeEnabled?const Color(0xFFEAF1FF):const Color(0xFF172B4D);
+Color get blue=>darkModeEnabled?const Color(0xFF9CC3FF):const Color(0xFF4F46E5);
+Color get gold=>const Color(0xFFF59E0B);
+Color get bg=>darkModeEnabled?const Color(0xFF26364D):const Color(0xFFF3F5FC);
+Color get muted=>darkModeEnabled?const Color(0xFFA9B8CC):const Color(0xFF74809A);
+Color get green=>darkModeEnabled?const Color(0xFF62C99A):const Color(0xFF0F9D78);
+Color get red=>darkModeEnabled?const Color(0xFFFF8585):const Color(0xFFDC4C64);
+Color get surfaceColor=>darkModeEnabled?const Color(0xFF17263B):const Color(0xFFFFFFFF);
+Color get appBgColor=>darkModeEnabled?const Color(0xFF0D1728):const Color(0xFFF3F5FC);
+Color get borderColor=>darkModeEnabled?const Color(0xFF30435D):const Color(0xFFE1E6F0);
 ThemeData buildAppTheme(bool dark){
- final scheme=ColorScheme.fromSeed(seedColor:dark?const Color(0xFF6FA4E8):const Color(0xFF29496D),brightness:dark?Brightness.dark:Brightness.light).copyWith(primary:dark?const Color(0xFF9CC3FF):const Color(0xFF14233B),secondary:dark?const Color(0xFF64C9C1):const Color(0xFF168C86),surface:dark?const Color(0xFF17263B):const Color(0xFFF8FAFD),onSurface:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B));
- return ThemeData(useMaterial3:true,brightness:dark?Brightness.dark:Brightness.light,scaffoldBackgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF4F6FB),colorScheme:scheme,appBarTheme:AppBarTheme(backgroundColor:dark?const Color(0xFF0D1728):const Color(0xFFF4F6FB),foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),elevation:0,centerTitle:false),cardTheme:CardThemeData(color:dark?const Color(0xFF17263B):Colors.white),inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:dark?const Color(0xFF17263B):Colors.white,contentPadding:const EdgeInsets.symmetric(horizontal:14,vertical:14),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:BorderSide(color:dark?const Color(0xFF30435D):const Color(0xFFE1E7F0))),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:Color(0xFF6FA4E8),width:1.5))),filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:dark?const Color(0xFF315A8A):const Color(0xFF14233B),foregroundColor:Colors.white,minimumSize:const Size(0,48),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:dark?const Color(0xFFE5EEFF):const Color(0xFF14233B),minimumSize:const Size(0,46),side:BorderSide(color:dark?const Color(0xFF526985):const Color(0xFFCCD6E4)),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating));
+ const ink=Color(0xFF49320D),gold=Color(0xFFB77912),goldLight=Color(0xFFFFF1C7),canvas=Color(0xFFFFFBF1),line=Color(0xFFEAD8AA);
+ final scheme=ColorScheme.fromSeed(seedColor:gold,brightness:Brightness.light).copyWith(primary:gold,secondary:const Color(0xFF8C651F),tertiary:const Color(0xFFD6A64C),surface:Colors.white,onSurface:ink);
+ return ThemeData(useMaterial3:true,brightness:Brightness.light,scaffoldBackgroundColor:canvas,colorScheme:scheme,
+ appBarTheme:const AppBarTheme(backgroundColor:canvas,foregroundColor:ink,elevation:0,scrolledUnderElevation:0,centerTitle:false,toolbarHeight:62,titleTextStyle:TextStyle(color:ink,fontSize:19,fontWeight:FontWeight.w800),iconTheme:IconThemeData(color:gold)),
+ cardTheme:CardThemeData(color:Colors.white,elevation:2,shadowColor:const Color(0x18A87919),margin:const EdgeInsets.symmetric(vertical:6),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(18),side:const BorderSide(color:line))),
+ inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:const Color(0xFFFFFDF7),contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:15),border:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:line)),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:line)),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(14),borderSide:const BorderSide(color:gold,width:1.6))),
+ filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:gold,foregroundColor:Colors.white,minimumSize:const Size(0,49),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),textStyle:const TextStyle(fontWeight:FontWeight.w800),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15)))),
+ outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:ink,minimumSize:const Size(0,46),side:const BorderSide(color:line),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),
+ snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating,backgroundColor:ink,contentTextStyle:TextStyle(color:Colors.white,fontWeight:FontWeight.w600)),dividerColor:line,
+ navigationBarTheme:NavigationBarThemeData(backgroundColor:Colors.white,indicatorColor:goldLight,labelTextStyle:WidgetStateProperty.resolveWith((states)=>TextStyle(fontSize:11,fontWeight:states.contains(WidgetState.selected)?FontWeight.w800:FontWeight.w500,color:states.contains(WidgetState.selected)?gold:const Color(0xFF9A8866)))));
 }
 class BharatSaathiApp extends StatelessWidget{
- final bool supabaseAvailable,requireAuth;
- const BharatSaathiApp({super.key,this.supabaseAvailable=false,this.requireAuth=false});
- @override Widget build(BuildContext context)=>ValueListenableBuilder<bool>(
-  valueListenable:appDarkMode,
-  builder:(context,isDark,_)=>MaterialApp(
-   title:'Bharat Saathi',debugShowCheckedModeBanner:false,
-   theme:buildAppTheme(false),darkTheme:buildAppTheme(true),
-   themeMode:isDark?ThemeMode.dark:ThemeMode.light,
-   home:requireAuth?AuthGate(supabaseAvailable:supabaseAvailable):RetailerHome(supabaseAvailable:supabaseAvailable)
-  )
- );
+ final bool supabaseAvailable,requireAuth,testModeSkipRestore;
+ const BharatSaathiApp({super.key,this.supabaseAvailable=false,this.requireAuth=false,this.testModeSkipRestore=false});
+ @override Widget build(BuildContext context)=>MaterialApp(title:'Bharat Saathi',debugShowCheckedModeBanner:false,theme:buildAppTheme(false),themeMode:ThemeMode.light,home:requireAuth?AuthGate(supabaseAvailable:supabaseAvailable):RetailerHome(supabaseAvailable:supabaseAvailable,testModeSkipRestore:testModeSkipRestore));
 }
 class AuthGate extends StatefulWidget{
  final bool supabaseAvailable;
@@ -224,7 +223,7 @@ class _AuthGateState extends State<AuthGate>{
  }
 }
 class Record{String name,detail;double amount;IconData icon;DateTime? createdAt;Record(this.name,this.detail,this.amount,this.icon,[DateTime? timestamp]):createdAt=timestamp??DateTime.now();Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint,'createdAt':createdAt?.toIso8601String()};factory Record.fromJson(Map<String,dynamic> j){final timestamp=j['createdAt'] is String?DateTime.tryParse(j['createdAt'] as String):null;return Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long,timestamp)..createdAt=timestamp;}}
-class RetailerHome extends StatefulWidget{final bool supabaseAvailable;const RetailerHome({super.key,this.supabaseAvailable=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
+class RetailerHome extends StatefulWidget{final bool supabaseAvailable,testModeSkipRestore;const RetailerHome({super.key,this.supabaseAvailable=false,this.testModeSkipRestore=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
 class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver{
  Timer? _autoSyncDebounce;
  Timer? _autoSyncRetry;
@@ -238,7 +237,7 @@ class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver
  final personalKhata=<Record>[];
  final khata=<Record>[];
 final serviceTransactions=<Record>[];
- @override void initState(){super.initState();_localUserId=widget.supabaseAvailable?(Supabase.instance.client.auth.currentUser?.id??'local'):'local';WidgetsBinding.instance.addObserver(this);homeTabRequest.addListener(_returnToHomeTab);_autoSyncRetry=Timer.periodic(const Duration(seconds:60),(_)=>_syncCloudNow());_restore();}
+ @override void initState(){super.initState();_localUserId=widget.supabaseAvailable?(Supabase.instance.client.auth.currentUser?.id??'local'):'local';WidgetsBinding.instance.addObserver(this);homeTabRequest.addListener(_returnToHomeTab);_autoSyncRetry=Timer.periodic(const Duration(seconds:60),(_)=>_syncCloudNow());if(widget.testModeSkipRestore){loaded=true;}else{_restore();}}
   void _returnToHomeTab(){if(mounted&&tab!=0)setState(()=>tab=0);}
   @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed)_syncCloudNow();}
   @override void dispose(){WidgetsBinding.instance.removeObserver(this);homeTabRequest.removeListener(_returnToHomeTab);_autoSyncDebounce?.cancel();_autoSyncRetry?.cancel();super.dispose();}
@@ -246,7 +245,7 @@ final serviceTransactions=<Record>[];
   Future<void> _uploadCloudSnapshot(User user,String raw,DateTime localUpdatedAt)async{
    final decoded=jsonDecode(raw);
    if(decoded is! Map<String,dynamic>)throw const FormatException('स्थानीय रिकॉर्ड का प्रारूप सही नहीं है।');
-   for(final key in const ['products','sales','purchases','supplierLedger','salesReturns','stockAdjustments']){decoded.remove(key);}
+   for(final key in const ['products','sales','purchases','supplierLedger','salesReturns','stockAdjustments']){ decoded.remove(key); }
    await Supabase.instance.client.from('user_backups').upsert({'user_id':user.id,'payload':decoded,'schema_version':1,'updated_at':localUpdatedAt.toUtc().toIso8601String()});
   }
   Future<String?> _reconcileCloudSnapshot(String? raw)async{
@@ -291,6 +290,7 @@ final serviceTransactions=<Record>[];
   var shouldSanitizeSnapshot=false;
   try{
    final userId=_localUserId;
+   if(!widget.testModeSkipRestore){
    var legacyPrefs=await _prefs.getString('bharat_saathi_store_v1').timeout(const Duration(seconds:2));
    legacyPrefs=await LocalStore.sanitizeLegacyInventoryData(legacyPrefs);
    if(legacyPrefs!=null)await _prefs.setString('bharat_saathi_store_v1',legacyPrefs);
@@ -309,7 +309,7 @@ final serviceTransactions=<Record>[];
     ));
     if(!mounted)return;
     if(importLegacy==true){
-     final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
+    final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
      if(migrated&&legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
      if(!migrated){
       if(!mounted)return;
@@ -326,10 +326,14 @@ final serviceTransactions=<Record>[];
     final migrated=await LocalStore.migrateLegacyForUser(userId,legacyPrefs);
     if(migrated&&legacyPrefs!=null)await _prefs.remove('bharat_saathi_store_v1');
    }
+   }
    var raw=await LocalStore.read(userId).timeout(const Duration(seconds:2));
    if(syncCloud)raw=await _reconcileCloudSnapshot(raw);
-   if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=(d['darkMode'] as bool?)??false;appDarkMode.value=darkMode;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));shouldSanitizeSnapshot=true;}
-  }catch(_){}
+   if(raw!=null){final d=jsonDecode(raw) as Map<String,dynamic>;cash=(d['cash'] as num?)?.toDouble()??0;expenses=(d['expenses'] as num?)?.toDouble()??0;personalBudget=(d['personalBudget'] as num?)?.toDouble()??0;personalBudgetName=(d['personalBudgetName'] as String?)??'व्यक्तिगत खर्च सीमा';english=(d['language'] as String?)=='en';darkMode=false;personalKhata.addAll((d['personalKhata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));expensesList.addAll((d['expensesList'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));khata.addAll((d['khata'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));personalTransactions.addAll((d['personalTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));serviceTransactions.addAll((d['serviceTransactions'] as List? ?? []).map((e)=>Record.fromJson(Map<String,dynamic>.from(e as Map))));shouldSanitizeSnapshot=true;}
+  }catch(error,stackTrace){
+   debugPrint('Bharat Saathi restore failed: $error');
+   debugPrintStack(stackTrace:stackTrace);
+  }
   if(mounted)setState(()=>loaded=true);
   if(shouldSanitizeSnapshot){await _persist();}else if(syncCloud){_scheduleCloudSync();}
  }
@@ -344,15 +348,62 @@ final serviceTransactions=<Record>[];
  SizedBox(height:18),SizedBox(width:double.infinity,child:FilledButton(style:FilledButton.styleFrom(backgroundColor:navy,padding:EdgeInsets.all(15)),onPressed:(){final a=double.tryParse(v.text);if(n.text.trim().isEmpty||a==null||a<=0){msg('सही जानकारी भरें');return;}save(n.text.trim(),a);Navigator.pop(c);},child:Text('सेव करें')))
  ])));
  }
- Future<void> expense()=>form('खर्च दर्ज करें','खर्च का विवरण','खर्च राशि (₹)',(n,a){setState((){expenses+=a;cash-=a;expensesList.insert(0,Record(n,'खर्च • अभी',a,Icons.payments_outlined));});_persist();msg('खर्च इस डिवाइस पर सेव हुआ');});
- Future<void> entry([bool payment=false])=>form(payment?'भुगतान दर्ज करें':'खाता एंट्री','ग्राहक का नाम',payment?'भुगतान राशि (₹)':'उधार राशि (₹)',(n,a){final outstanding=khata.where((e)=>e.name.toLowerCase()==n.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);if(payment&&(outstanding<=0||a>outstanding)){msg(outstanding<=0?'इस ग्राहक का बकाया उपलब्ध नहीं है':'भुगतान बकाया राशि से अधिक नहीं हो सकता');return;}setState((){khata.insert(0,Record(n,payment?'भुगतान • अभी':'उधार • अभी',payment?-a:a,payment?Icons.payments_outlined:Icons.person));if(payment)cash+=a;});_persist();msg('खाता रिकॉर्ड इस डिवाइस पर सेव हुआ');});
-
- Future<void> personalLoanEntry([bool payment=false])=>form(payment?'वापसी दर्ज करें':'उधार दर्ज करें','व्यक्ति का नाम',payment?'वापसी राशि (₹)':'उधार राशि (₹)',(n,a){
- final due=personalKhata.where((e)=>e.name.toLowerCase()==n.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);
- if(payment&&(due<=0||a>due)){msg('वापसी बकाया से अधिक नहीं हो सकती');return;}
- setState(()=>personalKhata.insert(0,Record(n,payment?'पैसा वापस मिला':'उधार दिया',payment?-a:a,Icons.people_outline)));
- _persist();msg('पर्सनल उधार सेव हुआ');
- });
+ Future<void> expense()=>form('खर्च दर्ज करें','खर्च का विवरण','खर्च राशि (₹)',(n,a){setState((){expenses+=a;cash-=a;expensesList.insert(0,Record(n,'खर्च • ${DateTime.now().toLocal().toString().substring(0,16)}',a,Icons.payments_outlined));});_persist();msg('खर्च इस डिवाइस पर सेव हुआ');});
+ Future<void> editExpense(Record record)async{
+  final name=TextEditingController(text:record.name),detail=TextEditingController(text:record.detail),amount=TextEditingController(text:record.amount.toString());
+  await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('खर्च एडिट करें'),content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:name,decoration:const InputDecoration(labelText:'खर्च का नाम')),TextField(controller:detail,decoration:const InputDecoration(labelText:'विवरण / वजह')),TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'राशि (₹)'))])),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:(){final value=double.tryParse(amount.text);if(name.text.trim().isEmpty||value==null||value<=0){msg('सही जानकारी भरें');return;}final delta=value-record.amount;setState((){record.name=name.text.trim();record.detail=detail.text.trim();record.amount=value;expenses+=delta;cash-=delta;});_persist();Navigator.pop(c);msg('खर्च अपडेट हो गया');},child:const Text('सेव करें'))]));
+  WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();detail.dispose();amount.dispose();});
+ }
+ Future<void> _ledgerEntry(List<Record> target,{required bool payment,required bool personal,String? fixedPerson})async{
+  final person=TextEditingController(text:fixedPerson??''),reason=TextEditingController(),items=TextEditingController(),amount=TextEditingController();
+  await showModalBottomSheet<void>(context:context,isScrollControlled:true,shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(24))),builder:(c)=>Padding(padding:EdgeInsets.fromLTRB(18,20,18,20+MediaQuery.of(c).viewInsets.bottom),child:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
+   Text(payment?(personal?'रकम घटाएँ / वापसी':'भुगतान दर्ज करें'):(personal?'रकम जोड़ें':'उधार दर्ज करें'),style:TextStyle(fontSize:20,fontWeight:FontWeight.w900,color:navy)),
+   const SizedBox(height:12),if(fixedPerson==null)TextField(controller:person,decoration:InputDecoration(labelText:personal?'व्यक्ति का नाम':'ग्राहक का नाम')),
+   const SizedBox(height:9),TextField(controller:reason,decoration:const InputDecoration(labelText:'किस वजह से? (जरूरी)')),
+   const SizedBox(height:9),TextField(controller:items,maxLines:2,decoration:const InputDecoration(labelText:'सामान की लिस्ट (वैकल्पिक)',hintText:'जैसे चावल 5 किलो, तेल 2 लीटर')),
+   const SizedBox(height:9),TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:InputDecoration(labelText:'राशि (₹)')),
+   const SizedBox(height:14),SizedBox(width:double.infinity,child:FilledButton(onPressed:()async{
+    final n=(fixedPerson??person.text).trim(),why=reason.text.trim(),value=double.tryParse(amount.text);
+    if(n.isEmpty||why.isEmpty||value==null||value<=0){msg('नाम, वजह और सही राशि भरें');return;}
+    final due=target.where((e)=>e.name.toLowerCase()==n.toLowerCase()).fold<double>(0,(sum,e)=>sum+e.amount);
+    if(payment&&(due<=0||value>due)){msg('घटाई जाने वाली रकम मौजूदा बकाया से अधिक नहीं हो सकती');return;}
+    final detail='$why${items.text.trim().isEmpty?'':' • सामान: ${items.text.trim()}'} • ${DateTime.now().toLocal().toString().substring(0,16)}';
+    setState(()=>target.insert(0,Record(n,detail,payment?-value:value,personal?Icons.people_outline:(payment?Icons.payments_outlined:Icons.person))));
+    _persist();if(!mounted)return;Navigator.of(context).pop();msg('खाता रिकॉर्ड सेव हो गया');
+   },child:const Text('सेव करें')))
+  ]))));
+  WidgetsBinding.instance.addPostFrameCallback((_) {person.dispose();reason.dispose();items.dispose();amount.dispose();});
+ }
+ Future<void> entry([bool payment=false,String? customer])=>_ledgerEntry(khata,payment:payment,personal:false,fixedPerson:customer);
+ Future<void> personalLoanEntry([bool payment=false,String? customer])=>_ledgerEntry(personalKhata,payment:payment,personal:true,fixedPerson:customer);
+ Future<void> addLedgerPerson(List<Record> target)async{
+  final name=TextEditingController();
+  await showDialog<void>(context:context,builder:(c)=>AlertDialog(
+   title:const Text('नया ग्राहक जोड़ें'),
+   content:TextField(controller:name,autofocus:true,decoration:const InputDecoration(labelText:'ग्राहक का नाम')),
+   actions:[
+    TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),
+    FilledButton(onPressed:()async{
+     final value=name.text.trim();
+     if(value.isEmpty){msg('ग्राहक का नाम लिखें');return;}
+     if(target.any((r)=>r.name.toLowerCase()==value.toLowerCase())){msg('यह नाम पहले से मौजूद है');return;}
+     setState(()=>target.add(Record(value,'खाता बनाया गया',0,Icons.person_outline)));
+     _persist();if(!mounted)return;Navigator.of(context,rootNavigator:true).pop();msg('ग्राहक जोड़ दिया गया');
+    },child:const Text('ग्राहक जोड़ें'))
+   ],
+  ));
+  WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();});
+ }
+ Future<void> renameLedgerPerson(String oldName,List<Record> target)async{
+  final name=TextEditingController(text:oldName);
+  await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('नाम एडिट करें'),content:TextField(controller:name,decoration:const InputDecoration(labelText:'नया नाम')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:()async{final value=name.text.trim();if(value.isEmpty){msg('नाम खाली नहीं हो सकता');return;}if(value.toLowerCase()!=oldName.toLowerCase()&&target.any((r)=>r.name.toLowerCase()==value.toLowerCase())){msg('यह नाम पहले से मौजूद है');return;}setState((){for(final r in target){if(r.name==oldName)r.name=value;}});_persist();if(!mounted)return;Navigator.of(context,rootNavigator:true).pop();msg('नाम अपडेट हो गया');},child:const Text('सेव करें'))]));
+  WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();});
+ }
+ Future<void> editLedgerRecord(Record record,List<Record> target)async{
+  final name=TextEditingController(text:record.name),detail=TextEditingController(text:record.detail),amount=TextEditingController(text:record.amount.abs().toString());
+  await showDialog<void>(context:context,builder:(c)=>AlertDialog(title:const Text('खाता एंट्री एडिट करें'),content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[TextField(controller:name,decoration:const InputDecoration(labelText:'नाम')),TextField(controller:detail,maxLines:3,decoration:const InputDecoration(labelText:'वजह / सामान की लिस्ट')),TextField(controller:amount,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'राशि (₹)'))])),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('रद्द करें')),FilledButton(onPressed:(){final value=double.tryParse(amount.text);if(name.text.trim().isEmpty||value==null||value<=0){msg('सही जानकारी भरें');return;}setState((){record.name=name.text.trim();record.detail=detail.text.trim();record.amount=record.amount<0?-value:value;});_persist();Navigator.pop(c);msg('खाता एंट्री अपडेट हो गई');},child:const Text('सेव करें'))]));
+  WidgetsBinding.instance.addPostFrameCallback((_) {name.dispose();detail.dispose();amount.dispose();});
+ }
 
  void setPersonalBudget()=>form('खर्च सीमा सेट करें','सीमा का नाम','अधिकतम राशि (₹)',(n,a){setState((){personalBudget=a;personalBudgetName=n;});_persist();msg('खर्च सीमा सेव हुई');});
  void personalEntry(bool income)=>form(income?'व्यक्तिगत आय दर्ज करें':'व्यक्तिगत खर्च दर्ज करें',income?'आय का स्रोत':'खर्च का विवरण',income?'आय राशि (₹)':'खर्च राशि (₹)',(n,a){setState(()=>personalTransactions.insert(0,Record(n,income?'आय • अभी':'खर्च • अभी',income?a:-a,income?Icons.trending_up:Icons.payments_outlined)));_persist();msg('व्यक्तिगत रिकॉर्ड इस डिवाइस पर सेव हुआ');});
@@ -361,65 +412,234 @@ final serviceTransactions=<Record>[];
  final metadataName=currentUser?.userMetadata?['full_name'];
  final accountName=metadataName is String&&metadataName.trim().isNotEmpty?metadataName.trim():(currentUser?.email?.split('@').first??'').trim();
  final pages=<Widget>[
-  Dashboard(english:english,supabaseAvailable:widget.supabaseAvailable,accountName:accountName,onWallet:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommerceWalletPage(supabaseAvailable:widget.supabaseAvailable))),shopDue:khata.fold<double>(0,(s,e)=>s+e.amount),personalDue:personalKhata.fold<double>(0,(s,e)=>s+e.amount),monthExpense:expensesList.where((e)=>e.createdAt!=null&&e.createdAt!.year==DateTime.now().year&&e.createdAt!.month==DateTime.now().month).fold<double>(0,(s,e)=>s+e.amount),onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onExpense:()=>setState(()=>tab=2),onRecharge:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'recharge',english:english))),onBills:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'bills',english:english))),onChallan:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'challan',english:english))),onInsurance:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ServiceCategoryPage(kind:'insurance',english:english)))),
-  KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onCredit:()=>entry(),onPayment:()=>entry(true)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onCredit:()=>personalLoanEntry(),onPayment:()=>personalLoanEntry(true)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
-  ExpenseOnlyPage(items:expensesList,onAdd:expense),
-  TransactionHistoryPage(items:serviceTransactions,english:english),
-   ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,darkMode:darkMode,onDarkMode:(v){setState(()=>darkMode=v);appDarkMode.value=v;_persist();},onLanguage:(v){setState(()=>english=v);_persist();},expensesList:expensesList,khata:khata,personalTransactions:personalTransactions)
+  Dashboard(english:english,accountName:accountName,onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>kind=='soundbox'?const SoundBoxPage():UtilityModulePage(kind:kind,title:const {'qr':'QR Code Tools','poster':'Poster Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator','soundbox':'Payment Sound Box','calling':'AI Calling Assistant'}[kind]??'Tools')))),
+  KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onAddPerson:()=>addLedgerPerson(khata),onCreditForPerson:(n)=>entry(false,n),onPaymentForPerson:(n)=>entry(true,n),onEditRecord:(r)=>editLedgerRecord(r,khata),onRenamePerson:(n)=>renameLedgerPerson(n,khata)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onAddPerson:()=>addLedgerPerson(personalKhata),onCreditForPerson:(n)=>personalLoanEntry(false,n),onPaymentForPerson:(n)=>personalLoanEntry(true,n),onEditRecord:(r)=>editLedgerRecord(r,personalKhata),onRenamePerson:(n)=>renameLedgerPerson(n,personalKhata)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
+  ExpenseOnlyPage(items:expensesList,onAdd:expense,onEdit:editExpense),
+   ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,darkMode:darkMode,onDarkMode:(v){setState(()=>darkMode=v);_persist();},onLanguage:(v){setState(()=>english=v);_persist();},expensesList:expensesList,khata:khata,personalTransactions:personalTransactions)
  ];
- return Scaffold(appBar:AppBar(titleSpacing:17,backgroundColor:appBgColor,foregroundColor:navy,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:Icon(Icons.account_balance_wallet,color:gold)),SizedBox(width:10),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Bharat Saathi':'भारत साथी',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(english?'Smart Khata & Expenses':'स्मार्ट खाता और खर्च',style:TextStyle(fontSize:10,color:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=4),icon:Icon(Icons.person_outline))]),body:SafeArea(child:loaded?Column(children:[if(tab==3)const BannerAdSlot(),Expanded(child:IndexedStack(index:tab,children:pages))]):Center(child:CircularProgressIndicator())),bottomNavigationBar:Column(mainAxisSize:MainAxisSize.min,children:[if(tab==1||tab==2||tab==4)const BannerAdSlot(),NavigationBar(height:68,backgroundColor:surfaceColor,indicatorColor:darkMode?Color(0xFF29496D):Color(0xFFE8EEF6),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:Icon(Icons.receipt_long_outlined),label:english?'History':'इतिहास'),NavigationDestination(icon:Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]) ]));
+ return Scaffold(appBar:AppBar(titleSpacing:17,backgroundColor:appBgColor,foregroundColor:navy,title:Row(children:[Container(width:38,height:38,decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(12)),child:Icon(Icons.account_balance_wallet,color:gold)),SizedBox(width:10),Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(english?'Bharat Saathi':'भारत साथी',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(english?'Smart Khata & Expenses':'स्मार्ट खाता और खर्च',style:TextStyle(fontSize:10,color:muted))])]),actions:[IconButton(onPressed:()=>setState(()=>tab=3),icon:Icon(Icons.person_outline))]),body:SafeArea(child:loaded?Column(children:[Expanded(child:IndexedStack(index:tab,children:pages))]):Center(child:CircularProgressIndicator())),bottomNavigationBar:Column(mainAxisSize:MainAxisSize.min,children:[if(tab==1||tab==2||tab==3)const BannerAdSlot(),NavigationBar(height:68,backgroundColor:surfaceColor,indicatorColor:darkMode?Color(0xFF29496D):Color(0xFFE8EEF6),selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[NavigationDestination(icon:Icon(Icons.home_outlined),label:english?'Home':'होम'),NavigationDestination(icon:Icon(Icons.menu_book_outlined),label:english?'Khata':'खाता'),NavigationDestination(icon:Icon(Icons.payments_outlined),label:english?'Expenses':'खर्च'),NavigationDestination(icon:Icon(Icons.person_outline),label:english?'Profile':'प्रोफाइल')]) ]));
  }
  Widget fab(String s,VoidCallback f)=>FloatingActionButton.extended(onPressed:f,backgroundColor:navy,foregroundColor:Colors.white,icon:Icon(Icons.add),label:Text(s));
 }
 
-class HomeServiceWalletCard extends StatelessWidget{
- final bool supabaseAvailable,english;final VoidCallback onTap;
- const HomeServiceWalletCard({super.key,required this.supabaseAvailable,required this.onTap,required this.english});
- @override Widget build(BuildContext context)=>Material(color:Colors.transparent,child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(19),child:Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF176B72),Color(0xFF203F69)]),borderRadius:BorderRadius.circular(19),boxShadow:[BoxShadow(color:const Color(0xFF173B5B).withValues(alpha:.13),blurRadius:16,offset:const Offset(0,7))]),child:Row(children:[
-  const Icon(Icons.account_balance_wallet_rounded,color:Color(0xFFFFD58A),size:25),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-   Text(english?'Commission Wallet':'कमीशन वॉलेट',style:const TextStyle(color:Colors.white,fontSize:16,fontWeight:FontWeight.w900)),
-   const SizedBox(height:4),Text(english?'Your service and referral earnings':'आपकी सेल्फ और रेफरल कमीशन की कमाई',style:const TextStyle(color:Colors.white70,fontSize:11)),
-   const SizedBox(height:5),Text(english?'Use earned commission as a discount on services':'कमाई हुई कमीशन राशि अगली सर्विस पर छूट बनेगी',style:const TextStyle(color:Color(0xFFFFD58A),fontSize:10,fontWeight:FontWeight.w700))
-  ])),const Icon(Icons.chevron_right,color:Colors.white70)
- ]))));
+class Dashboard extends StatelessWidget {
+  final bool english;
+  final String accountName;
+  final VoidCallback onKhata, onDocument;
+  final ValueChanged<String> onTools;
+
+  const Dashboard({
+    super.key,
+    required this.english,
+    required this.accountName,
+    required this.onKhata,
+    required this.onDocument,
+    required this.onTools,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: appBgColor,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFDDE8FF), Color(0xFFE8E1FF), Color(0xFFDDF7F0)],
+              ),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  accountName.isNotEmpty
+                      ? (english ? 'Account: $accountName' : 'खाता: $accountName')
+                      : (english ? 'Your account' : 'आपका खाता'),
+                  style: const TextStyle(
+                    color: Color(0xFF25345B),
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  english
+                      ? 'Your daily business at a glance'
+                      : 'आपके रोज़ के कारोबार का साफ़ और आसान हिसाब',
+                  style: const TextStyle(
+                    color: Color(0xFF5F6D91),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.42,
+            children: [
+              _tile(
+                english ? 'Khata Book' : 'खाता बुक',
+                english ? 'Shop and personal ledger' : 'दुकान और पर्सनल हिसाब',
+                Icons.menu_book_rounded,
+                const Color(0xFFE3ECFF),
+                onKhata,
+              ),
+              _tile(
+                english ? 'Bill / Item List' : 'बिल / सामान लिस्ट',
+                english ? 'Create bill or shopping list' : 'बिल या सामान की पर्ची बनाएँ',
+                Icons.receipt_long_rounded,
+                const Color(0xFFFFE9D8),
+                onDocument,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  english ? 'Shopkeeper Tools' : 'दुकानदार के स्मार्ट टूल',
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                english ? '6 useful tools' : '6 उपयोगी सुविधाएँ',
+                style: TextStyle(color: muted, fontSize: 11),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.52,
+            children: [
+              _tile('QR Code Tools', 'QR बनाएँ और स्कैन करें', Icons.qr_code_2,
+                  const Color(0xFFE8F0FF), () => onTools('qr')),
+              _tile('Poster Maker', 'ऑफर पोस्टर बनाएँ', Icons.palette_outlined,
+                  const Color(0xFFFFF2DE), () => onTools('poster')),
+              _tile('Reminders & Notes', 'काम और भुगतान याद रखें',
+                  Icons.notifications_active_outlined, const Color(0xFFDDF6EB),
+                  () => onTools('reminders')),
+              _tile('Smart Calculator', 'GST, छूट और मुनाफा',
+                  Icons.calculate_outlined, const Color(0xFFEAE3FF),
+                  () => onTools('calculator')),
+              _tile('Payment Sound Box', 'पेमेंट सूचना सेटअप',
+                  Icons.volume_up_outlined, const Color(0xFFE8F0FF),
+                  () => onTools('soundbox')),
+              _tile('AI Calling Assistant', 'कॉल असिस्टेंट',
+                  Icons.support_agent, const Color(0xFFFFF2DE),
+                  () => onTools('calling')),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            english
+                ? 'Khata Book and Bill / Item List remain available.'
+                : 'खाता बुक और बिल / सामान लिस्ट पहले की तरह उपलब्ध हैं।',
+            style: TextStyle(color: muted, fontSize: 10),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tile(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color iconBg,
+    VoidCallback tap,
+  ) {
+    final accent = Color.lerp(iconBg, const Color(0xFF354F9D), .52)!;
+    return Material(
+      color: surfaceColor,
+      elevation: 2.5,
+      shadowColor: const Color(0x24526FC4),
+      borderRadius: BorderRadius.circular(19),
+      child: InkWell(
+        onTap: tap,
+        borderRadius: BorderRadius.circular(19),
+        child: Container(
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(19),
+            gradient: LinearGradient(begin: Alignment.topLeft,end: Alignment.bottomRight,colors: darkModeEnabled ? [const Color(0xFF1C2D47),const Color(0xFF17263B)] : [Colors.white,Color.lerp(iconBg,Colors.white,.72)!]),
+            border: Border.all(color: darkModeEnabled ? borderColor : Color.lerp(iconBg,accent,.35)!),
+            boxShadow: [BoxShadow(color: darkModeEnabled ? Colors.black.withValues(alpha:.16) : accent.withValues(alpha:.07),blurRadius:12,offset:const Offset(0,5))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: darkModeEnabled
+                      ? const Color(0xFF233D5B)
+                      : iconBg,
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(
+                    color: darkModeEnabled
+                        ? const Color(0xFF385779)
+                        : borderColor,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  color: darkModeEnabled
+                      ? const Color(0xFF9CCBFF)
+                      : accent,
+                  size: 25,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: navy,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: muted, fontSize: 10),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class Dashboard extends StatelessWidget{
- final bool english,supabaseAvailable;final String accountName;final double shopDue,personalDue,monthExpense;final VoidCallback onKhata,onDocument,onExpense,onRecharge,onBills,onChallan,onInsurance,onWallet;
- const Dashboard({super.key,required this.english,required this.supabaseAvailable,required this.accountName,required this.onWallet,required this.shopDue,required this.personalDue,required this.monthExpense,required this.onKhata,required this.onDocument,required this.onExpense,required this.onRecharge,required this.onBills,required this.onChallan,required this.onInsurance});
- @override Widget build(BuildContext context)=>Container(
-  color:appBgColor,
-  child:ListView(padding:const EdgeInsets.fromLTRB(16,14,16,24),children:[
-   Container(padding:const EdgeInsets.fromLTRB(18,20,18,20),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF142B49),Color(0xFF294D73)]),borderRadius:BorderRadius.circular(22)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Text(accountName.isNotEmpty?(english?'Account: $accountName':'खाता: $accountName'):(english?'Your account':'आपका खाता'),style:const TextStyle(color:Colors.white,fontSize:21,fontWeight:FontWeight.w900),maxLines:2,overflow:TextOverflow.ellipsis),
-    const SizedBox(height:5),
-    Text(english?'Your daily business at a glance':'आपके रोज़ के कारोबार का साफ़ और आसान हिसाब',style:const TextStyle(color:Color(0xFFD5DFEA),fontSize:12))
-   ])),
-   const SizedBox(height:14),
-   GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.52,children:[
-    _tile(english?'Khata Book':'खाता बुक',english?'Shop and personal ledger':'दुकान और पर्सनल हिसाब',Icons.menu_book_rounded,const Color(0xFFE8F0FF),onKhata),
-    _tile(english?'Bill / Item List':'बिल / सामान लिस्ट',english?'Create bill or shopping list':'बिल या सामान की पर्ची बनाएँ',Icons.receipt_long_rounded,const Color(0xFFFFF2DE),onDocument)
-   ]),
-   const SizedBox(height:14),
-   HomeServiceWalletCard(supabaseAvailable:supabaseAvailable,onTap:onWallet,english:english),
-   const SizedBox(height:20),
-   Row(children:[Expanded(child:Text(english?'Services':'मुख्य सेवाएँ',style:TextStyle(color:navy,fontSize:18,fontWeight:FontWeight.w900))),Text(english?'Quick access':'आसान पहुँच',style:TextStyle(color:muted,fontSize:11))]),
-   const SizedBox(height:12),
-   GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,childAspectRatio:1.52,children:[
-    _tile(english?'Mobile Recharge':'मोबाइल रिचार्ज',english?'Prepaid and postpaid':'प्रीपेड और पोस्टपेड',Icons.phone_android_rounded,const Color(0xFFE6F7F0),onRecharge),
-    _tile(english?'Bill Payment':'बिल पेमेंट',english?'Electricity, gas and more':'बिजली, गैस और दूसरे बिल',Icons.receipt_long_rounded,const Color(0xFFFFF2DE),onBills),
-    _tile(english?'Challan Payment':'चालान पेमेंट',english?'Traffic challan services':'ट्रैफिक चालान सुविधा',Icons.local_police_rounded,const Color(0xFFF1EAFE),onChallan),
-    _tile(english?'Bike / Car Insurance':'बाइक / कार इंश्योरेंस',english?'Vehicle insurance':'वाहन बीमा सेवा',Icons.directions_car_filled_rounded,const Color(0xFFE8F0FF),onInsurance)
-   ]),
-   const SizedBox(height:12),
-   Text(english?'Recharge, bill, challan and insurance services are being connected.':'रिचार्ज, बिल, चालान और इंश्योरेंस सेवाओं को जोड़ा जा रहा है।',style:TextStyle(color:muted,fontSize:10))
-  ])
- );
- Widget _tile(String title,String subtitle,IconData icon,Color iconBg,VoidCallback tap)=>Material(color:surfaceColor,borderRadius:BorderRadius.circular(17),child:InkWell(onTap:tap,borderRadius:BorderRadius.circular(17),child:Container(padding:const EdgeInsets.all(13),decoration:BoxDecoration(borderRadius:BorderRadius.circular(17),border:Border.all(color:borderColor),boxShadow:darkModeEnabled?[BoxShadow(color:Colors.black.withValues(alpha:.16),blurRadius:10,offset:const Offset(0,4))]:[]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-  Container(width:44,height:44,decoration:BoxDecoration(color:darkModeEnabled?const Color(0xFF233D5B):iconBg,borderRadius:BorderRadius.circular(13),border:Border.all(color:darkModeEnabled?const Color(0xFF385779):borderColor)),child:Icon(icon,color:darkModeEnabled?const Color(0xFF9CCBFF):navy,size:25)),
-  Spacer(),Text(title,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:13)),SizedBox(height:3),Text(subtitle,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(color:muted,fontSize:10))
- ]))));
-}
 class BillListPage extends StatefulWidget{
  const BillListPage({super.key});
  @override State<BillListPage> createState()=>_BillListPageState();
@@ -427,12 +647,12 @@ class BillListPage extends StatefulWidget{
 class _BillListPageState extends State<BillListPage>{
  final _name=TextEditingController(),_phone=TextEditingController();
  final List<_BillRow> _rows=[_BillRow()];
- String _mode='bill';bool _started=false,_pdfBusy=false;
- static const Map<String,String> _units={'kg':'किलो','g':'ग्राम','packet':'पैकेट','piece':'पीस'};
+ String _mode='bill';bool _started=false,_pdfBusy=false,_homeUse=false;
+ static const Map<String,String> _units={'kg':'किलो','g':'ग्राम','packet':'पैकेट','piece':'पीस','ft':'फिट','m':'मीटर'};
  @override void initState(){super.initState();_watch(_rows.first);}
  void _watch(_BillRow r){r.item.addListener(_refresh);r.qty.addListener(_refresh);r.price.addListener(_refresh);}
  void _refresh(){if(mounted)setState((){});}
- @override void dispose(){_name.dispose();_phone.dispose();for(final r in _rows)r.dispose();super.dispose();}
+ @override void dispose(){_name.dispose();_phone.dispose();for(final r in _rows){r.dispose();}super.dispose();}
  double get _total=>_rows.fold<double>(0,(sum,r)=>sum+(double.tryParse(r.price.text.trim())??0));
  String _qtyText(_BillRow r){final v=double.tryParse(r.qty.text.trim())??0;return v==v.roundToDouble()?v.toInt().toString():v.toString();}
  String _phoneForWhatsApp(){var p=_phone.text.replaceAll(RegExp(r'[^0-9]'),'');if(p.length==10)p='91$p';if(p.startsWith('0')&&p.length==11)p='91${p.substring(1)}';return p;}
@@ -440,7 +660,7 @@ class _BillListPageState extends State<BillListPage>{
  void _removeRow(int i){if(_rows.length==1)return;setState(()=>_rows.removeAt(i).dispose());}
  List<_BillRow> get _validRows=>_rows.where((r)=>r.item.text.trim().isNotEmpty).toList();
  String _message(){
-  final b=StringBuffer();b.writeln(_mode=='bill'?'*बिल*':'*सामान मंगवाने की लिस्ट*');b.writeln('ग्राहक: ${_name.text.trim()}');b.writeln('मोबाइल: ${_phone.text.trim()}');b.writeln('--------------------');
+  final b=StringBuffer();b.writeln(_mode=='bill'?'*बिल*':'*सामान मंगवाने की लिस्ट*');if(_name.text.trim().isNotEmpty)b.writeln('ग्राहक / दुकान: ${_name.text.trim()}');b.writeln('WhatsApp: ${_phone.text.trim()}');b.writeln('--------------------');
   var i=0;for(final r in _validRows){i++;final q=_qtyText(r);final unit=_units[r.unit]??r.unit;b.writeln('$i. ${r.item.text.trim()} — $q $unit${_mode=='bill'?' — ₹${(double.tryParse(r.price.text.trim())??0).toStringAsFixed(2)}':''}');}
   if(_mode=='bill')b.writeln('कुल राशि: *₹${_total.toStringAsFixed(2)}*');b.writeln('धन्यवाद');return b.toString();
  }
@@ -454,7 +674,7 @@ class _BillListPageState extends State<BillListPage>{
    build:(context)=>[
     pw.Center(child:pw.Text(_mode=='bill'?'बिल / रसीद':'सामान मंगवाने की लिस्ट',style:pw.TextStyle(fontSize:20,fontWeight:pw.FontWeight.bold))),
     pw.SizedBox(height:14),
-    pw.Text('ग्राहक: ${_name.text.trim()}'),
+    if(_name.text.trim().isNotEmpty)pw.Text('ग्राहक / दुकान: ${_name.text.trim()}'),
     pw.Text('WhatsApp: ${_phone.text.trim()}'),
     pw.Text('दिनांक: ${DateTime.now().toLocal().toString().substring(0,16)}'),
     pw.Divider(),
@@ -500,13 +720,14 @@ class _BillListPageState extends State<BillListPage>{
  }
  @override Widget build(BuildContext context){
   return Scaffold(appBar:AppBar(title:const Text('बिल / सामान लिस्ट')),body:!_started?ListView(padding:const EdgeInsets.all(18),children:[
-   const Text('पहले ग्राहक की जानकारी भरें',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
-   const SizedBox(height:14),TextField(controller:_name,decoration:const InputDecoration(labelText:'ग्राहक / लिस्ट पाने वाले का नाम',border:OutlineInputBorder())),
-   const SizedBox(height:12),TextField(controller:_phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर',hintText:'10 अंकों का नंबर',border:OutlineInputBorder())),
-   const SizedBox(height:18),FilledButton(onPressed:(){if(_name.text.trim().isEmpty||_phoneForWhatsApp().length<11){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('नाम और सही मोबाइल नंबर भरें।')));return;}setState(()=>_started=true);},child:const Text('आगे बढ़ें'))
+   const Text('किस तरह इस्तेमाल करना है?',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
+   const SizedBox(height:12),Wrap(spacing:10,children:[ChoiceChip(label:const Text('दुकानदार'),selected:!_homeUse,onSelected:(_)=>setState(()=>_homeUse=false)),ChoiceChip(label:const Text('घर के लिए'),selected:_homeUse,onSelected:(_)=>setState((){_homeUse=true;_mode='list';}))]),
+   const SizedBox(height:14),if(!_homeUse)TextField(controller:_name,decoration:const InputDecoration(labelText:'ग्राहक / दुकान का नाम',border:OutlineInputBorder())),
+   if(!_homeUse)const SizedBox(height:12),TextField(controller:_phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर',hintText:'10 अंकों का नंबर',border:OutlineInputBorder())),
+   const SizedBox(height:18),FilledButton(onPressed:(){if((!_homeUse&&_name.text.trim().isEmpty)||_phoneForWhatsApp().length<11){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('सही जानकारी और WhatsApp नंबर भरें।')));return;}setState(()=>_started=true);},child:const Text('आगे बढ़ें'))
   ]):ListView(padding:const EdgeInsets.all(16),children:[
-   Text('नाम: ${_name.text.trim()}  •  ${_phone.text.trim()}',style:const TextStyle(fontWeight:FontWeight.w800)),
-   const SizedBox(height:12),SegmentedButton<String>(segments:const [ButtonSegment(value:'bill',label:Text('बिल'),icon:Icon(Icons.receipt_long)),ButtonSegment(value:'list',label:Text('सामान लिस्ट'),icon:Icon(Icons.shopping_bag_outlined))],selected:{_mode},onSelectionChanged:(v)=>setState(()=>_mode=v.first)),
+   Text(_name.text.trim().isNotEmpty?'दुकान / ग्राहक: ${_name.text.trim()}  •  WhatsApp: ${_phone.text.trim()}':'WhatsApp: ${_phone.text.trim()}',style:const TextStyle(fontWeight:FontWeight.w800)),
+   const SizedBox(height:12),if(!_homeUse)SegmentedButton<String>(segments:const [ButtonSegment(value:'bill',label:Text('बिल'),icon:Icon(Icons.receipt_long)),ButtonSegment(value:'list',label:Text('सामान लिस्ट'),icon:Icon(Icons.shopping_bag_outlined))],selected:{_mode},onSelectionChanged:(v)=>setState(()=>_mode=v.first)) else const Text('घर के लिए सामान लिस्ट',style:TextStyle(fontWeight:FontWeight.w900,color:Color(0xFF0D9488))),
    const SizedBox(height:8),
    Text(_mode=='bill'?'हर सामान की मात्रा और उस सामान की कुल कीमत भरें।':'सामान का नाम, मात्रा और उसकी यूनिट चुनें। कीमत भरना जरूरी नहीं है।',style:TextStyle(color:muted,fontSize:12)),
    const SizedBox(height:8),
@@ -515,9 +736,9 @@ class _BillListPageState extends State<BillListPage>{
     TextField(controller:r.item,decoration:const InputDecoration(labelText:'सामान का नाम',border:OutlineInputBorder())),
     const SizedBox(height:8),
     Row(children:[
-     Expanded(flex:2,child:TextField(controller:r.qty,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'मात्रा (जैसे 200 या 2)',border:OutlineInputBorder()))),
+     Expanded(flex:3,child:TextField(controller:r.qty,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'मात्रा (जैसे 200 या 2)',border:OutlineInputBorder()))),
      const SizedBox(width:8),
-     Expanded(child:DropdownButtonFormField<String>(value:r.unit,decoration:const InputDecoration(labelText:'यूनिट',border:OutlineInputBorder()),items:_units.entries.map((e)=>DropdownMenuItem(value:e.key,child:Text(e.value))).toList(),onChanged:(v){if(v!=null)setState(()=>r.unit=v);})),
+     Expanded(flex:2,child:DropdownButtonFormField<String>(isExpanded:true,initialValue:r.unit,decoration:const InputDecoration(labelText:'यूनिट',border:OutlineInputBorder()),items:_units.entries.map((e)=>DropdownMenuItem(value:e.key,child:Text(e.value,overflow:TextOverflow.ellipsis))).toList(),onChanged:(v){if(v!=null)setState(()=>r.unit=v);})),
     ]),
     if(_mode=='bill')Padding(padding:const EdgeInsets.only(top:8),child:TextField(controller:r.price,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'इस सामान की कीमत (₹)',hintText:'उदाहरण: 45',border:OutlineInputBorder())))
    ])));}),
@@ -544,25 +765,100 @@ class KhataHubPage extends StatelessWidget{
  Widget _card(String a,String b,String c,VoidCallback f)=>Card(color:surfaceColor,child:ListTile(title:Text(a,style:TextStyle(color:navy,fontWeight:FontWeight.w900)),subtitle:Text(b),trailing:c.isEmpty?Icon(Icons.chevron_right):Text(c),onTap:f));
 }
 class LocalLedgerPage extends StatefulWidget{
- final String title;final List<Record> items;final Future<void> Function() onCredit,onPayment;
- const LocalLedgerPage({super.key,required this.title,required this.items,required this.onCredit,required this.onPayment});
+ final String title;final List<Record> items;final Future<void> Function() onAddPerson;
+ final Future<void> Function(String) onCreditForPerson,onPaymentForPerson;
+ final Future<void> Function(Record) onEditRecord;final Future<void> Function(String) onRenamePerson;
+ const LocalLedgerPage({super.key,required this.title,required this.items,required this.onAddPerson,required this.onCreditForPerson,required this.onPaymentForPerson,required this.onEditRecord,required this.onRenamePerson});
  @override State<LocalLedgerPage> createState()=>_LocalLedgerPageState();
 }
 class _LocalLedgerPageState extends State<LocalLedgerPage>{
- @override Widget build(BuildContext context){final people=<String,double>{};for(final e in widget.items){people[e.name]=(people[e.name]??0)+e.amount;}return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(widget.title)),body:ListView(padding:EdgeInsets.all(16),children:[Text('कुल बकाया: ₹'+money(widget.items.fold<double>(0,(s,e)=>s+e.amount)),style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:21)),Row(children:[Expanded(child:FilledButton(onPressed:()async{await widget.onCredit();if(mounted)setState((){});},child:Text('उधार दें'))),SizedBox(width:8),Expanded(child:OutlinedButton(onPressed:()async{await widget.onPayment();if(mounted)setState((){});},child:Text('वापसी दर्ज करें')))]),...people.entries.map((e)=>ListTile(title:Text(e.key),trailing:Text('₹'+money(e.value),style:TextStyle(color:navy,fontWeight:FontWeight.w900))))]));}
+ @override Widget build(BuildContext context){
+  final people=<String,List<Record>>{};for(final e in widget.items){people.putIfAbsent(e.name,()=>[]).add(e);}
+  return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(widget.title)),body:ListView(padding:const EdgeInsets.all(16),children:[
+   Text('कुल बकाया: ₹${money(widget.items.fold<double>(0,(s,e)=>s+e.amount))}',style:TextStyle(color:navy,fontWeight:FontWeight.w900,fontSize:21)),
+   const SizedBox(height:12),
+   SizedBox(width:double.infinity,child:OutlinedButton.icon(onPressed:()async{await widget.onAddPerson();if(mounted)setState((){});},icon:const Icon(Icons.person_add_alt_1),label:const Text('ग्राहक जोड़ें'))),
+   if(people.isEmpty)const Padding(padding:EdgeInsets.all(20),child:Text('अभी कोई नाम नहीं जोड़ा गया है।')),
+   ...people.entries.map((entry){
+    final due=entry.value.fold<double>(0,(sum,r)=>sum+r.amount);
+    return Card(color:surfaceColor,child:ListTile(
+     title:Text(entry.key,style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
+     subtitle:Text('बकाया / शेष: ₹${money(due)}'),
+     trailing:Row(mainAxisSize:MainAxisSize.min,children:[
+      IconButton(tooltip:'नाम एडिट करें',onPressed:()=>widget.onRenamePerson(entry.key),icon:const Icon(Icons.edit_outlined)),
+      TextButton(onPressed:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CustomerLedgerPage(
+       name:entry.key,items:widget.items,onCredit:()=>widget.onCreditForPerson(entry.key),onPayment:()=>widget.onPaymentForPerson(entry.key),onEditRecord:widget.onEditRecord,
+      ))),child:const Text('हिसाब')),
+     ]),
+    ));
+   })
+  ]));
+ }
+}
+class CustomerLedgerPage extends StatefulWidget{
+ final String name;final List<Record> items;final Future<void> Function() onCredit,onPayment;final Future<void> Function(Record) onEditRecord;
+ const CustomerLedgerPage({super.key,required this.name,required this.items,required this.onCredit,required this.onPayment,required this.onEditRecord});
+ @override State<CustomerLedgerPage> createState()=>_CustomerLedgerPageState();
+}
+class _CustomerLedgerPageState extends State<CustomerLedgerPage>{
+ @override Widget build(BuildContext context){
+  final allRecords=widget.items.where((r)=>r.name==widget.name).toList();
+  final records=allRecords.where((r)=>r.amount!=0).toList()..sort((a,b)=>(b.createdAt??DateTime(2000)).compareTo(a.createdAt??DateTime(2000)));
+  final due=allRecords.fold<double>(0,(sum,r)=>sum+r.amount);
+  return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(widget.name)),body:ListView(padding:const EdgeInsets.all(16),children:[
+   Card(color:surfaceColor,child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text('कुल बकाया',style:TextStyle(color:muted)),Text('₹${money(due)}',style:TextStyle(color:navy,fontSize:26,fontWeight:FontWeight.w900)),
+   ]))),
+   Row(children:[
+    Expanded(child:FilledButton.icon(onPressed:()async{await widget.onCredit();if(mounted)setState((){});},icon:const Icon(Icons.add),label:const Text('उधार जोड़ें'))),
+    const SizedBox(width:8),
+    Expanded(child:OutlinedButton.icon(onPressed:()async{await widget.onPayment();if(mounted)setState((){});},icon:const Icon(Icons.remove),label:const Text('पैसे घटाएँ'))),
+   ]),
+   const SizedBox(height:12),
+   if(records.isEmpty)const Padding(padding:EdgeInsets.all(20),child:Text('इस ग्राहक का अभी कोई लेन-देन नहीं है।')),
+   ...records.map((record)=>Card(color:surfaceColor,child:ListTile(
+    title:Text(record.detail.isEmpty?'लेन-देन':record.detail),
+    subtitle:Text(record.createdAt?.toLocal().toString().substring(0,16)??''),
+    leading:Icon(record.amount<0?Icons.call_received:Icons.call_made,color:record.amount<0?green:red),
+    trailing:Row(mainAxisSize:MainAxisSize.min,children:[
+     Text('${record.amount<0?'−':'+'} ₹${money(record.amount.abs())}',style:TextStyle(fontWeight:FontWeight.w900,color:record.amount<0?green:red)),
+     IconButton(tooltip:'एंट्री एडिट करें',onPressed:()=>widget.onEditRecord(record),icon:const Icon(Icons.edit_note)),
+    ]),
+   ))),
+  ]));
+ }
 }
 class ExpenseOnlyPage extends StatefulWidget{
- final List<Record> items;final Future<void> Function() onAdd;
- const ExpenseOnlyPage({super.key,required this.items,required this.onAdd});
+ final List<Record> items;final Future<void> Function() onAdd;final Future<void> Function(Record) onEdit;
+ const ExpenseOnlyPage({super.key,required this.items,required this.onAdd,required this.onEdit});
  @override State<ExpenseOnlyPage> createState()=>_ExpenseOnlyPageState();
 }
 class _ExpenseOnlyPageState extends State<ExpenseOnlyPage>{
- @override Widget build(BuildContext context){final now=DateTime.now();final rows=widget.items.where((e)=>e.createdAt!=null&&e.createdAt!.year==now.year&&e.createdAt!.month==now.month).toList();final total=rows.fold<double>(0,(s,e)=>s+e.amount);return Scaffold(appBar:AppBar(title:Text('महीने का खर्च')),body:ListView(padding:EdgeInsets.all(16),children:[Text('इस महीने का खर्च: ₹'+money(total),style:TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w900)),FilledButton.icon(onPressed:()async{await widget.onAdd();if(mounted)setState((){});},icon:Icon(Icons.add),label:Text('खर्च जोड़ें')),...rows.map((e)=>ListTile(title:Text(e.name),subtitle:Text(e.detail),trailing:Text('₹'+money(e.amount))))]));}
+ int selectedMonth=DateTime.now().month;
+ int selectedYear=DateTime.now().year;
+ static const months=['जनवरी','फरवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर'];
+ double _totalFor(int month)=>widget.items.where((e)=>e.createdAt!=null&&e.createdAt!.year==selectedYear&&e.createdAt!.month==month).fold<double>(0,(sum,e)=>sum+e.amount);
+ @override Widget build(BuildContext context){
+  final rows=widget.items.where((e)=>e.createdAt!=null&&e.createdAt!.year==selectedYear&&e.createdAt!.month==selectedMonth).toList();
+  final total=rows.fold<double>(0,(sum,e)=>sum+e.amount);
+  final years=widget.items.where((e)=>e.createdAt!=null).map((e)=>e.createdAt!.year).toSet()..add(DateTime.now().year);
+  final sortedYears=years.toList()..sort((a,b)=>b.compareTo(a));
+  return Scaffold(appBar:AppBar(title:const Text('महीने का खर्च')),body:ListView(padding:const EdgeInsets.all(16),children:[
+   Row(children:[const Text('साल चुनें',style:TextStyle(fontWeight:FontWeight.w800)),const SizedBox(width:12),SizedBox(width:120,child:DropdownButton<int>(isExpanded:true,value:selectedYear,items:sortedYears.map((y)=>DropdownMenuItem(value:y,child:Text('$y'))).toList(),onChanged:(y){if(y!=null)setState(()=>selectedYear=y);}))]),
+   FilledButton.icon(onPressed:()async{await widget.onAdd();if(mounted)setState((){});},icon:const Icon(Icons.add),label:const Text('खर्च जोड़ें')),
+   const SizedBox(height:10),
+   Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(17)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('${months[selectedMonth-1]} $selectedYear का खर्च',style:const TextStyle(color:Colors.white70)),Text('₹${money(total)}',style:const TextStyle(color:Colors.white,fontSize:25,fontWeight:FontWeight.w900))])),
+   const SizedBox(height:14),const Text('महीने के अनुसार खर्च',style:TextStyle(fontSize:16,fontWeight:FontWeight.w900)),
+   ...List.generate(12,(i){final month=i+1;final amount=_totalFor(month);final active=selectedMonth==month;return Card(color:active?const Color(0xFFE9EDFF):surfaceColor,child:ListTile(onTap:()=>setState(()=>selectedMonth=month),title:Text(months[i],style:TextStyle(fontWeight:active?FontWeight.w900:FontWeight.w600,color:navy)),subtitle:Text('${widget.items.where((e)=>e.createdAt!=null&&e.createdAt!.year==selectedYear&&e.createdAt!.month==month).length} एंट्री'),trailing:Text('₹${money(amount)}',style:TextStyle(color:active?blue:navy,fontWeight:FontWeight.w900))));}),
+   const SizedBox(height:10),Text('${months[selectedMonth-1]} की एंट्री',style:const TextStyle(fontSize:16,fontWeight:FontWeight.w900)),
+   if(rows.isEmpty)const Padding(padding:EdgeInsets.all(18),child:Text('इस महीने कोई खर्च दर्ज नहीं है।')),
+   ...rows.map((e)=>Card(color:surfaceColor,child:ListTile(title:Text(e.name,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(e.detail),leading:const Icon(Icons.payments_outlined),trailing:Row(mainAxisSize:MainAxisSize.min,children:[Text('₹${money(e.amount)}',style:TextStyle(color:red,fontWeight:FontWeight.w900)),IconButton(tooltip:'एडिट करें',onPressed:()async{await widget.onEdit(e);if(mounted)setState((){});},icon:const Icon(Icons.edit_outlined))]))))
+  ]));
+ }
 }
 class ServiceCategoryPage extends StatelessWidget{
  final String kind;final bool english;const ServiceCategoryPage({super.key,required this.kind,required this.english});
  @override Widget build(BuildContext context){
-  final insurance=kind=='insurance';
   final opts=kind=='recharge'?(english?['Prepaid mobile recharge','Postpaid mobile bill']:['प्रीपेड मोबाइल रिचार्ज','पोस्टपेड मोबाइल बिल']):kind=='bills'?(english?['Electricity bill','Water bill','Gas bill','DTH recharge','Broadband / internet bill','Landline bill','FASTag recharge (Coming Soon)']:['बिजली बिल','पानी बिल','गैस बिल','DTH रिचार्ज','ब्रॉडबैंड / इंटरनेट बिल','लैंडलाइन बिल','FASTag रिचार्ज (Coming Soon)']):kind=='challan'?(english?['Traffic challan','Vehicle challan status']:['ट्रैफिक चालान','वाहन चालान की स्थिति']):(english?['Bike Insurance','Car Insurance']:['बाइक इंश्योरेंस','कार इंश्योरेंस']);
   final title=kind=='recharge'?(english?'Mobile Recharge':'मोबाइल रिचार्ज'):kind=='bills'?(english?'Bill Payment':'बिल पेमेंट'):kind=='challan'?(english?'Challan Payment':'चालान पेमेंट'):(english?'Bike / Car Insurance':'बाइक / कार इंश्योरेंस');
   return Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:Text(title)),body:ListView(padding:EdgeInsets.all(16),children:opts.map((x)=>Card(color:surfaceColor,child:ListTile(title:Text(x),trailing:Chip(label:Text('COMING SOON')),onTap:()=>openComingSoon(context,x)))).toList()));
@@ -947,7 +1243,7 @@ class PrivacyPolicyPage extends StatelessWidget{
  const PrivacyPolicyPage({super.key,this.english=false});
  static const List<List<String>> _hi=[
   ['1. यह नीति किस पर लागू है','यह नीति Bharat Saathi Android ऐप, अकाउंट, लिंक्ड खाता, रेफरल/कमीशन जानकारी और स्वचालित क्लाउड सिंक पर लागू होती है। ऐप इस्तेमाल करने के लिए अकाउंट और लॉगिन आवश्यक है।'],
-  ['2. ऐप में दर्ज और डिवाइस पर सेव डेटा','आप नाम, ईमेल, मोबाइल नंबर, व्यक्तिगत और दुकान के खाते, खर्च तथा सेवा रिकॉर्ड दर्ज कर सकते हैं। रिकॉर्ड पहले डिवाइस के स्थानीय SQLite डेटाबेस में सेव होते हैं।'],
+  ['2. ऐप में दर्ज और डिवाइस पर सेव डेटा','आप नाम, ईमेल, मोबाइल नंबर, व्यक्तिगत और दुकान के खाते, खर्च तथा सेवा रिकॉर्ड दर्ज कर सकते हैं। रिकॉर्ड पहले डिवाइस के स्थानीय SQLite डेटाबेस में सेव होते हैं। यदि आप Payment Sound Box सक्रिय करते हैं, तो Android Notification Access अनुमति से समर्थित UPI ऐप्स की सूचनाएँ डिवाइस पर पढ़ी जाती हैं। ऐप केवल संभावित प्राप्त भुगतान की राशि और स्रोत पहचानने की कोशिश करता है; Sound Box हिस्ट्री डिवाइस पर स्थानीय रूप से रखी जाती है और इस सुविधा के लिए notification content Supabase पर नहीं भेजा जाता। यह बैंक से स्वतंत्र पुष्टि नहीं है; UPI ऐप की सूचना देर से आए तो आवाज़ भी देर से आ सकती है।'],
   ['3. अकाउंट और लॉगिन जानकारी','रजिस्ट्रेशन में Supabase Auth ईमेल और पासवर्ड संभालता है। आपका नाम और 10 अंकों का मोबाइल नंबर प्रोफाइल से जुड़ता है। ईमेल कन्फर्म होने के बाद मोबाइल नंबर और पासवर्ड से लॉगिन होता है। मोबाइल नंबर अभी SMS OTP से सत्यापित नहीं होता। लॉगिन से पहले मोबाइल नंबर खोजने की सेवा ईमेल नहीं दिखाती; सफल लॉगिन के बाद अकाउंट ईमेल बैकअप स्क्रीन पर दिख सकता है। पासवर्ड ऐप में पढ़ने योग्य रूप में सेव नहीं होता।'],
   ['4. हर अकाउंट का अलग डेटा और ऑटोमैटिक क्लाउड सिंक','डिवाइस पर स्थानीय रिकॉर्ड लॉगिन किए हुए अकाउंट की अलग पहचान के अंतर्गत रखे जाते हैं। एक ही फोन पर अलग अकाउंट का स्थानीय डेटा अलग रहता है। लॉगिन रहने और इंटरनेट उपलब्ध होने पर ऐप रिकॉर्ड का स्नैपशॉट उसी अकाउंट के Supabase क्लाउड बैकअप में अपने-आप सिंक करता है। बदलाव के बाद सिंक शेड्यूल होता है; ऐप चलते समय समय-समय पर और दोबारा खुलने पर पुनः प्रयास होता है। ऑफलाइन रिकॉर्ड डिवाइस पर रहते हैं। ऐप पूरी तरह बंद रहने पर बैकग्राउंड सिंक की गारंटी नहीं है। उसी अकाउंट से दूसरे डिवाइस पर लॉगिन करके उपलब्ध बैकअप रीस्टोर किया जा सकता है। यह स्नैपशॉट बैकअप है, हर रिकॉर्ड का अलग सर्वर-लेजर सिंक नहीं। एक ही अकाउंट को एक समय पर एक फोन पर इस्तेमाल करें; अलग-अलग फोन पर एक साथ किए गए बदलाव अपने-आप मर्ज नहीं होते। पुराने संस्करण से अपडेट करने पर पुराने स्थानीय स्नैपशॉट को किसी अकाउंट में जोड़ने से पहले ऐप पुष्टि पूछता है। केवल सही पुराने अकाउंट की पुष्टि करने पर और तभी डेटा जोड़ा जाएगा जब उस अकाउंट में पहले से रिकॉर्ड न हों। मौजूदा रिकॉर्ड कभी ओवरराइट नहीं होंगे; इसलिए पहले उसी अकाउंट से लॉगिन करें जो पहले इस फोन पर इस्तेमाल होता था।'],
   ['5. लिंक्ड खाता और रेफरल जानकारी','लिंक्ड खाता इस्तेमाल करने पर संबंधित मोबाइल नंबर, दुकान/प्रदर्शन नाम, जुड़े खातों का संबंध और प्रतिभागियों द्वारा दर्ज उधारी/भुगतान तथा नोट Supabase में प्रोसेस होते हैं। रेफरल/कमीशन सुविधा इस्तेमाल करने पर रेफरल कोड, पात्रता और कमीशन रिकॉर्ड भी प्रोसेस हो सकते हैं। संबंधित जानकारी सुविधा के नियमों के अनुसार दिखाई जाती है।'],
@@ -961,7 +1257,7 @@ class PrivacyPolicyPage extends StatelessWidget{
  ];
  static const List<List<String>> _en=[
   ['1. Scope','This policy applies to the Bharat Saathi Android app, user accounts, linked khata, referral/commission information and automatic cloud synchronization. An account and sign-in are required to use the app.'],
-  ['2. Information entered and stored on the device','You may provide your name, email address and mobile number, and enter personal or shop khata entries, linked-khata records, expenses and service records. Records are first saved in the device’s local SQLite database.'],
+  ['2. Information entered and stored on the device','You may provide your name, email address and mobile number, and enter personal or shop khata entries, linked-khata records, expenses and service records. Records are first saved in the device’s local SQLite database. If you enable Payment Sound Box, Android Notification Access reads notifications from supported UPI apps on the device. The app attempts to identify possible incoming-payment amounts and sources; Sound Box history is stored locally on the device, and notification content is not sent to Supabase for this feature. This is not independent bank verification; if a UPI app posts its notification late, the voice alert may also be late.'],
   ['3. Account and login information','Supabase Auth handles your registration email and password. Your name and 10-digit mobile number are associated with your profile. After email confirmation, you can sign in with your mobile number and password. The phone lookup does not reveal the account email before password verification; after successful login, the account email may be displayed to the signed-in user on the backup screen. The app does not store your password in readable form.'],
   ['4. Account separation and automatic cloud sync','Local records are stored under the identity of the signed-in account, separately from other accounts on the same device. While signed in and connected to the internet, the app automatically synchronizes a snapshot to that account’s Supabase cloud-backup record. Sync is scheduled after changes and retried periodically while the app is running and when it resumes. Offline records remain on the device. Background sync is not guaranteed while the app is fully closed. The latest available snapshot can be restored on another device by signing in to the same account. This is snapshot backup, not row-by-row synchronization to a server-side accounting ledger. Use one device per account at a time; concurrent edits on different devices are not automatically merged. When upgrading from an older version, the app asks which account should receive the previous single local snapshot. It is assigned only after confirmation; sign in first with the account that previously used the phone and confirm only if it is the correct account.'],
   ['5. Linked khata and referral information','If you use linked khata, the app processes relevant mobile numbers, shop/display names, account relationships and credit/payment entries and notes created by participants. If you use referral/commission features, referral codes, eligibility and commission records may also be processed. Information is made available according to each feature’s access rules.'],
@@ -996,18 +1292,16 @@ class ProfilePage extends StatelessWidget{
  final List<Record> expensesList,khata,personalTransactions;
  const ProfilePage({super.key,required this.supabaseAvailable,required this.onRestore,required this.expensesList,required this.khata,required this.personalTransactions,required this.english,required this.onLanguage,required this.darkMode,required this.onDarkMode});
  @override Widget build(BuildContext context){
-  final user=supabaseAvailable?Supabase.instance.client.auth.currentUser:null;
-  final admin=user!=null&&(user.appMetadata['role']=='admin'||user.appMetadata['role']=='super_admin');
+  
   return ListView(padding:const EdgeInsets.all(17),children:[
    heading(english?'Profile & Settings':'प्रोफाइल और सेटिंग',english?'Manage your account':'अपने अकाउंट को मैनेज करें'),
    setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const PrivacyPolicyPage(english:false)))),
    Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
-   SwitchListTile(secondary:Icon(Icons.dark_mode_outlined,color:blue),title:Text(english?'Dark theme':'डार्क थीम',style:TextStyle(color:navy,fontWeight:FontWeight.w800)),subtitle:Text(english?'Professional deep-blue appearance':'ऑन करने पर पूरे ऐप में प्रोफेशनल ब्लू डार्क थीम लागू होगी',style:TextStyle(color:muted,fontSize:11)),value:darkMode,onChanged:onDarkMode,activeThumbColor:blue,contentPadding:EdgeInsets.symmetric(horizontal:14)),
-    setting(Icons.percent_rounded,english?'Commission List':'कमीशन लिस्ट',english?'Self and referral commission by service':'हर सर्विस का सेल्फ और रेफरल कमीशन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CommissionListPage(supabaseAvailable:supabaseAvailable)))),
-   setting(Icons.share_outlined,english?'Refer & Earn':'रेफर करें और कमाएँ',english?'Your referral code and referral history':'आपका रेफरल कोड और रेफरल जानकारी',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
-   if(admin)setting(Icons.admin_panel_settings_outlined,english?'Admin Commission Settings':'एडमिन कमीशन सेटिंग',english?'Configure service and referral rates':'सर्विस और रेफरल कमीशन की दरें सेट करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const AdminCommissionPage()))),
-   setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
+   setting(Icons.account_balance_wallet_outlined,english?'Coin Wallet':'कॉइन वॉलेट',english?'Balance, history and AI Call redemption':'कॉइन बैलेंस, हिस्ट्री और AI Call सब्सक्रिप्शन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AiCoinWalletPage(supabaseAvailable:supabaseAvailable)))),
+    setting(Icons.volume_up_outlined,english?'Payment Sound Box':'पेमेंट साउंड बॉक्स',english?'Speak incoming UPI payment notifications':'PhonePe, Google Pay, Paytm आदि के पेमेंट नोटिफिकेशन बोलें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const SoundBoxPage()))),
+   setting(Icons.card_giftcard,english?'Refer & Earn':'रेफर एंड अर्न',english?'Earn coins and unlock AI Call Assistant':'सफल रेफरल पर 10 कॉइन पाएँ; 100 कॉइन पर AI Call Assistant का 1 महीना',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
+    setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),
    setting(Icons.cloud_sync,english?'Automatic cloud sync':'ऑटोमैटिक क्लाउड सिंक',english?'Records sync automatically; restore from cloud':'रिकॉर्ड अपने-आप सिंक होते हैं; क्लाउड से रीस्टोर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),
   ]);
@@ -1087,6 +1381,62 @@ class _CommerceWalletPageState extends State<CommerceWalletPage>{
  ]));
  Widget _walletCard(String title,String subtitle,String amount,IconData icon)=>Container(padding:EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(17)),child:Row(children:[Icon(icon,color:gold,size:28),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900)),Text(subtitle,style:TextStyle(color:Colors.white70,fontSize:11))])),Text(amount,style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:18))]));
 }
+class AiCoinWalletPage extends StatefulWidget{
+ final bool supabaseAvailable;
+ const AiCoinWalletPage({super.key,required this.supabaseAvailable});
+ @override State<AiCoinWalletPage> createState()=>_AiCoinWalletPageState();
+}
+class _AiCoinWalletPageState extends State<AiCoinWalletPage>{
+ bool loading=true,busy=false;int balance=0;List<Map<String,dynamic>> history=[];DateTime? callExpiry;String? error;
+ @override void initState(){super.initState();_load();}
+ Future<void> _load()async{
+  final client=Supabase.instance.client;final user=client.auth.currentUser;
+  if(!widget.supabaseAvailable||user==null){if(mounted)setState(()=>loading=false);return;}
+  try{
+   final results=await Future.wait([
+    client.from('ai_coin_wallets').select('balance').eq('user_id',user.id).maybeSingle(),
+    client.from('ai_coin_transactions').select('direction,amount,reason,description,created_at').eq('user_id',user.id).order('created_at',ascending:false).limit(40),
+    client.from('ai_call_subscriptions').select('expires_at').eq('user_id',user.id).maybeSingle(),
+   ]);
+   if(!mounted)return;
+   setState(() {
+    final wallet=results[0] as Map<String,dynamic>?;
+    final transactions=results[1] as List;
+    final subscription=results[2] as Map<String,dynamic>?;
+    balance=(wallet?['balance'] as num?)?.toInt()??0;
+    history=transactions.map((e)=>Map<String,dynamic>.from(e as Map)).toList();
+    callExpiry=DateTime.tryParse(subscription?['expires_at']?.toString()??'');
+    loading=false;error=null;
+   });
+  }catch(e){if(mounted)setState((){loading=false;error=e.toString();});}
+ }
+ Future<void> _redeem()async{
+  if(busy)return;setState(()=>busy=true);
+  try{await Supabase.instance.client.rpc('redeem_ai_call_month');await _load();if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('AI Call Assistant का एक महीना रिडीम हो गया।')));}
+  catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('रिडीम नहीं हुआ: $e')));}
+  finally{if(mounted)setState(()=>busy=false);}
+ }
+ @override Widget build(BuildContext context)=>Scaffold(
+  bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:const Text('Coin Wallet')),
+  body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
+   if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Text('Coin Wallet के लिए पहले लॉगिन करें।'),
+   if(error!=null)Text('वॉलेट लोड नहीं हुआ: $error',style:TextStyle(color:red)),
+   Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF24345B),Color(0xFF52628A)]),borderRadius:BorderRadius.circular(20)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    const Text('आपका Coin Balance',style:TextStyle(color:Colors.white70)),const SizedBox(height:7),
+    Text('$balance Coins',style:TextStyle(color:gold,fontSize:30,fontWeight:FontWeight.w900)),
+    const SizedBox(height:8),const Text('एक ही वॉलेट से AI फोटो, AI वीडियो और Call Assistant के कॉइन इस्तेमाल होंगे।',style:TextStyle(color:Colors.white70,fontSize:12))
+   ])),
+   const SizedBox(height:12),
+   Card(color:surfaceColor,child:const ListTile(leading:Icon(Icons.ondemand_video),title:Text('विज्ञापन देखकर कॉइन कमाएँ'),subtitle:Text('Rewarded Ad की सर्वर-साइड पुष्टि जोड़ने के बाद यह विकल्प चालू होगा।'))),
+   Card(color:surfaceColor,child:const ListTile(leading:Icon(Icons.card_giftcard),title:Text('Refer & Earn'),subtitle:Text('हर सफल रेफरल पर 10 कॉइन।'))),
+   Card(color:surfaceColor,child:const ListTile(leading:Icon(Icons.shopping_cart_outlined),title:Text('कॉइन खरीदें'),subtitle:Text('पेमेंट गेटवे जुड़ने के बाद कॉइन पैक खरीद सकेंगे।'))),
+   Card(color:surfaceColor,child:ListTile(leading:const Icon(Icons.support_agent),title:const Text('AI Call Assistant — 1 महीना'),subtitle:Text(callExpiry!=null&&callExpiry!.isAfter(DateTime.now())?'सक्रिय: '+callExpiry!.toLocal().toString().substring(0,16):'100 कॉइन में एक महीना रिडीम करें'),trailing:FilledButton(onPressed:balance>=100&&!busy?_redeem:null,child:Text(busy?'...':'100 कॉइन')))),
+   const SizedBox(height:12),Text('कॉइन हिस्ट्री',style:TextStyle(color:navy,fontSize:17,fontWeight:FontWeight.w900)),
+   if(history.isEmpty)const Padding(padding:EdgeInsets.all(12),child:Text('अभी कोई कॉइन ट्रांजैक्शन नहीं है।')),
+   ...history.map((row){final credit=row['direction']=='credit';final amount=(row['amount'] as num).toInt();return Card(color:surfaceColor,child:ListTile(leading:Icon(credit?Icons.add_circle_outline:Icons.remove_circle_outline,color:credit?green:red),title:Text(row['description']?.toString()??row['reason'].toString()),subtitle:Text((row['created_at']?.toString()??'').replaceFirst('T',' ').substring(0,(row['created_at']?.toString()??'').length>16?16:(row['created_at']?.toString()??'').length)),trailing:Text((credit?'+':'−')+amount.toString(),style:TextStyle(color:credit?green:red,fontWeight:FontWeight.w900))));})
+  ])
+ );
+}
 class ReferralPage extends StatefulWidget{
  final bool supabaseAvailable;const ReferralPage({super.key,required this.supabaseAvailable});
  @override State<ReferralPage> createState()=>_ReferralPageState();
@@ -1103,17 +1453,17 @@ class _ReferralPageState extends State<ReferralPage>{
   if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('पहले लॉगिन करें।')));return;}
   final c=TextEditingController();final value=await showDialog<String>(context:context,builder:(ctx)=>AlertDialog(title:const Text('Referral Code लगाएँ'),content:TextField(controller:c,decoration:const InputDecoration(labelText:'Referral Code')),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(ctx,c.text.trim()),child:const Text('Apply'))]));
   if(value==null||value.isEmpty)return;
-  try{await Supabase.instance.client.rpc('apply_bharat_saathi_referral_code',params:{'p_referral_code':value});if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Referral Code जुड़ गया।')));}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Referral Code लागू नहीं हुआ: $e')));}
+  try{await Supabase.instance.client.rpc('apply_bharat_saathi_referral_code',params:{'p_referral_code':value});if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Referral Code जुड़ गया। रेफर करने वाले को 10 कॉइन मिल गए।')));}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Referral Code लागू नहीं हुआ: $e')));}
  }
  @override Widget build(BuildContext context)=>Scaffold(bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:const Text('Refer & Earn')),body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(18),children:[
   if(!widget.supabaseAvailable||Supabase.instance.client.auth.currentUser==null)const Text('रेफरल कोड देखने के लिए लॉगिन करें।'),
   if(error!=null)Text(error!,style:TextStyle(color:red)),
   Container(padding:EdgeInsets.all(18),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(18)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('आपका Referral Code',style:TextStyle(color:Colors.white70)),SizedBox(height:8),Text(code.isEmpty?'—':code,style:TextStyle(color:gold,fontSize:27,fontWeight:FontWeight.w900)),SizedBox(height:12),Row(children:[Expanded(child:OutlinedButton(onPressed:code.isEmpty?null:()=>Clipboard.setData(ClipboardData(text:code)),child:Text('Copy Code'))),SizedBox(width:8),Expanded(child:FilledButton(onPressed:code.isEmpty?null:()=>Share.share('Bharat Saathi से जुड़ें। मेरा Referral Code: $code'),child:Text('Share')))])])),
   const SizedBox(height:12),OutlinedButton(onPressed:_apply,child:const Text('किसी का Referral Code लगाएँ')),
-  Card(color:surfaceColor,child:Padding(padding:EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-   Text('₹10 First Successful Referral Reward',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
-   SizedBox(height:5),Text('आपके Referral से जुड़ा यूज़र पहली सफल Recharge या Bill Payment पूरी करेगा, तो आपको ₹10 एक बार मिलेंगे।'),
-   SizedBox(height:8),Text('इसके बाद उस यूज़र की योग्य सर्विस ट्रांजैक्शन पर आपको केवल Direct Referral Service Commission मिलेगा।')
+  Card(color:surfaceColor,child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+   Text('10 कॉइन प्रति सफल रेफरल',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
+   const SizedBox(height:5),const Text('आपका रेफरल कोड लगाकर नया यूज़र अकाउंट जोड़ेगा तो आपके Coin Wallet में 10 कॉइन जुड़ेंगे। खुद का कोड इस्तेमाल नहीं किया जा सकता।'),
+   const SizedBox(height:8),const Text('100 कॉइन से AI Call Assistant का 1 महीने का सब्सक्रिप्शन रिडीम करें।')
   ])))
  ]));
 }

@@ -1,0 +1,322 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+const _ink=Color(0xFF25345B), _teal=Color(0xFF159B88);
+const _vault=FlutterSecureStorage();
+
+class UtilityModulesPage extends StatelessWidget {
+  const UtilityModulesPage({super.key});
+  static const modules=[
+    ('QR Code Tools','QR बनाएँ और स्कैन करें',Icons.qr_code_2,'qr'),
+    ('Poster Maker','Gemini AI से पोस्टर बनाएँ',Icons.auto_awesome,'poster'),
+    ('Reminders & Notes','काम और भुगतान की याद दिलाएँ',Icons.notifications_active_outlined,'reminders'),
+    ('Smart Calculator','सामान्य कैलकुलेटर + GST',Icons.calculate_outlined,'calculator'),
+    ('Payment Sound Box','पेमेंट API कनेक्शन',Icons.volume_up_outlined,'soundbox'),
+    ('AI Calling Assistant','कॉल असिस्टेंट सेटअप',Icons.support_agent,'calling'),
+  ];
+  @override Widget build(BuildContext context)=>Scaffold(
+    appBar:AppBar(title:const Text('दुकानदार के स्मार्ट टूल')),
+    body:ListView(padding:const EdgeInsets.all(16),children:[
+      Container(padding:const EdgeInsets.all(17),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFFDDE8FF),Color(0xFFEDE5FF),Color(0xFFDDF7EF)]),borderRadius:BorderRadius.circular(20)),child:const Row(children:[Icon(Icons.dashboard_customize_rounded,color:Color(0xFF536CC0),size:30),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Smart Tools',style:TextStyle(color:_ink,fontSize:20,fontWeight:FontWeight.w900)),Text('आपके कारोबार के लिए आसान डिजिटल टूल',style:TextStyle(color:Color(0xFF657295),fontSize:12))]))])),
+      const SizedBox(height:16),
+      Text('रोज़ के काम के लिए उपयोगी सुविधाएँ',style:TextStyle(color:_ink,fontSize:17,fontWeight:FontWeight.w800)),
+      const SizedBox(height:12),
+      GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:modules.length,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,mainAxisSpacing:12,crossAxisSpacing:12,childAspectRatio:1.12),itemBuilder:(context,i){
+        final m=modules[i];
+        final colors=[const Color(0xFFE7F0FF),const Color(0xFFFFE8F0),const Color(0xFFE6F8F1),const Color(0xFFFFF2D9),const Color(0xFFEDE9FF),const Color(0xFFE4F6FA)];
+        return Material(color:Colors.white,elevation:3,shadowColor:const Color(0x20526FC4),borderRadius:BorderRadius.circular(20),child:InkWell(borderRadius:BorderRadius.circular(20),onTap:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>UtilityModulePage(kind:m.$4,title:m.$1))),child:Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Colors.white,Color.lerp(colors[i],Colors.white,.48)!]),borderRadius:BorderRadius.circular(20),border:Border.all(color:Color.lerp(colors[i],const Color(0xFF8498D8),.3)!)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Container(width:49,height:49,decoration:BoxDecoration(gradient:LinearGradient(colors:[colors[i],Color.lerp(colors[i],Colors.white,.2)!]),borderRadius:BorderRadius.circular(15)),child:Icon(m.$3,color:const Color(0xFF4E64AF),size:27)),const Spacer(),Text(m.$1,style:const TextStyle(color:_ink,fontWeight:FontWeight.w900,fontSize:14)),const SizedBox(height:4),Text(m.$2,style:const TextStyle(color:Color(0xFF78839C),fontSize:11))]))));
+      })
+    ])
+  );
+}
+
+class UtilityModulePage extends StatelessWidget {
+  final String kind,title;
+  const UtilityModulePage({super.key,required this.kind,required this.title});
+  @override Widget build(BuildContext context){
+    final Widget page=switch(kind){
+      'qr'=>const _QrTool(),
+      'poster'=>const _PosterTool(),
+      'reminders'=>const _ReminderTool(),
+      'calculator'=>const _BusinessCalculator(),
+      'soundbox'=>const _SoundboxInfo(),
+      _=>const _CallingInfo(),
+    };
+    return Scaffold(appBar:AppBar(title:Text(title)),body:page);
+  }
+}
+
+class _QrTool extends StatefulWidget{const _QrTool();@override State<_QrTool> createState()=>_QrToolState();}
+class _QrToolState extends State<_QrTool>{
+ final input=TextEditingController();String mode='text';String? scanned;
+ @override void dispose(){input.dispose();super.dispose();}
+ @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:[
+  SegmentedButton<String>(segments:const [ButtonSegment(value:'text',label:Text('Text / Link')),ButtonSegment(value:'upi',label:Text('UPI QR'))],selected:{mode},onSelectionChanged:(s)=>setState(()=>mode=s.first)),
+  const SizedBox(height:14),
+  TextField(controller:input,onChanged:(_)=>setState((){}),decoration:InputDecoration(labelText:mode=='upi'?'UPI ID (जैसे name@upi)':'Text या Website URL',hintText:mode=='upi'?'yourname@upi':'https://example.com')),
+  const SizedBox(height:16),
+  if(input.text.trim().isNotEmpty)Center(child:Container(color:Colors.white,padding:const EdgeInsets.all(14),child:QrImageView(data:mode=='upi'?'upi://pay?pa=${input.text.trim()}&pn=Bharat%20Saathi':input.text.trim(),size:220))),
+  FilledButton(onPressed:()=>setState((){}),child:const Text('QR कोड बनाएँ')),
+  OutlinedButton.icon(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>_QrScanner(onValue:(v){setState(()=>scanned=v);Navigator.pop(context);}))),icon:const Icon(Icons.qr_code_scanner),label:const Text('QR स्कैन करें')),
+  if(scanned!=null)SelectableText('स्कैन परिणाम: $scanned'),
+  if(input.text.trim().isNotEmpty)TextButton.icon(onPressed:()=>Share.share('QR content: ${mode=='upi'?'upi://pay?pa=${input.text.trim()}&pn=Bharat%20Saathi':input.text.trim()}'),icon:const Icon(Icons.share),label:const Text('कंटेंट शेयर करें')),
+ ]);
+}
+class _QrScanner extends StatelessWidget{final ValueChanged<String> onValue;const _QrScanner({required this.onValue});@override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('QR स्कैन करें')),body:MobileScanner(onDetect:(capture){final value=(capture.barcodes.isNotEmpty?capture.barcodes.first.rawValue:null);if(value!=null&&value.isNotEmpty)onValue(value);}));}
+
+class _PosterTool extends StatefulWidget{const _PosterTool();@override State<_PosterTool> createState()=>_PosterToolState();}
+class _PosterToolState extends State<_PosterTool>{
+ final shop=TextEditingController(),phone=TextEditingController(),brief=TextEditingController();
+ final posterKey=GlobalKey();
+ final picker=ImagePicker();
+ Uint8List? referenceImage,generatedImage;
+ String imageMime='image/jpeg',creativeMode='creative',generationType='image';
+ bool generating=false;
+ String? error,usageMessage;
+ @override void dispose(){shop.dispose();phone.dispose();brief.dispose();super.dispose();}
+ Future<void> _pickImage()async{
+  final file=await picker.pickImage(source:ImageSource.gallery,imageQuality:88,maxWidth:1800,maxHeight:1800);
+  if(file==null)return;
+  final bytes=await file.readAsBytes();
+  if(!mounted)return;
+  setState((){referenceImage=bytes;imageMime=file.mimeType??'image/jpeg';error=null;});
+ }
+ Future<void> _generate()async{
+  if(brief.text.trim().isEmpty){setState(()=>error='बताएँ कि किस तरह की इमेज बनानी है।');return;}
+  if(generationType=='video'){
+   setState(()=>error='AI वीडियो के लिए Google Veo का सर्वर-साइड प्रोजेक्ट और Cloud Storage सेटअप अभी बाकी है। ग्राहक को API Key नहीं डालनी होगी।');
+   return;
+  }
+  setState((){generating=true;error=null;generatedImage=null;usageMessage=null;});
+  try{
+   final prompt=creativeMode=='shop'
+    ? 'Create a premium, polished Indian business advertising design. Business/shop name: ${shop.text.trim()}. Contact number: ${phone.text.trim()}. Design brief: ${brief.text.trim()}. Make it suitable for a shop, service, product promotion or offer. Compose a visually striking vertical 4:5 poster. Render any short requested text legibly; do not invent phone numbers or prices.'
+    : 'Create an original high-quality creative image based on this brief: ${brief.text.trim()}. This is general-purpose creative work, not necessarily a shop advertisement. It may be a personal portrait concept, birthday or wedding design, festival greeting, social media creative, wallpaper, illustration, artwork or any other safe creative idea. Use a polished professional composition and vertical 4:5 format.';
+   final response=await Supabase.instance.client.functions.invoke(
+    'ai-creative-studio',
+    body:{
+     'generationType':'image',
+     'mode':creativeMode,
+     'prompt':prompt,
+     'imageBase64':referenceImage==null?null:base64Encode(referenceImage!),
+     'imageMimeType':referenceImage==null?null:imageMime,
+    },
+   );
+   final data=response.data;
+   if(data is! Map)throw Exception('AI सर्वर से सही response नहीं मिला।');
+   if(data['error']!=null)throw Exception(data['error'].toString());
+   final encoded=data['imageBase64']?.toString();
+   if(encoded==null||encoded.isEmpty)throw Exception('AI ने इमेज डेटा नहीं लौटाया।');
+   if(!mounted)return;
+   setState((){
+    generatedImage=base64Decode(encoded);
+    final remaining=data['freeRemaining'];
+    usageMessage=remaining is num?'इस महीने के फ्री जनरेशन बाकी: ${remaining.toInt()}':'आपका AI क्रिएशन तैयार है।';
+   });
+  }catch(e){
+   if(mounted)setState(()=>error='जनरेशन नहीं हो पाया: ${e.toString().replaceFirst('Exception: ','')}');
+  }finally{if(mounted)setState(()=>generating=false);}
+ }
+ Future<void> _download()async{
+  try{
+   final boundary=posterKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+   if(boundary==null)throw Exception('प्रीव्यू तैयार नहीं है।');
+   final image=await boundary.toImage(pixelRatio:3);
+   final data=await image.toByteData(format:ui.ImageByteFormat.png);
+   if(data==null)throw Exception('इमेज सेव नहीं हो पाई।');
+   await Share.shareXFiles([XFile.fromData(data.buffer.asUint8List(),mimeType:'image/png',name:'bharat-saathi-ai-creative.png')],text:'Bharat Saathi AI Creative Studio');
+  }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}
+ }
+ @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
+  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF4338CA),Color(0xFF9333EA),Color(0xFFEC4899)]),borderRadius:BorderRadius.circular(22)),child:const Row(children:[Icon(Icons.auto_awesome,color:Colors.white,size:32),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('AI Creative Studio',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),Text('पोस्टर, फोटो और क्रिएटिव डिजाइन',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
+  const SizedBox(height:16),
+  SegmentedButton<String>(segments:const [ButtonSegment(value:'creative',label:Text('अपनी पसंद का')),ButtonSegment(value:'shop',label:Text('दुकान / बिजनेस'))],selected:{creativeMode},onSelectionChanged:(v)=>setState(()=>creativeMode=v.first)),
+  const SizedBox(height:12),
+  SegmentedButton<String>(segments:const [ButtonSegment(value:'image',label:Text('AI फोटो / पोस्टर')),ButtonSegment(value:'video',label:Text('AI वीडियो'))],selected:{generationType},onSelectionChanged:(v)=>setState(()=>generationType=v.first)),
+  if(creativeMode=='shop')...[
+   const SizedBox(height:10),TextField(controller:shop,decoration:const InputDecoration(labelText:'दुकान / बिजनेस का नाम (वैकल्पिक)',prefixIcon:Icon(Icons.storefront))),
+   const SizedBox(height:10),TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'पोस्टर पर मोबाइल नंबर (वैकल्पिक)',prefixIcon:Icon(Icons.phone))),
+  ],
+  const SizedBox(height:10),
+  TextField(controller:brief,maxLines:4,decoration:InputDecoration(labelText:generationType=='video'?'किस तरह का वीडियो चाहिए?':'किस तरह की फोटो / डिजाइन चाहिए?',hintText:creativeMode=='shop'?'जैसे दिवाली ऑफर, प्रोडक्ट विज्ञापन, दुकान का बैनर...':'जैसे जन्मदिन, शादी, त्योहार, फोटो एडिट, वॉलपेपर, सोशल मीडिया आर्ट...')),
+  const SizedBox(height:10),
+  OutlinedButton.icon(onPressed:generating?null:_pickImage,icon:const Icon(Icons.add_photo_alternate_outlined),label:Text(referenceImage==null?'अपनी फोटो जोड़ें (वैकल्पिक)':'फोटो चुनी गई — बदलने के लिए टैप करें')),
+  if(referenceImage!=null)Padding(padding:const EdgeInsets.only(top:8),child:ClipRRect(borderRadius:BorderRadius.circular(14),child:Image.memory(referenceImage!,height:130,fit:BoxFit.contain))),
+  const SizedBox(height:12),
+  FilledButton.icon(onPressed:generating?null:_generate,icon:generating?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.auto_awesome),label:Text(generating?'AI तैयार कर रहा है...':generationType=='video'?'AI वीडियो बनाएँ':'AI फोटो / पोस्टर बनाएँ')),
+  if(error!=null)Padding(padding:const EdgeInsets.only(top:10),child:Text(error!,style:const TextStyle(color:Colors.red,fontSize:12))),
+  if(usageMessage!=null)Padding(padding:const EdgeInsets.only(top:10),child:Text(usageMessage!,style:const TextStyle(color:Color(0xFF0F8A69),fontWeight:FontWeight.w700))),
+  if(generatedImage!=null)...[
+   const SizedBox(height:18),const Text('आपका AI क्रिएशन',style:TextStyle(fontSize:17,fontWeight:FontWeight.w900)),
+   const SizedBox(height:10),
+   RepaintBoundary(key:posterKey,child:ClipRRect(borderRadius:BorderRadius.circular(18),child:Image.memory(generatedImage!,fit:BoxFit.contain))),
+   const SizedBox(height:12),FilledButton.icon(onPressed:_download,icon:const Icon(Icons.download_rounded),label:const Text('डाउनलोड / शेयर करें')),
+  ],
+  const SizedBox(height:12),
+  const Text('आप अपनी फोटो से नया डिजाइन या एडिट बनवा सकते हैं। सामान्य क्रिएटिव डिजाइन के लिए दुकान का नाम या मोबाइल नंबर देना जरूरी नहीं है। AI सेवा की API Key ऐप में नहीं दिखाई जाएगी।',style:TextStyle(color:Colors.blueGrey,fontSize:11)),
+ ]);
+}
+class _ReminderTool extends StatefulWidget{const _ReminderTool();@override State<_ReminderTool> createState()=>_ReminderToolState();}
+class _ReminderToolState extends State<_ReminderTool>{
+ final title=TextEditingController();List<Map<String,dynamic>> items=[];DateTime due=DateTime.now().add(const Duration(days:1));bool loading=true;
+ @override void initState(){super.initState();_load();}
+ Future<void> _load()async{final p=await SharedPreferences.getInstance();final raw=p.getString('bs_reminders_v1');if(raw!=null){try{items=List<Map<String,dynamic>>.from(jsonDecode(raw));}catch(_){}}if(mounted)setState(()=>loading=false);}
+ Future<void> _save()async{final p=await SharedPreferences.getInstance();await p.setString('bs_reminders_v1',jsonEncode(items));}
+ Future<void> _add()async{if(title.text.trim().isEmpty)return;items.insert(0,{'title':title.text.trim(),'due':due.toIso8601String(),'done':false});title.clear();await _save();if(mounted)setState((){});}
+ @override Widget build(BuildContext context)=>loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
+  TextField(controller:title,decoration:const InputDecoration(labelText:'काम / भुगतान की याद')),
+  const SizedBox(height:8),OutlinedButton.icon(onPressed:()async{final d=await showDatePicker(context:context,initialDate:due,firstDate:DateTime.now(),lastDate:DateTime.now().add(const Duration(days:3650)));if(d!=null)setState(()=>due=d);},icon:const Icon(Icons.calendar_month),label:Text('तारीख: ${due.day}-${due.month}-${due.year}')),
+  FilledButton(onPressed:_add,child:const Text('याद सेव करें')),
+  const Divider(height:28),
+  if(items.isEmpty)const Text('अभी कोई रिमाइंडर नहीं है।'),
+  ...items.asMap().entries.map((e)=>Card(child:CheckboxListTile(value:e.value['done'] as bool,onChanged:(v)async{items[e.key]['done']=v??false;await _save();setState((){});},title:Text(e.value['title'].toString()),subtitle:Text(DateTime.parse(e.value['due'].toString()).toLocal().toString().split(' ').first),secondary:IconButton(onPressed:()async{items.removeAt(e.key);await _save();setState((){});},icon:const Icon(Icons.delete_outline))))),
+ ]);
+}
+
+class _BusinessCalculator extends StatefulWidget{const _BusinessCalculator();@override State<_BusinessCalculator> createState()=>_BusinessCalculatorState();}
+class _BusinessCalculatorState extends State<_BusinessCalculator>{
+ String display='0',expression='';double? first;String? operator;bool fresh=true;final List<String> history=[];
+ void _digit(String value){
+  setState((){
+   if(fresh||display=='0'){
+    display=value=='.'?'0.':value;
+    fresh=false;
+   }else if(value=='.'&&display.contains('.')){
+    return;
+   }else{
+    display+=value;
+   }
+  });
+ }
+ void _clear(){setState((){display='0';expression='';first=null;operator=null;fresh=true;history.clear();});}
+ double _calculate(double left,double right,String op){
+  switch(op){
+   case '+':return left+right;
+   case '−':return left-right;
+   case '×':return left*right;
+   case '÷':return right==0?double.nan:left/right;
+   default:return double.nan;
+  }
+ }
+ void _choose(String op){
+  final value=double.tryParse(display);
+  if(value==null||!value.isFinite)return;
+  setState((){
+   var next=value;
+   // Complete the pending operation before accepting another operator.
+   // This supports unlimited chains such as 5 + 5 + 5 + 5.
+   if(first!=null&&operator!=null&&!fresh){
+    next=_calculate(first!,value,operator!);
+    if(!next.isFinite){display='Error';first=null;operator=null;expression='';fresh=true;return;}
+    history.add('$expression ${_fmt(value)} = ${_fmt(next)}');
+    display=_fmt(next);
+   }
+   first=next;
+   operator=op;
+   expression='${_fmt(next)} $op';
+   fresh=true;
+  });
+ }
+ void _equals(){
+  final second=double.tryParse(display);
+  if(first==null||operator==null||second==null)return;
+  final result=_calculate(first!,second,operator!);
+  setState((){
+   final completed='$expression $display = ${result.isFinite?_fmt(result):'Error'}';
+   history.add(completed);
+   expression='$expression $display =';
+   display=result.isFinite?_fmt(result):'Error';
+   first=null;
+   operator=null;
+   fresh=true;
+  });
+ }
+ String _fmt(double v)=>v==v.roundToDouble()?v.toInt().toString():v.toStringAsFixed(8).replaceFirst(RegExp(r'0+$'),'').replaceFirst(RegExp(r'\.$'),'');
+ void _delete(){setState((){if(display.length<=1){display='0';}else{display=display.substring(0,display.length-1);}});}
+ void _percent(){final v=double.tryParse(display);if(v!=null)setState(()=>display=_fmt(v/100));}
+ Future<void> _gst()async{
+  final rate=await showModalBottomSheet<double>(context:context,showDragHandle:true,builder:(context)=>SafeArea(child:Padding(padding:const EdgeInsets.all(18),child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
+   const Text('GST कैलकुलेशन',style:TextStyle(fontSize:19,fontWeight:FontWeight.w900)),const SizedBox(height:12),
+   Wrap(spacing:8,runSpacing:8,children:[for(final r in [5,12,18,28])OutlinedButton(onPressed:()=>Navigator.pop(context,r.toDouble()),child:Text('$r%'))]),
+   const SizedBox(height:8),const Text('राशि पर GST जोड़ने के लिए दर चुनें। GST हटाने का विकल्प अगली स्क्रीन पर मिलेगा।',style:TextStyle(color:Colors.blueGrey,fontSize:12))
+  ]))));
+  if(rate==null)return;
+  if(!mounted)return;
+  final remove=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(title:Text('GST $rate%'),content:const Text('GST जोड़ना है या पहले से शामिल GST हटाना है?'),actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('GST जोड़ें')),FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('GST हटाएँ'))]));
+  if(remove==null)return;
+  final amount=double.tryParse(display);if(amount==null)return;
+  final result=remove?amount/(1+rate/100):amount*(1+rate/100);
+  setState((){expression=remove?'GST $rate% हटाया':'GST $rate% जोड़ा';display=_fmt(result);fresh=true;first=null;operator=null;});
+ }
+ Widget _key(String label,{Color? color,Color? textColor,VoidCallback? onTap,bool wide=false}){
+  return Expanded(flex:wide?2:1,child:Padding(padding:const EdgeInsets.all(5),child:Material(color:color??Colors.white,elevation:2,shadowColor:const Color(0x1D5369B5),borderRadius:BorderRadius.circular(18),child:InkWell(borderRadius:BorderRadius.circular(18),onTap:onTap,child:Container(height:64,alignment:Alignment.center,decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xFFE0E6F5))),child:Text(label,style:TextStyle(color:textColor??_ink,fontSize:label.length>3?17:23,fontWeight:FontWeight.w800)))))));
+ }
+ @override Widget build(BuildContext context){
+  final rows=<Widget>[
+   Row(children:[_key('AC',color:const Color(0xFFFFE3EA),textColor:const Color(0xFF9C2945),onTap:_clear),_key('DEL',color:const Color(0xFFFFEBD7),textColor:const Color(0xFF9A5014),onTap:_delete),_key('%',color:const Color(0xFFECE7FF),textColor:const Color(0xFF5938A8),onTap:_percent),_key('÷',color:const Color(0xFFDCD5FF),textColor:const Color(0xFF5944A8),onTap:()=>_choose('÷'))]),
+   Row(children:[_key('7',onTap:()=>_digit('7')),_key('8',onTap:()=>_digit('8')),_key('9',onTap:()=>_digit('9')),_key('×',color:const Color(0xFFDCD5FF),textColor:const Color(0xFF5944A8),onTap:()=>_choose('×'))]),
+   Row(children:[_key('4',onTap:()=>_digit('4')),_key('5',onTap:()=>_digit('5')),_key('6',onTap:()=>_digit('6')),_key('−',color:const Color(0xFFDCD5FF),textColor:const Color(0xFF5944A8),onTap:()=>_choose('−'))]),
+   Row(children:[_key('1',onTap:()=>_digit('1')),_key('2',onTap:()=>_digit('2')),_key('3',onTap:()=>_digit('3')),_key('+',color:const Color(0xFFDCD5FF),textColor:const Color(0xFF5944A8),onTap:()=>_choose('+'))]),
+   Row(children:[_key('GST',color:const Color(0xFFFFE4A6),textColor:const Color(0xFF78520A),onTap:_gst),_key('0',onTap:()=>_digit('0')),_key('.',onTap:()=>_digit('.')),_key('=',color:const Color(0xFFBFEFE5),textColor:const Color(0xFF087A6A),onTap:_equals)]),
+  ];
+  return Container(decoration:const BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFFF1F4FF),Color(0xFFE8E7FF),Color(0xFFE1F6F1)])),child:SafeArea(child:Column(children:[
+   Padding(padding:const EdgeInsets.fromLTRB(18,22,18,14),child:Row(children:[const Icon(Icons.calculate_rounded,color:Color(0xFF5D6FC6),size:26),const SizedBox(width:9),const Text('कैलकुलेटर',style:TextStyle(color:_ink,fontSize:20,fontWeight:FontWeight.w900)),const Spacer(),Container(padding:const EdgeInsets.symmetric(horizontal:12,vertical:7),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(20)),child:const Text('GST Ready',style:TextStyle(color:Color(0xFF9A6A12),fontWeight:FontWeight.w800,fontSize:11)))])),
+   Expanded(child:Container(width:double.infinity,margin:const EdgeInsets.fromLTRB(14,6,14,14),padding:const EdgeInsets.fromLTRB(20,18,20,20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(26),border:Border.all(color:const Color(0xFFDDE4F5)),boxShadow:const [BoxShadow(color:Color(0x18536FC4),blurRadius:18,offset:Offset(0,7))]),child:Column(mainAxisAlignment:MainAxisAlignment.end,crossAxisAlignment:CrossAxisAlignment.end,children:[if(history.isNotEmpty)SizedBox(height:118,width:double.infinity,child:ListView.builder(reverse:true,itemCount:history.length,itemBuilder:(context,index){final line=history[history.length-1-index];return Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Text(line,textAlign:TextAlign.right,style:const TextStyle(color:Color(0xFF66728D),fontSize:13,fontWeight:FontWeight.w600),maxLines:1,overflow:TextOverflow.ellipsis));})),Text(expression,style:const TextStyle(color:Color(0xFF8993AC),fontSize:16),maxLines:1),const SizedBox(height:12),FittedBox(fit:BoxFit.scaleDown,child:Text(display,style:const TextStyle(color:_ink,fontSize:48,fontWeight:FontWeight.w900)))]))),
+   Padding(padding:const EdgeInsets.fromLTRB(10,0,10,14),child:Column(children:rows))
+  ])));
+ }
+}
+
+class _SoundboxInfo extends StatefulWidget{const _SoundboxInfo();@override State<_SoundboxInfo> createState()=>_SoundboxInfoState();}
+class _SoundboxInfoState extends State<_SoundboxInfo>{
+ final endpoint=TextEditingController(),token=TextEditingController();
+ bool loading=true,testing=false,connected=false,obscure=true;
+ String status='API अभी कनेक्ट नहीं है।';
+ @override void initState(){super.initState();_load();}
+ @override void dispose(){endpoint.dispose();token.dispose();super.dispose();}
+ Future<void> _load()async{endpoint.text=await _vault.read(key:'soundbox_api_url')??'';token.text=await _vault.read(key:'soundbox_api_token')??'';if(mounted)setState(()=>loading=false);}
+ Future<void> _save()async{await _vault.write(key:'soundbox_api_url',value:endpoint.text.trim());await _vault.write(key:'soundbox_api_token',value:token.text.trim());if(mounted)setState(()=>status='API सेटिंग सेव हो गई। अब कनेक्शन टेस्ट करें।');}
+ Future<void> _disconnect()async{await _vault.delete(key:'soundbox_api_url');await _vault.delete(key:'soundbox_api_token');endpoint.clear();token.clear();if(mounted)setState((){connected=false;status='API डिस्कनेक्ट कर दी गई है।';});}
+ Future<void> _test()async{
+  final uri=Uri.tryParse(endpoint.text.trim());
+  if(uri==null||!uri.hasScheme||!uri.hasAuthority){setState(()=>status='सही HTTPS API URL दर्ज करें।');return;}
+  setState((){testing=true;status='API कनेक्शन जाँचा जा रहा है...';});
+  try{
+   final headers=<String,String>{'Accept':'application/json'};
+   if(token.text.trim().isNotEmpty)headers['Authorization']='Bearer ${token.text.trim()}';
+   final response=await http.get(uri,headers:headers).timeout(const Duration(seconds:20));
+   if(response.statusCode>=200&&response.statusCode<300){connected=true;status='API endpoint से सफल response मिला (HTTP ${response.statusCode})। Payment feed की पुष्टि अलग से करनी होगी.';}
+   else{connected=false;status='API ने HTTP ${response.statusCode} लौटाया। URL, token या provider का सही endpoint जाँचें.';}
+  }catch(e){connected=false;status='कनेक्शन नहीं हुआ: $e';}
+  if(mounted)setState(()=>testing=false);
+ }
+ @override Widget build(BuildContext context)=>loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(18),children:[
+  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFFDDF7EF),Color(0xFFDDE8FF)]),borderRadius:BorderRadius.circular(20)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Icon(Icons.volume_up_rounded,color:Color(0xFF218C83),size:34),SizedBox(height:10),Text('Payment Sound Box',style:TextStyle(color:_ink,fontSize:21,fontWeight:FontWeight.w900)),Text('अपने payment provider का API endpoint जोड़ें',style:TextStyle(color:Color(0xFF647393),fontSize:12))])),
+  const SizedBox(height:16),TextField(controller:endpoint,keyboardType:TextInputType.url,decoration:const InputDecoration(labelText:'API Endpoint URL',hintText:'https://api.example.com/payments')),
+  const SizedBox(height:10),TextField(controller:token,obscureText:obscure,decoration:InputDecoration(labelText:'API Token / Secret (वैकल्पिक)',suffixIcon:IconButton(onPressed:()=>setState(()=>obscure=!obscure),icon:Icon(obscure?Icons.visibility:Icons.visibility_off)))),
+  const SizedBox(height:14),OutlinedButton.icon(onPressed:_save,icon:const Icon(Icons.save_outlined),label:const Text('API सेटिंग सेव करें')),
+  const SizedBox(height:8),FilledButton.icon(onPressed:testing?null:_test,icon:testing?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.link),label:Text(testing?'कनेक्शन जाँच रहे हैं...':'API Connect / Test Connection')),
+  TextButton.icon(onPressed:_disconnect,icon:const Icon(Icons.link_off),label:const Text('Disconnect / API हटाएँ')),
+  const SizedBox(height:14),Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:connected?const Color(0xFFE5F7EF):const Color(0xFFFFF4DF),borderRadius:BorderRadius.circular(14)),child:Row(children:[Icon(connected?Icons.check_circle:Icons.info_outline,color:connected?Colors.green:Colors.orange),const SizedBox(width:10),Expanded(child:Text(status,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w600)))])),
+  const SizedBox(height:12),const Text('ध्यान दें: यह endpoint और token को सेव करके API की पहुँच जाँचता है। असली पेमेंट की आवाज़ तभी चलेगी जब आपके payment provider का webhook/event format और verified payment callback जोड़ा जाएगा। केवल HTTP response को भुगतान की पुष्टि नहीं माना जाएगा।',style:TextStyle(color:Colors.blueGrey,fontSize:11))
+ ]);
+}
+class _CallingInfo extends StatelessWidget{const _CallingInfo();@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:const [
+ Icon(Icons.support_agent,size:64,color:_teal),SizedBox(height:12),
+ Text('AI Calling Assistant',style:TextStyle(fontSize:20,fontWeight:FontWeight.w900,color:_ink)),
+ Text('इस सुविधा को बाकी मॉड्यूल के बाद सक्रिय किया जाएगा। इसके लिए Android Default Dialer role, conditional call forwarding, सुरक्षित telephony provider और AI voice backend की ज़रूरत होगी।'),
+ SizedBox(height:12),ListTile(leading:Icon(Icons.phone_android),title:Text('SIM और कॉल अनुमति'),subtitle:Text('किसी कॉल को अपने आप forward या answer नहीं किया जाएगा।')),
+ ListTile(leading:Icon(Icons.privacy_tip_outlined),title:Text('Privacy first'),subtitle:Text('कॉलर को AI assistant से बात होने की जानकारी और रिकॉर्डिंग/डेटा नीति स्पष्ट होनी चाहिए.')),
+ Chip(label:Text('IMPLEMENTATION LAST — NOT ACTIVE'))
+]);}
