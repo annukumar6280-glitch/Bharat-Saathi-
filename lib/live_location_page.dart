@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -71,10 +71,12 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
 
   Future<void> _load({bool silent = false}) async {
     if (!widget.supabaseAvailable || _db.auth.currentUser == null) {
-      if (mounted) setState(() {
-        _loading = false;
-        _error = t('लोकेशन शेयर करने के लिए लॉगिन जरूरी है।', 'Sign in to use location sharing.');
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = t('लोकेशन शेयर करने के लिए लॉगिन जरूरी है।', 'Sign in to use location sharing.');
+        });
+      }
       return;
     }
     if (!silent && mounted) setState(() { _loading = true; _error = null; });
@@ -94,11 +96,13 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       if (enabled && !_tracker.isRunning) await _tracker.start(_db);
       if (!enabled && _tracker.isRunning) await _tracker.stop();
     } catch (_) {
-      if (mounted) setState(() {
-        _loading = false;
-        _error = t('डेटा लोड नहीं हुआ। इंटरनेट जाँचकर फिर कोशिश करें।',
-            'Could not load data. Check the internet and try again.');
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = t('डेटा लोड नहीं हुआ। इंटरनेट जाँचकर फिर कोशिश करें।',
+              'Could not load data. Check the internet and try again.');
+        });
+      }
     }
   }
 
@@ -133,6 +137,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       return false;
     }
     if (permission != LocationPermission.always) {
+      if (!mounted) return false;
       final openSettings = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -327,7 +332,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
               Expanded(child: Text(t('अपनी लाइव लोकेशन शेयर करें', 'Share your live location'),
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16))),
               Switch(value: _sharing, onChanged: _busy ? null : _toggleSharing,
-                activeColor: const Color(0xFF72D5A9)),
+                activeThumbColor: const Color(0xFF72D5A9)),
             ]),
             Text(_sharing
               ? t('आपकी लोकेशन स्वीकृत Family/Friends को दिख रही है।', 'Your location is visible to accepted Family/Friends.')
@@ -388,7 +393,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
               TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.bharatsaathi.bharat_saathi'),
               MarkerLayer(markers: _markers()),
-              RichAttributionWidget(attributions: [TextSourceAttribution('© OpenStreetMap contributors')]),
+              RichAttributionWidget(attributions: const [TextSourceAttribution('© OpenStreetMap contributors')]),
             ]))),
         _heading(t('मेरे Family & Friends', 'My Family & Friends')),
         if (_friends.isEmpty) Card(child: Padding(padding: const EdgeInsets.all(18),
@@ -447,11 +452,11 @@ class LiveLocationTracker {
     if (permission != LocationPermission.always) {
       throw Exception('Allow all the time location permission is required');
     }
-    const settings = AndroidSettings(
+    final settings = AndroidSettings(
       accuracy: LocationAccuracy.high,
       distanceFilter: 15,
-      intervalDuration: Duration(seconds: 10),
-      foregroundNotificationConfig: ForegroundNotificationConfig(
+      intervalDuration: const Duration(seconds: 10),
+      foregroundNotificationConfig: const ForegroundNotificationConfig(
         notificationTitle: 'Bharat Saathi Live Location',
         notificationText: 'Location is shared with accepted Family & Friends.',
         notificationChannelName: 'Live location sharing',
