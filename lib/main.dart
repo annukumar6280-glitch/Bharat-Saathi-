@@ -582,7 +582,7 @@ class Dashboard extends StatelessWidget {
         onTap: tap,
         borderRadius: BorderRadius.circular(19),
         child: Container(
-          padding: const EdgeInsets.all(13),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(19),
             gradient: LinearGradient(begin: Alignment.topLeft,end: Alignment.bottomRight,colors: darkModeEnabled ? [const Color(0xFF1C2D47),const Color(0xFF17263B)] : [Colors.white,Color.lerp(iconBg,Colors.white,.72)!]),
