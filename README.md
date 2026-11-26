@@ -47,9 +47,12 @@ GitHub Actions workflow: `.github/workflows/flutter-android.yml`
 
 ## Next implementation priorities
 
-1. Complete device-level testing of Family & Friends background location, permission flows, battery restrictions and Play Store background-location disclosures.\n2. Strengthen and test account-scoped automatic cloud snapshot sync/restore, account switching, offline retry behavior and recovery from interrupted writes.
+1. Complete device-level testing of Family & Friends background location, permission flows, battery restrictions and Play Store background-location disclosures. 
+2. Strengthen and test account-scoped automatic cloud snapshot sync/restore, account switching, offline retry behavior and recovery from interrupted writes.
 3. Complete Auth hardening: enable leaked-password protection where the Supabase plan supports it, configure production SMTP, verify password recovery and document an MFA strategy.
 4. Move from whole-snapshot backup toward a normalized, conflict-aware server-side transaction ledger with audit history before relying on multi-device financial workflows.
 5. Improve current khata and expense workflows, account statements and Hindi PDF export.
 6. Complete signed Android release configuration, real-device testing and Play Store declarations.
-7. Integrate recharge, BBPS, UPI or other external services only after approved providers, credentials, webhook verification, reconciliation and compliance checks are available.
+7. Configure a production map-tile provider; the public OpenStreetMap tile endpoint is used for development/testing and is not an unlimited production tile service.
+8. Configure Firebase Cloud Messaging for system push notifications when the app is closed; the current request inbox uses Supabase Realtime while connected.
+9. Integrate recharge, BBPS, UPI or other external services only after approved providers, credentials, webhook verification, reconciliation and compliance checks are available.
