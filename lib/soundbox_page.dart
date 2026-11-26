@@ -28,7 +28,7 @@ class _SoundBoxPageState extends State<SoundBoxPage> with WidgetsBindingObserver
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _refresh();
+    _openAccessSettingsOnEntry();
     _poller = Timer.periodic(const Duration(seconds: 3), (_) => _refresh(silent: true));
   }
 
@@ -85,10 +85,25 @@ class _SoundBoxPageState extends State<SoundBoxPage> with WidgetsBindingObserver
     }
   }
 
+  Future<void> _openAccessSettingsOnEntry() async {
+    await _refresh();
+    if (!mounted || _hasAccess) return;
+    // Notification Listener access is a protected Android special-access setting,
+    // not the normal per-app notification permission. Open the exact app toggle once
+    // when the user enters Sound Box; Android still requires the user to enable it.
+    await _openSettings();
+  }
+
   Future<void> _openSettings() async {
     try {
       await _channel.invokeMethod<bool>('openNotificationSettings');
-    } catch (_) {}
+    } on PlatformException catch (error) {
+      if (mounted) {
+        _showMessage('Notification Access सेटिंग नहीं खुल सकी: ${error.message ?? error.code}');
+      }
+    } catch (error) {
+      if (mounted) _showMessage('Notification Access सेटिंग नहीं खुल सकी: $error');
+    }
   }
 
   Future<void> _setEnabled(bool value) async {
