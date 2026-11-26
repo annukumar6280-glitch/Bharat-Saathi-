@@ -512,7 +512,7 @@ class Dashboard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  english ? 'Shopkeeper Tools' : 'दुकानदार के स्मार्ट टूल',
+                  english ? 'Smart Tools & Features' : 'स्मार्ट टूल और सुविधाएँ',
                   style: TextStyle(
                     color: navy,
                     fontSize: 18,
@@ -521,7 +521,7 @@ class Dashboard extends StatelessWidget {
                 ),
               ),
               Text(
-                english ? '6 useful tools' : '6 उपयोगी सुविधाएँ',
+                english ? '6 useful features' : '6 उपयोगी सुविधाएँ',
                 style: TextStyle(color: muted, fontSize: 11),
               ),
             ],
