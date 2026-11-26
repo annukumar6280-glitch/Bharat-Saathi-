@@ -431,6 +431,14 @@ class LiveLocationTracker {
   void addListener(void Function(Position?) listener) => _listeners.add(listener);
   void removeListener(void Function(Position?) listener) => _listeners.remove(listener);
 
+  Future<void> resumeIfEnabled(SupabaseClient client) async {
+    final user = client.auth.currentUser;
+    if (user == null || _subscription != null) return;
+    final row = await client.from('location_shares')
+        .select('enabled').eq('user_id', user.id).maybeSingle();
+    if (row?['enabled'] == true) await start(client);
+  }
+
   Future<void> start(SupabaseClient client) async {
     if (_subscription != null) return;
     final permission = await Geolocator.checkPermission();
