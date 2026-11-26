@@ -55,7 +55,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SoundBoxPage()));
     await tester.pumpAndSettle();
     expect(find.text('Notification Access की अनुमति दें'), findsOneWidget);
-    expect(find.text('पहले Notification Access की अनुमति दें'), findsOneWidget);
+    expect(find.textContaining('Notification Access की अनुमति बाकी'), findsOneWidget);
   });
 
   testWidgets('Sound Box ON/OFF switch stays usable before notification permission is granted', (tester) async {
