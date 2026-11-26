@@ -10,7 +10,8 @@ Internal preparation note only. Re-check the exact release APK, all included SDK
 - **Financial info — Other financial info:** current personal and shop records may include income, expenses, budgets, khata balances, credit/payment entries and transaction notes. Linked-khata entries and referral/commission records are stored in Supabase when those features are used.
 - **App activity / app interactions:** Google Mobile Ads SDK may collect ad interactions.
 - **App info and performance / diagnostics:** Google Mobile Ads SDK may collect diagnostics.
-- **Device or other IDs:** Google Mobile Ads SDK may collect advertising ID, app-set ID and other device/account identifiers.\n- **Location — precise location:** Family & Friends Live Location collects GPS coordinates and location accuracy while the user has explicitly enabled sharing. The latest location is stored in Supabase and shared only with accepted connections while sharing is enabled.
+- **Device or other IDs:** Google Mobile Ads SDK may collect advertising ID, app-set ID and other device/account identifiers. 
+- **Location — precise location:** Family & Friends Live Location collects GPS coordinates and location accuracy while the user has explicitly enabled sharing. The latest location is stored in Supabase and shared only with accepted connections while sharing is enabled.
 
 ## Processing and sharing
 
