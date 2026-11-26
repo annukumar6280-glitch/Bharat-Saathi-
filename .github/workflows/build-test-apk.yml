@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/family-friends-live-location
+      - feature/ai-poster-calculator-soundbox
   pull_request:
     branches:
       - main
