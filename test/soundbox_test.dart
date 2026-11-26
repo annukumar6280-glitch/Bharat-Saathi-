@@ -60,6 +60,6 @@ void main() {
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('₹500 प्राप्ति अलर्ट'), 300);
     expect(find.text('₹500 प्राप्ति अलर्ट'), findsOneWidget);
-    expect(find.textContaining('PhonePe'), findsOneWidget);
+    expect(find.textContaining('₹500 received from customer'), findsOneWidget);
   });
 }
