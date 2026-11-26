@@ -344,6 +344,8 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
           Text(t('Bharat Saathi में रजिस्टर मोबाइल नंबर डालें। अनुरोध स्वीकार होने पर दोनों एक-दूसरे की लोकेशन देख सकेंगे।',
             'Enter their registered Bharat Saathi mobile number. Once accepted, both can see each other’s locations.'),
             style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 6),
+          Text(t('ध्यान दें: मोबाइल नंबर अभी SMS OTP से सत्यापित नहीं है। अनुरोध स्वीकार होने के बाद नाम पहचानकर ही लोकेशन शेयर करें।', 'Note: mobile numbers are not yet verified by SMS OTP. Confirm the person’s identity before sharing location.'), style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 12),
           Row(children: [
             Expanded(child: TextField(controller: _phone, keyboardType: TextInputType.phone, maxLength: 10,
