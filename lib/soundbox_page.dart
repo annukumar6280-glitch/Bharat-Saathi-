@@ -117,9 +117,26 @@ class _SoundBoxPageState extends State<SoundBoxPage> with WidgetsBindingObserver
 
   Future<void> _testVoice() async {
     try {
-      await _channel.invokeMethod<bool>('testSpeech');
-    } catch (_) {
-      if (mounted) _showMessage('आवाज़ शुरू नहीं हो सकी।');
+      final started = await _channel.invokeMethod<bool>('testSpeech');
+      if (mounted && started == true) {
+        _showMessage('टेस्ट आवाज़ भेज दी गई है। आवाज़ न आए तो फोन का Media Volume और Text-to-Speech भाषा जाँचें।');
+      } else if (mounted) {
+        _showMessage('टेस्ट आवाज़ शुरू नहीं हो सकी।');
+      }
+    } on PlatformException catch (error) {
+      if (!mounted) return;
+      final message = switch (error.code) {
+        'TTS_LANGUAGE_UNAVAILABLE' =>
+          'फोन में चुनी हुई भाषा की Text-to-Speech आवाज़ उपलब्ध नहीं है। Android की Text-to-Speech सेटिंग में हिंदी/English Voice Data इंस्टॉल करें।',
+        'TTS_INIT_FAILED' =>
+          'फोन का Text-to-Speech इंजन शुरू नहीं हुआ। Google Speech Services को अपडेट/सक्रिय करें।',
+        'TTS_SPEAK_FAILED' =>
+          'Text-to-Speech इंजन आवाज़ नहीं चला पाया। Media Volume और Speech Services जाँचें।',
+        _ => 'आवाज़ शुरू नहीं हो सकी: ${error.message ?? error.code}',
+      };
+      _showMessage(message);
+    } catch (error) {
+      if (mounted) _showMessage('आवाज़ शुरू नहीं हो सकी: $error');
     }
   }
 
