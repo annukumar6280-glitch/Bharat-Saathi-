@@ -47,7 +47,7 @@ jobs:
           for permission in permissions:
               marker = permission.split('"')[1]
               if marker not in content:
-                  prefix += permission + "\\n"
+                  prefix += permission + "\n"
           manifest.write_text(prefix + suffix)
           print("Configured fine, background and foreground-service location permissions")
           PY
