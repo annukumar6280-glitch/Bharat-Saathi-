@@ -14,7 +14,7 @@ class LiveLocationPage extends StatefulWidget {
 }
 
 class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBindingObserver {
-  final SupabaseClient _db = Supabase.instance.client;
+  late final SupabaseClient _db;
   final TextEditingController _phone = TextEditingController();
   final LiveLocationTracker _tracker = LiveLocationTracker.instance;
   List<Map<String, dynamic>> _friends = [];
@@ -30,6 +30,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (widget.supabaseAvailable) _db = Supabase.instance.client;
     _tracker.addListener(_onPosition);
     _load();
     _subscribe();
@@ -55,8 +56,9 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
   }
 
   void _subscribe() {
+    if (!widget.supabaseAvailable) return;
     final user = _db.auth.currentUser;
-    if (user == null || !widget.supabaseAvailable) return;
+    if (user == null) return;
     _channel = _db.channel('family-location-' + user.id)
       ..onPostgresChanges(event: PostgresChangeEvent.all, schema: 'public',
           table: 'location_connections', callback: (_) => _load(silent: true))
@@ -322,7 +324,9 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
     return Scaffold(
       appBar: AppBar(title: Text(t('Family & Friends Live Location', 'Family & Friends Live Location')),
         actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
-      body: _loading ? const Center(child: CircularProgressIndicator()) :
+      body: !widget.supabaseAvailable
+          ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(t('लाइव लोकेशन के लिए फिलहाल सर्वर कनेक्शन उपलब्ध नहीं है।', 'Live location is unavailable because the server connection is not ready.'))))
+          : _loading ? const Center(child: CircularProgressIndicator()) :
       RefreshIndicator(onRefresh: _load, child: ListView(padding: const EdgeInsets.fromLTRB(14, 8, 14, 28), children: [
         Card(color: const Color(0xFF102A43), child: Padding(padding: const EdgeInsets.all(16), child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
