@@ -533,7 +533,7 @@ class Dashboard extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.52,
+            childAspectRatio: 1.12,
             children: [
               _tile('QR Code Tools', 'QR बनाएँ और स्कैन करें', Icons.qr_code_2,
                   const Color(0xFFE8F0FF), () => onTools('qr')),
@@ -593,8 +593,8 @@ class Dashboard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: darkModeEnabled
                       ? const Color(0xFF233D5B)
@@ -614,10 +614,10 @@ class Dashboard extends StatelessWidget {
                   size: 25,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
               Text(
                 title,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: navy,
@@ -628,7 +628,7 @@ class Dashboard extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: muted, fontSize: 10),
               ),
@@ -1073,7 +1073,7 @@ class _AuthPageState extends State<AuthPage>{
    final response=await client.auth.signUp(
     email:mail,password:password.text,
     data:{'full_name':enteredName,'phone':mobile,'accepted_terms':true,'terms_version':termsVersion,'terms_accepted_at':DateTime.now().toUtc().toIso8601String()},
-    emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'
+    emailRedirectTo:'bharatsaathi://login-callback'
    );
    if(response.session==null){if(mounted)setState(()=>signUp=false);message('रजिस्ट्रेशन हो गया। ईमेल पर आए लिंक से अकाउंट कन्फर्म करें। उसके बाद मोबाइल नंबर और पासवर्ड से लॉगिन करें।');}
    else{await _ensureProfileAndAccounts(nameOverride:enteredName,mobileOverride:mobile);try{await LiveLocationTracker.instance.resumeIfEnabled(client);}catch(_){}returnToHome=true;}
