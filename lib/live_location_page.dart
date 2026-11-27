@@ -241,8 +241,14 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
         _message(t('लोकेशन शेयरिंग बंद कर दी गई है।', 'Location sharing has stopped.'));
       }
       await _load(silent: true);
-    } catch (_) {
-      _message(t('सेटिंग सेव नहीं हुई। दोबारा कोशिश करें।', 'Could not save. Please try again.'));
+    } catch (error) {
+      if (enabled) {
+        try {
+          await _tracker.stop();
+          await _db.rpc('set_location_sharing', params: {'p_enabled': false});
+        } catch (_) {}
+      }
+      _message(t('लोकेशन शेयरिंग चालू नहीं हो सकी: ', 'Could not start location sharing: ') + error.toString());
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -303,8 +309,14 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
         'p_request_id': item['id'], 'p_accept': accept,
       });
       await _load(silent: true);
-    } catch (_) {
-      _message(t('अनुरोध अपडेट नहीं हुआ।', 'Could not update request.'));
+    } catch (error) {
+      if (accept) {
+        try {
+          await _tracker.stop();
+          await _db.rpc('set_location_sharing', params: {'p_enabled': false});
+        } catch (_) {}
+      }
+      _message(t('अनुरोध अपडेट नहीं हुआ: ', 'Could not update request: ') + error.toString());
     }
   }
 
