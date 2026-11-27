@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -129,8 +130,8 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       builder: (context) => AlertDialog(
         title: Text(t('लाइव लोकेशन की अनुमति', 'Live location disclosure')),
         content: Text(t(
-          'Bharat Saathi आपकी सटीक GPS लोकेशन और अपडेट का समय Supabase पर सेव करेगा। यह केवल आपके स्वीकार किए गए Family/Friends को दिखेगा। बैकग्राउंड में शेयरिंग चालू रहने पर Android की स्थायी Location सूचना दिखेगी। आप कभी भी Stop Sharing कर सकते हैं।',
-          'Bharat Saathi will store your precise GPS location and update time in Supabase. It is visible only to your accepted Family/Friends. Android will show an ongoing location notification while background sharing is active. You can stop sharing at any time.',
+          'Bharat Saathi आपकी सटीक GPS लोकेशन और अपडेट का समय Supabase पर सेव करेगा। यह केवल आपके स्वीकार किए गए Family/Friends को दिखेगा। बैकग्राउंड शेयरिंग के दौरान Android की स्थायी Location सूचना दिखाई देगी। आप कभी भी Stop Sharing कर सकते हैं।',
+          'Bharat Saathi stores your precise GPS location and update time in Supabase. It is visible only to accepted Family/Friends. Android displays an ongoing location notification during background sharing. You can stop sharing at any time.',
         )),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t('अभी नहीं', 'Not now'))),
@@ -139,29 +140,28 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       ),
     );
     if (consent != true) return false;
-
     if (!await Geolocator.isLocationServiceEnabled()) {
       _message(t('फोन की Location/GPS सेटिंग चालू करें।', 'Turn on Location/GPS in phone settings.'));
       await Geolocator.openLocationSettings();
       return false;
     }
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-      _message(t('लोकेशन परमिशन जरूरी है। ऐप सेटिंग में अनुमति दें।',
-          'Location permission is required. Allow it in app settings.'));
-      if (permission == LocationPermission.deniedForever) await Geolocator.openAppSettings();
+    var locationStatus = await Permission.location.request();
+    if (!locationStatus.isGranted) {
+      _message(t('सटीक लोकेशन की अनुमति जरूरी है। ऐप सेटिंग में अनुमति दें।',
+          'Precise location permission is required. Allow it in app settings.'));
+      if (locationStatus.isPermanentlyDenied) await openAppSettings();
       return false;
     }
-    if (permission != LocationPermission.always) {
+    var alwaysStatus = await Permission.locationAlways.request();
+    if (!alwaysStatus.isGranted) {
       if (!mounted) return false;
       final openSettings = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: Text(t('बैकग्राउंड लोकेशन जरूरी है', 'Background location is required')),
           content: Text(t(
-            'लोकेशन लगातार शेयर रखने के लिए App Permissions में Location को “Allow all the time” चुनें। केवल “While using the app” से बैकग्राउंड अपडेट रुक सकते हैं।',
-            'For continuous sharing, open App permissions and set Location to “Allow all the time”. “While using the app” may stop background updates.',
+            'App Permissions में Location को “Allow all the time” चुनें। केवल “While using the app” से स्क्रीन बंद होने या ऐप बदलने पर अपडेट रुक सकते हैं।',
+            'In App permissions, set Location to “Allow all the time”. “While using the app” may stop updates when the screen is off or you switch apps.',
           )),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t('रद्द करें', 'Cancel'))),
@@ -170,13 +170,52 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
         ),
       );
       if (openSettings != true) return false;
-      await Geolocator.openAppSettings();
-      permission = await Geolocator.checkPermission();
+      await openAppSettings();
+      alwaysStatus = await Permission.locationAlways.status;
     }
-    if (permission != LocationPermission.always) {
+    if (!alwaysStatus.isGranted || await Geolocator.checkPermission() != LocationPermission.always) {
       _message(t('लगातार बैकग्राउंड शेयरिंग के लिए “Allow all the time” चुनना जरूरी है।',
           'Choose “Allow all the time” to enable continuous background sharing.'));
       return false;
+    }
+    final notificationStatus = await Permission.notification.request();
+    if (!notificationStatus.isGranted) {
+      if (!mounted) return false;
+      final openSettings = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(t('Location सूचना की अनुमति', 'Location notification permission')),
+          content: Text(t(
+            'बैकग्राउंड लोकेशन सेवा की स्थायी सूचना दिखाने के लिए Notifications चालू करें।',
+            'Enable notifications so Android can show the ongoing background location service notification.',
+          )),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t('रद्द करें', 'Cancel'))),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(t('Notification सेटिंग खोलें', 'Open notification settings'))),
+          ],
+        ),
+      );
+      if (openSettings != true) return false;
+      await openAppSettings();
+      if (!await Permission.notification.isGranted) return false;
+    }
+    final batteryStatus = await Permission.ignoreBatteryOptimizations.status;
+    if (!batteryStatus.isGranted) {
+      final requestBattery = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(t('बैटरी प्रतिबंध', 'Battery restrictions')),
+          content: Text(t(
+            'कुछ फोन बैटरी बचाने के लिए बैकग्राउंड लोकेशन रोक देते हैं। बेहतर निरंतरता के लिए अगली Android स्क्रीन पर Bharat Saathi को बैटरी ऑप्टिमाइज़ेशन से छूट दें। यह वैकल्पिक है।',
+            'Some phones stop background location to save battery. For better continuity, allow Bharat Saathi to be excluded from battery optimization on the next Android screen. This is optional.',
+          )),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(t('अभी छोड़ें', 'Skip for now'))),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(t('बैटरी सेटिंग खोलें', 'Open battery setting'))),
+          ],
+        ),
+      );
+      if (requestBattery == true) await Permission.ignoreBatteryOptimizations.request();
     }
     return true;
   }
