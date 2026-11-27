@@ -698,6 +698,11 @@ class _CallingInfoState extends State<_CallingInfo> {
               Text('मोबाइल नंबर वेरिफाई है', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w700, fontSize: 12)),
             ]),
           ),
+        const SizedBox(height: 6),
+        const Text(
+          'यह OTP केवल AI Call Assistant के मोबाइल नंबर वेरिफिकेशन के लिए है। Bharat Saathi का मुख्य लॉगिन पहले जैसा ही रहेगा। चुना गया SIM कॉल कनेक्शन सेटअप के लिए सेव होगा।',
+          style: TextStyle(color: Colors.blueGrey, fontSize: 11, height: 1.4),
+        ),
         const SizedBox(height: 10),
         TextField(
           controller: _transfer,
