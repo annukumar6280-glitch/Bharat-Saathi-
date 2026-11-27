@@ -50,10 +50,12 @@ The server listens on port 5000. For a temporary test only, expose it through a 
 
 ## Exotel Stream URL
 
+The upstream integration uses a private path token to prevent unauthorized WebSocket clients from using the OpenAI key. Set the same long random token in `EXOTEL_STREAM_TOKEN` on the host and in the Exotel Stream URL. The token is a secret: do not publish it in screenshots or source code.
+
 The upstream integration uses:
 
 ```
-wss://YOUR_HOST/?sample-rate=8000
+wss://YOUR_HOST/YOUR_PRIVATE_STREAM_TOKEN?sample-rate=8000
 ```
 
 Exotel's support team must confirm AgentStream/Voicebot enablement and the correct flow setup first.
