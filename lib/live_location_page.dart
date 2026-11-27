@@ -201,6 +201,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
     }
     final batteryStatus = await Permission.ignoreBatteryOptimizations.status;
     if (!batteryStatus.isGranted) {
+      if (!mounted) return false;
       final requestBattery = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
