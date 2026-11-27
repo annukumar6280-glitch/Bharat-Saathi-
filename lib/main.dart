@@ -15,13 +15,13 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'utility_modules.dart';
-import 'soundbox_page.dart';
+import 'live_location_page.dart';
 const supabaseUrl='https://nlfdqkkrwthobvwqfepl.supabase.co';
 const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
 const privacyPolicyUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/privacy-policy.html';
 const termsConditionsUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/terms-and-conditions.html';
 const termsVersion='1.0';
-Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));}
+Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));if(ready){WidgetsBinding.instance.addPostFrameCallback((_)async{try{await LiveLocationTracker.instance.resumeIfEnabled(Supabase.instance.client);}catch(_){}});}}
 
 bool bannerAdsEnabled=true;
 const String _bannerAdUnitId='ca-app-pub-3940256099942544/6300978111';
@@ -412,7 +412,7 @@ final serviceTransactions=<Record>[];
  final metadataName=currentUser?.userMetadata?['full_name'];
  final accountName=metadataName is String&&metadataName.trim().isNotEmpty?metadataName.trim():(currentUser?.email?.split('@').first??'').trim();
  final pages=<Widget>[
-  Dashboard(english:english,accountName:accountName,onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>kind=='soundbox'?const SoundBoxPage():UtilityModulePage(kind:kind,title:const {'qr':'QR Code Tools','poster':'Poster Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator','soundbox':'Payment Sound Box','calling':'AI Calling Assistant'}[kind]??'Tools')))),
+  Dashboard(english:english,accountName:accountName,onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>kind=='location'?LiveLocationPage(supabaseAvailable:widget.supabaseAvailable,english:english):UtilityModulePage(kind:kind,title:const {'qr':'QR Code Tools','poster':'Poster Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator','location':'Family & Friends Live Location','calling':'AI Calling Assistant'}[kind]??'Tools')))),
   KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onAddPerson:()=>addLedgerPerson(khata),onCreditForPerson:(n)=>entry(false,n),onPaymentForPerson:(n)=>entry(true,n),onEditRecord:(r)=>editLedgerRecord(r,khata),onRenamePerson:(n)=>renameLedgerPerson(n,khata)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onAddPerson:()=>addLedgerPerson(personalKhata),onCreditForPerson:(n)=>personalLoanEntry(false,n),onPaymentForPerson:(n)=>personalLoanEntry(true,n),onEditRecord:(r)=>editLedgerRecord(r,personalKhata),onRenamePerson:(n)=>renameLedgerPerson(n,personalKhata)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
   ExpenseOnlyPage(items:expensesList,onAdd:expense,onEdit:editExpense),
    ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,darkMode:darkMode,onDarkMode:(v){setState(()=>darkMode=v);_persist();},onLanguage:(v){setState(()=>english=v);_persist();},expensesList:expensesList,khata:khata,personalTransactions:personalTransactions)
@@ -489,7 +489,7 @@ class Dashboard extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.42,
+            childAspectRatio: 1.10,
             children: [
               _tile(
                 english ? 'Khata Book' : 'खाता बुक',
@@ -512,7 +512,7 @@ class Dashboard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  english ? 'Shopkeeper Tools' : 'दुकानदार के स्मार्ट टूल',
+                  english ? 'Smart Tools & Features' : 'स्मार्ट टूल और सुविधाएँ',
                   style: TextStyle(
                     color: navy,
                     fontSize: 18,
@@ -521,7 +521,7 @@ class Dashboard extends StatelessWidget {
                 ),
               ),
               Text(
-                english ? '6 useful tools' : '6 उपयोगी सुविधाएँ',
+                english ? '6 useful features' : '6 उपयोगी सुविधाएँ',
                 style: TextStyle(color: muted, fontSize: 11),
               ),
             ],
@@ -533,7 +533,7 @@ class Dashboard extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.52,
+            childAspectRatio: 1.12,
             children: [
               _tile('QR Code Tools', 'QR बनाएँ और स्कैन करें', Icons.qr_code_2,
                   const Color(0xFFE8F0FF), () => onTools('qr')),
@@ -545,9 +545,9 @@ class Dashboard extends StatelessWidget {
               _tile('Smart Calculator', 'GST, छूट और मुनाफा',
                   Icons.calculate_outlined, const Color(0xFFEAE3FF),
                   () => onTools('calculator')),
-              _tile('Payment Sound Box', 'पेमेंट सूचना सेटअप',
-                  Icons.volume_up_outlined, const Color(0xFFE8F0FF),
-                  () => onTools('soundbox')),
+              _tile('Family & Friends Live Location', 'फैमिली की लाइव लोकेशन',
+                  Icons.location_on_outlined, const Color(0xFFDDF6EB),
+                  () => onTools('location')),
               _tile('AI Calling Assistant', 'कॉल असिस्टेंट',
                   Icons.support_agent, const Color(0xFFFFF2DE),
                   () => onTools('calling')),
@@ -582,7 +582,7 @@ class Dashboard extends StatelessWidget {
         onTap: tap,
         borderRadius: BorderRadius.circular(19),
         child: Container(
-          padding: const EdgeInsets.all(13),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(19),
             gradient: LinearGradient(begin: Alignment.topLeft,end: Alignment.bottomRight,colors: darkModeEnabled ? [const Color(0xFF1C2D47),const Color(0xFF17263B)] : [Colors.white,Color.lerp(iconBg,Colors.white,.72)!]),
@@ -593,8 +593,8 @@ class Dashboard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: darkModeEnabled
                       ? const Color(0xFF233D5B)
@@ -614,10 +614,10 @@ class Dashboard extends StatelessWidget {
                   size: 25,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
               Text(
                 title,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: navy,
@@ -628,7 +628,7 @@ class Dashboard extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: muted, fontSize: 10),
               ),
@@ -1073,10 +1073,10 @@ class _AuthPageState extends State<AuthPage>{
    final response=await client.auth.signUp(
     email:mail,password:password.text,
     data:{'full_name':enteredName,'phone':mobile,'accepted_terms':true,'terms_version':termsVersion,'terms_accepted_at':DateTime.now().toUtc().toIso8601String()},
-    emailRedirectTo:'https://annukumar6280-glitch.github.io/Bharat-Saathi-/email-confirmed.html'
+    emailRedirectTo:'bharatsaathi://login-callback'
    );
    if(response.session==null){if(mounted)setState(()=>signUp=false);message('रजिस्ट्रेशन हो गया। ईमेल पर आए लिंक से अकाउंट कन्फर्म करें। उसके बाद मोबाइल नंबर और पासवर्ड से लॉगिन करें।');}
-   else{await _ensureProfileAndAccounts(nameOverride:enteredName,mobileOverride:mobile);returnToHome=true;}
+   else{await _ensureProfileAndAccounts(nameOverride:enteredName,mobileOverride:mobile);try{await LiveLocationTracker.instance.resumeIfEnabled(client);}catch(_){}returnToHome=true;}
   }else{
    final response=await client.functions.invoke('phone-password-login',body:{'phone':mobile,'password':password.text});
    final payload=response.data;
@@ -1086,6 +1086,7 @@ class _AuthPageState extends State<AuthPage>{
    }
    await client.auth.setSession(payload['refresh_token'] as String);
    await _ensureProfileAndAccounts(mobileOverride:mobile);
+   try{await LiveLocationTracker.instance.resumeIfEnabled(client);}catch(_){}
    returnToHome=true;
   }
  }on AuthException catch(e){message(e.message,error:true);}
@@ -1135,7 +1136,7 @@ class _AuthPageState extends State<AuthPage>{
  on AuthException catch(e){message(e.message,error:true);}catch(_){message('रीसेट ईमेल नहीं भेजा जा सका। ईमेल और SMTP सेटिंग जाँचें।',error:true);}
  if(mounted)setState(()=>busy=false);
 }
- Future<void> signOut()async{setState(()=>busy=true);try{await client.auth.signOut();if(mounted)Navigator.of(context).popUntil((route)=>route.isFirst);}catch(_){message('लॉगआउट पूरा नहीं हुआ।',error:true);}if(mounted)setState(()=>busy=false);}
+ Future<void> signOut()async{setState(()=>busy=true);try{try{await client.rpc('set_location_sharing',params:{'p_enabled':false});}catch(_){}await LiveLocationTracker.instance.stop();await client.auth.signOut();if(mounted)Navigator.of(context).popUntil((route)=>route.isFirst);}catch(_){message('लॉगआउट पूरा नहीं हुआ।',error:true);}if(mounted)setState(()=>busy=false);}
  @override void dispose(){email.dispose();password.dispose();fullName.dispose();phone.dispose();super.dispose();}
  @override Widget build(BuildContext context){
  final user=widget.supabaseAvailable?client.auth.currentUser:null;
@@ -1243,7 +1244,7 @@ class PrivacyPolicyPage extends StatelessWidget{
  const PrivacyPolicyPage({super.key,this.english=false});
  static const List<List<String>> _hi=[
   ['1. यह नीति किस पर लागू है','यह नीति Bharat Saathi Android ऐप, अकाउंट, लिंक्ड खाता, रेफरल/कमीशन जानकारी और स्वचालित क्लाउड सिंक पर लागू होती है। ऐप इस्तेमाल करने के लिए अकाउंट और लॉगिन आवश्यक है।'],
-  ['2. ऐप में दर्ज और डिवाइस पर सेव डेटा','आप नाम, ईमेल, मोबाइल नंबर, व्यक्तिगत और दुकान के खाते, खर्च तथा सेवा रिकॉर्ड दर्ज कर सकते हैं। रिकॉर्ड पहले डिवाइस के स्थानीय SQLite डेटाबेस में सेव होते हैं। यदि आप Payment Sound Box सक्रिय करते हैं, तो Android Notification Access अनुमति से समर्थित UPI ऐप्स की सूचनाएँ डिवाइस पर पढ़ी जाती हैं। ऐप केवल संभावित प्राप्त भुगतान की राशि और स्रोत पहचानने की कोशिश करता है; Sound Box हिस्ट्री डिवाइस पर स्थानीय रूप से रखी जाती है और इस सुविधा के लिए notification content Supabase पर नहीं भेजा जाता। यह बैंक से स्वतंत्र पुष्टि नहीं है; UPI ऐप की सूचना देर से आए तो आवाज़ भी देर से आ सकती है।'],
+  ['2. ऐप में दर्ज और डिवाइस पर सेव डेटा','आप नाम, ईमेल, मोबाइल नंबर, व्यक्तिगत और दुकान के खाते, खर्च तथा सेवा रिकॉर्ड दर्ज कर सकते हैं। रिकॉर्ड पहले डिवाइस के स्थानीय SQLite डेटाबेस में सेव होते हैं। Family & Friends Live Location इस्तेमाल करने पर ऐप GPS लोकेशन और उसकी अपडेट का समय Supabase में सेव करता है। यह लोकेशन केवल उन Bharat Saathi सदस्यों को दिखाई देती है जिनके साथ आपने मोबाइल नंबर के माध्यम से कनेक्शन स्वीकार किया है और जिनके लिए लोकेशन शेयरिंग चालू है। दोनों सदस्य अपनी लोकेशन अलग-अलग बंद कर सकते हैं। ऐप वर्तमान लोकेशन रखता है, लोकेशन हिस्ट्री नहीं। बैकग्राउंड अपडेट के लिए Android लोकेशन और Foreground Service अनुमति जरूरी है; Force Stop, परमिशन हटाने, GPS/इंटरनेट बंद होने या बैटरी प्रतिबंध से अपडेट रुक सकते हैं।'],
   ['3. अकाउंट और लॉगिन जानकारी','रजिस्ट्रेशन में Supabase Auth ईमेल और पासवर्ड संभालता है। आपका नाम और 10 अंकों का मोबाइल नंबर प्रोफाइल से जुड़ता है। ईमेल कन्फर्म होने के बाद मोबाइल नंबर और पासवर्ड से लॉगिन होता है। मोबाइल नंबर अभी SMS OTP से सत्यापित नहीं होता। लॉगिन से पहले मोबाइल नंबर खोजने की सेवा ईमेल नहीं दिखाती; सफल लॉगिन के बाद अकाउंट ईमेल बैकअप स्क्रीन पर दिख सकता है। पासवर्ड ऐप में पढ़ने योग्य रूप में सेव नहीं होता।'],
   ['4. हर अकाउंट का अलग डेटा और ऑटोमैटिक क्लाउड सिंक','डिवाइस पर स्थानीय रिकॉर्ड लॉगिन किए हुए अकाउंट की अलग पहचान के अंतर्गत रखे जाते हैं। एक ही फोन पर अलग अकाउंट का स्थानीय डेटा अलग रहता है। लॉगिन रहने और इंटरनेट उपलब्ध होने पर ऐप रिकॉर्ड का स्नैपशॉट उसी अकाउंट के Supabase क्लाउड बैकअप में अपने-आप सिंक करता है। बदलाव के बाद सिंक शेड्यूल होता है; ऐप चलते समय समय-समय पर और दोबारा खुलने पर पुनः प्रयास होता है। ऑफलाइन रिकॉर्ड डिवाइस पर रहते हैं। ऐप पूरी तरह बंद रहने पर बैकग्राउंड सिंक की गारंटी नहीं है। उसी अकाउंट से दूसरे डिवाइस पर लॉगिन करके उपलब्ध बैकअप रीस्टोर किया जा सकता है। यह स्नैपशॉट बैकअप है, हर रिकॉर्ड का अलग सर्वर-लेजर सिंक नहीं। एक ही अकाउंट को एक समय पर एक फोन पर इस्तेमाल करें; अलग-अलग फोन पर एक साथ किए गए बदलाव अपने-आप मर्ज नहीं होते। पुराने संस्करण से अपडेट करने पर पुराने स्थानीय स्नैपशॉट को किसी अकाउंट में जोड़ने से पहले ऐप पुष्टि पूछता है। केवल सही पुराने अकाउंट की पुष्टि करने पर और तभी डेटा जोड़ा जाएगा जब उस अकाउंट में पहले से रिकॉर्ड न हों। मौजूदा रिकॉर्ड कभी ओवरराइट नहीं होंगे; इसलिए पहले उसी अकाउंट से लॉगिन करें जो पहले इस फोन पर इस्तेमाल होता था।'],
   ['5. लिंक्ड खाता और रेफरल जानकारी','लिंक्ड खाता इस्तेमाल करने पर संबंधित मोबाइल नंबर, दुकान/प्रदर्शन नाम, जुड़े खातों का संबंध और प्रतिभागियों द्वारा दर्ज उधारी/भुगतान तथा नोट Supabase में प्रोसेस होते हैं। रेफरल/कमीशन सुविधा इस्तेमाल करने पर रेफरल कोड, पात्रता और कमीशन रिकॉर्ड भी प्रोसेस हो सकते हैं। संबंधित जानकारी सुविधा के नियमों के अनुसार दिखाई जाती है।'],
@@ -1257,7 +1258,7 @@ class PrivacyPolicyPage extends StatelessWidget{
  ];
  static const List<List<String>> _en=[
   ['1. Scope','This policy applies to the Bharat Saathi Android app, user accounts, linked khata, referral/commission information and automatic cloud synchronization. An account and sign-in are required to use the app.'],
-  ['2. Information entered and stored on the device','You may provide your name, email address and mobile number, and enter personal or shop khata entries, linked-khata records, expenses and service records. Records are first saved in the device’s local SQLite database. If you enable Payment Sound Box, Android Notification Access reads notifications from supported UPI apps on the device. The app attempts to identify possible incoming-payment amounts and sources; Sound Box history is stored locally on the device, and notification content is not sent to Supabase for this feature. This is not independent bank verification; if a UPI app posts its notification late, the voice alert may also be late.'],
+  ['2. Information entered and stored on the device','You may provide your name, email address and mobile number, and enter personal or shop khata entries, linked-khata records, expenses and service records. Records are first saved in the device’s local SQLite database. If you use Family & Friends Live Location, the app collects GPS coordinates and update timestamps and stores the latest location in Supabase. It is visible only to Bharat Saathi users with whom you have accepted a phone-number connection and while your location sharing is enabled. Each member can stop sharing independently. The app stores the current location, not a location history. Android location and foreground-service permissions are required for background updates; Force Stop, revoked permissions, disabled GPS/network or battery restrictions can interrupt updates.'],
   ['3. Account and login information','Supabase Auth handles your registration email and password. Your name and 10-digit mobile number are associated with your profile. After email confirmation, you can sign in with your mobile number and password. The phone lookup does not reveal the account email before password verification; after successful login, the account email may be displayed to the signed-in user on the backup screen. The app does not store your password in readable form.'],
   ['4. Account separation and automatic cloud sync','Local records are stored under the identity of the signed-in account, separately from other accounts on the same device. While signed in and connected to the internet, the app automatically synchronizes a snapshot to that account’s Supabase cloud-backup record. Sync is scheduled after changes and retried periodically while the app is running and when it resumes. Offline records remain on the device. Background sync is not guaranteed while the app is fully closed. The latest available snapshot can be restored on another device by signing in to the same account. This is snapshot backup, not row-by-row synchronization to a server-side accounting ledger. Use one device per account at a time; concurrent edits on different devices are not automatically merged. When upgrading from an older version, the app asks which account should receive the previous single local snapshot. It is assigned only after confirmation; sign in first with the account that previously used the phone and confirm only if it is the correct account.'],
   ['5. Linked khata and referral information','If you use linked khata, the app processes relevant mobile numbers, shop/display names, account relationships and credit/payment entries and notes created by participants. If you use referral/commission features, referral codes, eligibility and commission records may also be processed. Information is made available according to each feature’s access rules.'],
@@ -1299,7 +1300,7 @@ class ProfilePage extends StatelessWidget{
    setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const PrivacyPolicyPage(english:false)))),
    Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
    setting(Icons.account_balance_wallet_outlined,english?'Coin Wallet':'कॉइन वॉलेट',english?'Balance, history and AI Call redemption':'कॉइन बैलेंस, हिस्ट्री और AI Call सब्सक्रिप्शन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AiCoinWalletPage(supabaseAvailable:supabaseAvailable)))),
-    setting(Icons.volume_up_outlined,english?'Payment Sound Box':'पेमेंट साउंड बॉक्स',english?'Speak incoming UPI payment notifications':'PhonePe, Google Pay, Paytm आदि के पेमेंट नोटिफिकेशन बोलें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const SoundBoxPage()))),
+    setting(Icons.location_on_outlined,english?'Family & Friends Live Location':'फैमिली लाइव लोकेशन',english?'Share live location with accepted family and friends':'परिवार और दोस्तों के साथ लाइव लोकेशन शेयर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LiveLocationPage(supabaseAvailable:supabaseAvailable,english:english)))),
    setting(Icons.card_giftcard,english?'Refer & Earn':'रेफर एंड अर्न',english?'Earn coins and unlock AI Call Assistant':'सफल रेफरल पर 10 कॉइन पाएँ; 100 कॉइन पर AI Call Assistant का 1 महीना',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
     setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),

@@ -132,12 +132,12 @@ void main() {
     expect(await LocalStore.read('account-b'), '{"cash":75}');
   });
 
-  testWidgets('Home shows the retained modules and six new shopkeeper tools', (tester) async {
+  testWidgets('Home shows the retained modules and six dashboard tools', (tester) async {
     await pumpDashboardPhone(tester);
     expect(find.text('आपका खाता'), findsOneWidget);
     expect(find.text('खाता बुक'), findsOneWidget);
     expect(find.text('बिल / सामान लिस्ट'), findsOneWidget);
-    for (final title in ['QR Code Tools','Poster Maker','Reminders & Notes','Smart Calculator','Payment Sound Box','AI Calling Assistant']) {
+    for (final title in ['QR Code Tools','Poster Maker','Reminders & Notes','Smart Calculator','Family & Friends Live Location','AI Calling Assistant']) {
       await tester.ensureVisible(find.text(title));
       expect(find.text(title), findsOneWidget);
     }

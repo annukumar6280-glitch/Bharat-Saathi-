@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
@@ -10,6 +11,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:video_player/video_player.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _ink=Color(0xFF25345B), _teal=Color(0xFF159B88);
@@ -19,7 +22,7 @@ class UtilityModulesPage extends StatelessWidget {
   const UtilityModulesPage({super.key});
   static const modules=[
     ('QR Code Tools','QR बनाएँ और स्कैन करें',Icons.qr_code_2,'qr'),
-    ('Poster Maker','Gemini AI से पोस्टर बनाएँ',Icons.auto_awesome,'poster'),
+    ('Poster Maker','FLUX AI से फोटो और पोस्टर बनाएँ',Icons.auto_awesome,'poster'),
     ('Reminders & Notes','काम और भुगतान की याद दिलाएँ',Icons.notifications_active_outlined,'reminders'),
     ('Smart Calculator','सामान्य कैलकुलेटर + GST',Icons.calculate_outlined,'calculator'),
     ('Payment Sound Box','पेमेंट API कनेक्शन',Icons.volume_up_outlined,'soundbox'),
@@ -80,11 +83,12 @@ class _PosterToolState extends State<_PosterTool>{
  final shop=TextEditingController(),phone=TextEditingController(),brief=TextEditingController();
  final posterKey=GlobalKey();
  final picker=ImagePicker();
- Uint8List? referenceImage,generatedImage;
+ Uint8List? referenceImage,generatedImage,generatedVideo;
+ VideoPlayerController? videoController;
  String imageMime='image/jpeg',creativeMode='creative',generationType='image';
  bool generating=false;
  String? error,usageMessage;
- @override void dispose(){shop.dispose();phone.dispose();brief.dispose();super.dispose();}
+ @override void dispose(){shop.dispose();phone.dispose();brief.dispose();videoController?.dispose();super.dispose();}
  Future<void> _pickImage()async{
   final file=await picker.pickImage(source:ImageSource.gallery,imageQuality:88,maxWidth:1800,maxHeight:1800);
   if(file==null)return;
@@ -93,20 +97,31 @@ class _PosterToolState extends State<_PosterTool>{
   setState((){referenceImage=bytes;imageMime=file.mimeType??'image/jpeg';error=null;});
  }
  Future<void> _generate()async{
-  if(brief.text.trim().isEmpty){setState(()=>error='बताएँ कि किस तरह की इमेज बनानी है।');return;}
+  if(brief.text.trim().isEmpty){setState(()=>error=generationType=='video'?'बताएँ कि किस तरह का वीडियो बनाना है।':'बताएँ कि किस तरह की इमेज बनानी है।');return;}
   if(generationType=='video'){
-   setState(()=>error='AI वीडियो के लिए Google Veo का सर्वर-साइड प्रोजेक्ट और Cloud Storage सेटअप अभी बाकी है। ग्राहक को API Key नहीं डालनी होगी।');
-   return;
+   final confirm=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(
+    title:const Text('AI वीडियो जनरेशन'),
+    content:const Text('सफल वीडियो जनरेशन पर 50 Bharat Saathi कॉइन खर्च होंगे। fal.ai API की अलग provider billing भी लागू हो सकती है। क्या आप आगे बढ़ना चाहते हैं?'),
+    actions:[
+     TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('रद्द करें')),
+     FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('50 कॉइन के साथ बनाएँ')),
+    ],
+   ));
+   if(confirm!=true||!mounted)return;
   }
-  setState((){generating=true;error=null;generatedImage=null;usageMessage=null;});
+  setState((){generating=true;error=null;generatedImage=null;generatedVideo=null;usageMessage=null;});
+  await videoController?.dispose();
+  videoController=null;
   try{
-   final prompt=creativeMode=='shop'
-    ? 'Create a premium, polished Indian business advertising design. Business/shop name: ${shop.text.trim()}. Contact number: ${phone.text.trim()}. Design brief: ${brief.text.trim()}. Make it suitable for a shop, service, product promotion or offer. Compose a visually striking vertical 4:5 poster. Render any short requested text legibly; do not invent phone numbers or prices.'
-    : 'Create an original high-quality creative image based on this brief: ${brief.text.trim()}. This is general-purpose creative work, not necessarily a shop advertisement. It may be a personal portrait concept, birthday or wedding design, festival greeting, social media creative, wallpaper, illustration, artwork or any other safe creative idea. Use a polished professional composition and vertical 4:5 format.';
+   final prompt=generationType=='video'
+    ? 'Create a polished short vertical 9:16 video with natural synchronized audio. Scene and motion brief: ${brief.text.trim()}. Use cinematic camera movement, coherent motion, professional lighting and a clean composition. If a reference image is supplied, use it as the visual starting reference. Do not add watermarks, fake text, prices or contact details.'
+    : creativeMode=='shop'
+     ? 'Create a premium, polished Indian business advertising design. Business/shop name: ${shop.text.trim()}. Contact number: ${phone.text.trim()}. Design brief: ${brief.text.trim()}. Make it suitable for a shop, service, product promotion or offer. Compose a visually striking vertical 4:5 poster. Render any short requested text legibly; do not invent phone numbers or prices.'
+     : 'Create an original high-quality creative image based on this brief: ${brief.text.trim()}. This is general-purpose creative work, not necessarily a shop advertisement. It may be a personal portrait concept, birthday or wedding design, festival greeting, social media creative, wallpaper, illustration, artwork or any other safe creative idea. Use a polished professional composition and vertical 4:5 format.';
    final response=await Supabase.instance.client.functions.invoke(
     'ai-creative-studio',
     body:{
-     'generationType':'image',
+     'generationType':generationType,
      'mode':creativeMode,
      'prompt':prompt,
      'imageBase64':referenceImage==null?null:base64Encode(referenceImage!),
@@ -116,20 +131,44 @@ class _PosterToolState extends State<_PosterTool>{
    final data=response.data;
    if(data is! Map)throw Exception('AI सर्वर से सही response नहीं मिला।');
    if(data['error']!=null)throw Exception(data['error'].toString());
-   final encoded=data['imageBase64']?.toString();
-   if(encoded==null||encoded.isEmpty)throw Exception('AI ने इमेज डेटा नहीं लौटाया।');
-   if(!mounted)return;
-   setState((){
-    generatedImage=base64Decode(encoded);
+   if(generationType=='video'){
+    final encoded=data['videoBase64']?.toString();
+    if(encoded==null||encoded.isEmpty)throw Exception('AI ने वीडियो डेटा नहीं लौटाया।');
+    final bytes=base64Decode(encoded);
+    final directory=await getTemporaryDirectory();
+    final file=File('${directory.path}/bharat-saathi-ai-video.mp4');
+    await file.writeAsBytes(bytes,flush:true);
+    final controller=VideoPlayerController.file(file);
+    await controller.initialize();
+    await controller.setLooping(true);
+    if(!mounted){await controller.dispose();return;}
+    setState(()=>videoController=controller);
+    await controller.play();
+   }else{
+    final encoded=data['imageBase64']?.toString();
+    if(encoded==null||encoded.isEmpty)throw Exception('AI ने इमेज डेटा नहीं लौटाया।');
+    if(!mounted)return;
+    setState(()=>generatedImage=base64Decode(encoded));
+   }
+   if(mounted){
     final remaining=data['freeRemaining'];
-    usageMessage=remaining is num?'इस महीने के फ्री जनरेशन बाकी: ${remaining.toInt()}':'आपका AI क्रिएशन तैयार है।';
-   });
+    final coinCost=data['coinCost'];
+    final coinBalance=data['coinBalance'];
+    final usage=coinCost is num && coinCost>0
+      ? 'इस जनरेशन में ${coinCost.toInt()} कॉइन इस्तेमाल हुए। बाकी कॉइन: ${coinBalance is num?coinBalance.toInt():0}.'
+      : 'इस महीने के फ्री जनरेशन बाकी: ${remaining is num?remaining.toInt():0}';
+    setState(()=>usageMessage=usage);
+   }
   }catch(e){
    if(mounted)setState(()=>error='जनरेशन नहीं हो पाया: ${e.toString().replaceFirst('Exception: ','')}');
   }finally{if(mounted)setState(()=>generating=false);}
  }
  Future<void> _download()async{
   try{
+   if(generatedVideo!=null){
+    await Share.shareXFiles([XFile.fromData(generatedVideo!,mimeType:'video/mp4',name:'bharat-saathi-ai-video.mp4')],text:'Bharat Saathi AI Video');
+    return;
+   }
    final boundary=posterKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
    if(boundary==null)throw Exception('प्रीव्यू तैयार नहीं है।');
    final image=await boundary.toImage(pixelRatio:3);
@@ -139,11 +178,10 @@ class _PosterToolState extends State<_PosterTool>{
   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}
  }
  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
-  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF4338CA),Color(0xFF9333EA),Color(0xFFEC4899)]),borderRadius:BorderRadius.circular(22)),child:const Row(children:[Icon(Icons.auto_awesome,color:Colors.white,size:32),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('AI Creative Studio',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),Text('पोस्टर, फोटो और क्रिएटिव डिजाइन',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
+  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF4338CA),Color(0xFF9333EA),Color(0xFFEC4899)]),borderRadius:BorderRadius.circular(22)),child:const Row(children:[Icon(Icons.auto_awesome,color:Colors.white,size:32),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('AI Creative Studio',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),Text('AI से फोटो और पोस्टर बनाएँ',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
   const SizedBox(height:16),
   SegmentedButton<String>(segments:const [ButtonSegment(value:'creative',label:Text('अपनी पसंद का')),ButtonSegment(value:'shop',label:Text('दुकान / बिजनेस'))],selected:{creativeMode},onSelectionChanged:(v)=>setState(()=>creativeMode=v.first)),
   const SizedBox(height:12),
-  SegmentedButton<String>(segments:const [ButtonSegment(value:'image',label:Text('AI फोटो / पोस्टर')),ButtonSegment(value:'video',label:Text('AI वीडियो'))],selected:{generationType},onSelectionChanged:(v)=>setState(()=>generationType=v.first)),
   if(creativeMode=='shop')...[
    const SizedBox(height:10),TextField(controller:shop,decoration:const InputDecoration(labelText:'दुकान / बिजनेस का नाम (वैकल्पिक)',prefixIcon:Icon(Icons.storefront))),
    const SizedBox(height:10),TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'पोस्टर पर मोबाइल नंबर (वैकल्पिक)',prefixIcon:Icon(Icons.phone))),
@@ -157,6 +195,13 @@ class _PosterToolState extends State<_PosterTool>{
   FilledButton.icon(onPressed:generating?null:_generate,icon:generating?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.auto_awesome),label:Text(generating?'AI तैयार कर रहा है...':generationType=='video'?'AI वीडियो बनाएँ':'AI फोटो / पोस्टर बनाएँ')),
   if(error!=null)Padding(padding:const EdgeInsets.only(top:10),child:Text(error!,style:const TextStyle(color:Colors.red,fontSize:12))),
   if(usageMessage!=null)Padding(padding:const EdgeInsets.only(top:10),child:Text(usageMessage!,style:const TextStyle(color:Color(0xFF0F8A69),fontWeight:FontWeight.w700))),
+  if(videoController!=null&&videoController!.value.isInitialized)...[
+   const SizedBox(height:18),const Text('आपका AI वीडियो',style:TextStyle(fontSize:17,fontWeight:FontWeight.w900)),
+   const SizedBox(height:10),
+   ClipRRect(borderRadius:BorderRadius.circular(18),child:AspectRatio(aspectRatio:videoController!.value.aspectRatio,child:VideoPlayer(videoController!))),
+   Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>setState(()=>videoController!.value.isPlaying?videoController!.pause():videoController!.play()),icon:Icon(videoController!.value.isPlaying?Icons.pause_circle:Icons.play_circle,size:34)),const SizedBox(width:8),const Text('वीडियो चलाएँ / रोकें')]),
+   FilledButton.icon(onPressed:_download,icon:const Icon(Icons.download_rounded),label:const Text('वीडियो डाउनलोड / शेयर करें')),
+  ],
   if(generatedImage!=null)...[
    const SizedBox(height:18),const Text('आपका AI क्रिएशन',style:TextStyle(fontSize:17,fontWeight:FontWeight.w900)),
    const SizedBox(height:10),
@@ -312,11 +357,278 @@ class _SoundboxInfoState extends State<_SoundboxInfo>{
   const SizedBox(height:12),const Text('ध्यान दें: यह endpoint और token को सेव करके API की पहुँच जाँचता है। असली पेमेंट की आवाज़ तभी चलेगी जब आपके payment provider का webhook/event format और verified payment callback जोड़ा जाएगा। केवल HTTP response को भुगतान की पुष्टि नहीं माना जाएगा।',style:TextStyle(color:Colors.blueGrey,fontSize:11))
  ]);
 }
-class _CallingInfo extends StatelessWidget{const _CallingInfo();@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:const [
- Icon(Icons.support_agent,size:64,color:_teal),SizedBox(height:12),
- Text('AI Calling Assistant',style:TextStyle(fontSize:20,fontWeight:FontWeight.w900,color:_ink)),
- Text('इस सुविधा को बाकी मॉड्यूल के बाद सक्रिय किया जाएगा। इसके लिए Android Default Dialer role, conditional call forwarding, सुरक्षित telephony provider और AI voice backend की ज़रूरत होगी।'),
- SizedBox(height:12),ListTile(leading:Icon(Icons.phone_android),title:Text('SIM और कॉल अनुमति'),subtitle:Text('किसी कॉल को अपने आप forward या answer नहीं किया जाएगा।')),
- ListTile(leading:Icon(Icons.privacy_tip_outlined),title:Text('Privacy first'),subtitle:Text('कॉलर को AI assistant से बात होने की जानकारी और रिकॉर्डिंग/डेटा नीति स्पष्ट होनी चाहिए.')),
- Chip(label:Text('IMPLEMENTATION LAST — NOT ACTIVE'))
-]);}
+class _CallingInfo extends StatefulWidget {
+  const _CallingInfo();
+
+  @override
+  State<_CallingInfo> createState() => _CallingInfoState();
+}
+
+class _CallingInfoState extends State<_CallingInfo> {
+  final _phone = TextEditingController();
+  final _transfer = TextEditingController();
+  final _instructions = TextEditingController();
+  int _simSlot = 1;
+  String _forwardingMode = 'no_answer';
+  bool _disclosureAccepted = false;
+  bool _transcriptEnabled = false;
+  bool _loading = true;
+  bool _saving = false;
+  bool _signedIn = false;
+  String? _status;
+  List<Map<String, dynamic>> _logs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _phone.dispose();
+    _transfer.dispose();
+    _instructions.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final db = Supabase.instance.client;
+      final user = db.auth.currentUser;
+      if (user == null) {
+        if (mounted) setState(() { _loading = false; _signedIn = false; });
+        return;
+      }
+      final results = await Future.wait<dynamic>([
+        db.from('ai_call_assistant_settings').select().eq('user_id', user.id).maybeSingle(),
+        db.from('ai_call_logs')
+            .select('id,caller_number,caller_name,call_reason,summary,status,created_at,duration_seconds')
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false)
+            .limit(10),
+      ]);
+      final settings = results[0] as Map<String, dynamic>?;
+      final logs = (results[1] as List)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _signedIn = true;
+        _loading = false;
+        _logs = logs;
+        if (settings != null) {
+          _phone.text = settings['phone_number']?.toString() ?? '';
+          _transfer.text = settings['transfer_number']?.toString() ?? '';
+          _instructions.text = settings['assistant_instructions']?.toString() ?? '';
+          _simSlot = (settings['sim_slot'] as num?)?.toInt() ?? 1;
+          _forwardingMode = settings['forwarding_mode']?.toString() ?? 'no_answer';
+          _disclosureAccepted = settings['disclosure_accepted_at'] != null;
+          _transcriptEnabled = settings['transcript_enabled'] == true;
+        }
+      });
+    } catch (error) {
+      if (mounted) setState(() { _loading = false; _status = 'सेटिंग लोड नहीं हुई: $error'; });
+    }
+  }
+
+  String _normalisePhone(String value) =>
+      value.trim().replaceAll(RegExp(r'[^0-9+]'), '');
+
+  Future<void> _save() async {
+    final db = Supabase.instance.client;
+    final user = db.auth.currentUser;
+    if (user == null) {
+      setState(() => _status = 'सेटिंग सेव करने के लिए पहले लॉगिन करें।');
+      return;
+    }
+    final phone = _normalisePhone(_phone.text);
+    if (phone.isEmpty) {
+      setState(() => _status = 'अपना मोबाइल नंबर दर्ज करें।');
+      return;
+    }
+    if (!_disclosureAccepted) {
+      setState(() => _status = 'AI पहचान और कॉलर को सूचना देने की सहमति चुनें।');
+      return;
+    }
+    setState(() { _saving = true; _status = null; });
+    try {
+      await db.from('ai_call_assistant_settings').upsert({
+        'user_id': user.id,
+        'sim_slot': _simSlot,
+        'phone_number': phone,
+        'transfer_number': _normalisePhone(_transfer.text),
+        'assistant_instructions': _instructions.text.trim(),
+        'enabled': false,
+        'forwarding_mode': _forwardingMode,
+        'disclosure_accepted_at': DateTime.now().toUtc().toIso8601String(),
+        'transcript_enabled': _transcriptEnabled,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      if (mounted) setState(() => _status = 'आपकी Calling Assistant सेटिंग सुरक्षित रूप से सेव हो गई है।');
+    } catch (error) {
+      if (mounted) setState(() => _status = 'सेटिंग सेव नहीं हुई: $error');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  String _statusLabel(String? value) {
+    switch (value) {
+      case 'completed': return 'पूरी हुई';
+      case 'transferred': return 'आपको ट्रांसफर हुई';
+      case 'missed': return 'मिस्ड कॉल';
+      case 'failed': return 'कनेक्शन विफल';
+      case 'answered': return 'AI ने जवाब दिया';
+      default: return 'कॉल प्राप्त हुई';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (!_signedIn) {
+      return const Center(child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Text('AI Calling Assistant सेट करने के लिए Bharat Saathi में लॉगिन करें।'),
+      ));
+    }
+    return ListView(
+      padding: const EdgeInsets.all(18),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFFE0F4F5), Color(0xFFE6EAFE)]),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.support_agent_rounded, size: 38, color: _teal),
+              SizedBox(height: 10),
+              Text('आपका AI फोन असिस्टेंट', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: _ink)),
+              SizedBox(height: 5),
+              Text('AI आपकी ओर से आने वाली कॉल संभालेगा, ज़रूरी जानकारी लेगा और ज़रूरत पड़ने पर कॉल आपको ट्रांसफर करेगा।', style: TextStyle(color: Color(0xFF52627D), height: 1.4)),
+              SizedBox(height: 10),
+              Row(children: [
+                Icon(Icons.radio_button_checked, size: 13, color: Colors.orange),
+                SizedBox(width: 6),
+                Text('टेलीफोनी कनेक्शन सेटअप बाकी है', style: TextStyle(color: Color(0xFF8B5B13), fontWeight: FontWeight.w800, fontSize: 12)),
+              ]),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        const Text('1. अपना नंबर और SIM चुनें', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<int>(
+          initialValue: _simSlot,
+          decoration: const InputDecoration(labelText: 'किस SIM पर कॉल आती हैं?'),
+          items: const [
+            DropdownMenuItem(value: 1, child: Text('SIM 1')),
+            DropdownMenuItem(value: 2, child: Text('SIM 2')),
+          ],
+          onChanged: (value) { if (value != null) setState(() => _simSlot = value); },
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _phone,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(labelText: 'आपका मोबाइल नंबर', hintText: '+91XXXXXXXXXX'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _transfer,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(labelText: 'कॉल ट्रांसफर नंबर', hintText: 'खाली छोड़ें तो ऊपर वाला नंबर इस्तेमाल होगा'),
+        ),
+        const SizedBox(height: 18),
+        const Text('2. कॉल फॉरवर्डिंग का तरीका', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: _forwardingMode,
+          decoration: const InputDecoration(labelText: 'कब AI को कॉल भेजनी है?'),
+          items: const [
+            DropdownMenuItem(value: 'no_answer', child: Text('जब आप कॉल न उठाएँ')),
+            DropdownMenuItem(value: 'busy', child: Text('जब आपका नंबर व्यस्त हो')),
+            DropdownMenuItem(value: 'unreachable', child: Text('जब फोन बंद या नेटवर्क से बाहर हो')),
+          ],
+          onChanged: (value) { if (value != null) setState(() => _forwardingMode = value); },
+        ),
+        const SizedBox(height: 8),
+        const Text('कॉल फॉरवर्डिंग आपके मोबाइल ऑपरेटर के जरिए चालू होगी। अभी ऐप आपके SIM पर कोई कोड अपने-आप नहीं चलाता। सही ऑपरेटर सेटअप मिलने पर ऐप में चरण-दर-चरण निर्देश दिए जाएँगे।', style: TextStyle(color: Colors.blueGrey, fontSize: 12, height: 1.4)),
+        const SizedBox(height: 18),
+        const Text('3. AI को क्या करना है?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _instructions,
+          minLines: 4,
+          maxLines: 7,
+          maxLength: 4000,
+          decoration: const InputDecoration(
+            labelText: 'अपने असिस्टेंट को निर्देश दें',
+            hintText: 'जैसे: कॉल करने वाले का नाम, पता और कॉल का कारण पूछें। जरूरी काम हो तो मुझे कॉल ट्रांसफर करें।',
+            alignLabelWithHint: true,
+          ),
+        ),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _disclosureAccepted,
+          onChanged: (value) => setState(() => _disclosureAccepted = value == true),
+          title: const Text('AI हर कॉल की शुरुआत में अपनी पहचान बताएगा और कॉलर को जानकारी देगा।', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _transcriptEnabled,
+          onChanged: (value) => setState(() => _transcriptEnabled = value == true),
+          title: const Text('कॉलर को सूचना/सहमति देने के बाद बातचीत का टेक्स्ट और सारांश सेव करें।', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          onPressed: _saving ? null : _save,
+          icon: _saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save_outlined),
+          label: Text(_saving ? 'सेव हो रहा है...' : 'सेटिंग सेव करें'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: null,
+          icon: const Icon(Icons.call),
+          label: const Text('AI को कॉल करें — टेलीफोनी सेटअप के बाद'),
+        ),
+        if (_status != null) ...[
+          const SizedBox(height: 10),
+          Text(_status!, style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
+        ],
+        const SizedBox(height: 22),
+        const Text('हाल की कॉल', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const SizedBox(height: 8),
+        if (_logs.isEmpty)
+          const Text('अभी कोई AI कॉल रिकॉर्ड उपलब्ध नहीं है।', style: TextStyle(color: Colors.blueGrey, fontSize: 12))
+        else
+          ..._logs.map((log) {
+            final name = (log['caller_name']?.toString().trim().isNotEmpty ?? false)
+                ? log['caller_name'].toString()
+                : (log['caller_number']?.toString().isNotEmpty ?? false)
+                    ? log['caller_number'].toString()
+                    : 'अनजान कॉलर';
+            final summary = log['summary']?.toString().trim() ?? '';
+            return Card(
+              child: ListTile(
+                leading: const CircleAvatar(child: Icon(Icons.call_received)),
+                title: Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text(summary.isNotEmpty ? summary : (log['call_reason']?.toString() ?? 'कॉल विवरण उपलब्ध नहीं')),
+                trailing: Text(_statusLabel(log['status']?.toString()), style: const TextStyle(fontSize: 10, color: Colors.blueGrey)),
+                isThreeLine: true,
+                dense: true,
+              ),
+            );
+          }),
+        const SizedBox(height: 12),
+        const Text('सुरक्षा: AI कभी भी OTP, UPI PIN, बैंक पासवर्ड या कार्ड PIN नहीं माँगेगा। कॉल संभालना तभी शुरू होगा जब टेलीफोनी प्रोवाइडर, OpenAI SIP webhook और कॉल-फॉरवर्डिंग का परीक्षण पूरा होगा।', style: TextStyle(color: Colors.blueGrey, fontSize: 11, height: 1.4)),
+      ],
+    );
+  }
+}

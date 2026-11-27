@@ -2,6 +2,7 @@ name: Bharat Saathi Android Validation
 on:
   push:
     branches:
+      - feature/family-friends-live-location
       - feature/ai-poster-calculator-soundbox
   pull_request:
     branches:
@@ -44,39 +45,62 @@ jobs:
               settings.write_text(content)
           print("Configured Google-hosted Maven Central mirror before Maven Central")
           PY
-      - name: Install Bharat Saathi Sound Box Android service
+      - name: Configure Android email confirmation deep link
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import shutil
-
-          source = Path("tooling/android")
-          target = Path("android/app/src/main/kotlin/com/bharatsaathi/bharat_saathi")
-          target.mkdir(parents=True, exist_ok=True)
-          for file in source.glob("*.kt"):
-              shutil.copy2(file, target / file.name)
 
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           content = manifest.read_text()
-          marker = 'android:name=".SoundBoxNotificationListener"'
-          if marker not in content:
-              service = """
-                  <service
-                      android:name=".SoundBoxNotificationListener"
-                      android:label="Bharat Saathi Sound Box"
-                      android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
-                      android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.service.notification.NotificationListenerService" />
-                      </intent-filter>
-                  </service>
-              """
-              closing = content.find("</application>")
-              if closing < 0:
-                  raise SystemExit("Android application closing tag missing")
-              content = content[:closing] + service + content[closing:]
+          scheme = 'android:scheme="bharatsaathi"'
+          if scheme not in content:
+              main_action = content.find('android:name="android.intent.action.MAIN"')
+              if main_action < 0:
+                  raise SystemExit("MainActivity launcher intent filter not found")
+              activity_start = content.rfind("<activity", 0, main_action)
+              activity_end = content.find("</activity>", main_action)
+              if activity_start < 0 or activity_end < 0:
+                  raise SystemExit("Could not locate MainActivity in Android manifest")
+              intent_filter = '''
+                  <intent-filter>
+                      <action android:name="android.intent.action.VIEW" />
+                      <category android:name="android.intent.category.DEFAULT" />
+                      <category android:name="android.intent.category.BROWSABLE" />
+                      <data android:scheme="bharatsaathi" android:host="login-callback" />
+                  </intent-filter>
+              '''
+              content = content[:activity_end] + intent_filter + content[activity_end:]
               manifest.write_text(content)
-          print("Installed Sound Box NotificationListenerService and MethodChannel host")
+          verified = manifest.read_text()
+          if scheme not in verified or 'android:host="login-callback"' not in verified:
+              raise SystemExit("Bharat Saathi email deep link verification failed")
+          print("Configured bharatsaathi://login-callback Android deep link")
+          PY
+      - name: Configure Android location permissions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          content = manifest.read_text()
+          permissions = [
+              '    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />',
+              '    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />',
+              '    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />',
+              '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />',
+              '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />',
+              '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
+          ]
+          start = content.find("<application")
+          if start < 0:
+              raise SystemExit("Android application tag missing")
+          prefix = content[:start]
+          suffix = content[start:]
+          for permission in permissions:
+              marker = permission.split('"')[1]
+              if marker not in content:
+                  prefix += permission + "\n"
+          manifest.write_text(prefix + suffix)
+          print("Configured fine, background and foreground-service location permissions")
           PY
       - name: Set Android target API 36
         run: |
