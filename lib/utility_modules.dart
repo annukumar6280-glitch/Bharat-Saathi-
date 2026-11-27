@@ -632,16 +632,6 @@ class _CallingInfoState extends State<_CallingInfo> {
         const SizedBox(height: 18),
         const Text('1. अपना नंबर और SIM चुनें', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
         const SizedBox(height: 8),
-        DropdownButtonFormField<int>(
-          initialValue: _simSlot,
-          decoration: const InputDecoration(labelText: 'किस SIM पर कॉल आती हैं?'),
-          items: const [
-            DropdownMenuItem(value: 1, child: Text('SIM 1')),
-            DropdownMenuItem(value: 2, child: Text('SIM 2')),
-          ],
-          onChanged: (value) { if (value != null) setState(() => _simSlot = value); },
-        ),
-        const SizedBox(height: 10),
         TextField(
           controller: _phone,
           enabled: !_otpSent,
@@ -658,14 +648,24 @@ class _CallingInfoState extends State<_CallingInfo> {
             suffixIcon: _phoneVerified ? const Icon(Icons.verified, color: Colors.green) : null,
           ),
         ),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<int>(
+          initialValue: _simSlot,
+          decoration: const InputDecoration(labelText: 'किस SIM पर कॉल आती हैं?'),
+          items: const [
+            DropdownMenuItem(value: 1, child: Text('SIM 1')),
+            DropdownMenuItem(value: 2, child: Text('SIM 2')),
+          ],
+          onChanged: (value) { if (value != null) setState(() => _simSlot = value); },
+        ),
         const SizedBox(height: 8),
         if (!_phoneVerified && !_otpSent)
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: _sendingOtp ? null : _sendPhoneOtp,
-              icon: _sendingOtp ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.sms_outlined),
-              label: Text(_sendingOtp ? 'OTP भेजा जा रहा है...' : 'नंबर कनेक्ट करें और OTP भेजें'),
+              icon: _sendingOtp ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.link),
+              label: Text(_sendingOtp ? 'OTP भेजा जा रहा है...' : 'कनेक्ट करें और OTP भेजें'),
             ),
           ),
         if (_otpSent) ...[
@@ -684,6 +684,10 @@ class _CallingInfoState extends State<_CallingInfo> {
             const SizedBox(width: 8),
             TextButton(onPressed: _sendingOtp ? null : _resendPhoneOtp, child: const Text('दोबारा भेजें')),
           ]),
+          TextButton(
+            onPressed: () => setState(() { _otpSent = false; _pendingPhone = null; _otp.clear(); }),
+            child: const Text('मोबाइल नंबर बदलें'),
+          ),
         ],
         if (_phoneVerified)
           const Padding(
