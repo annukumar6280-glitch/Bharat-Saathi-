@@ -72,9 +72,9 @@ class Config:
     VAD_SILENCE_DURATION_MS = int(os.getenv('VAD_SILENCE_DURATION_MS', '400'))
     
     # ===== BOT PERSONALITY =====
-    SALES_BOT_NAME = os.getenv('SALES_BOT_NAME', 'Sarah')
+    SALES_BOT_NAME = os.getenv('SALES_BOT_NAME', 'Bharat Saathi Assistant')
     SALES_REP_NAME = os.getenv('SALES_REP_NAME', 'Bharat Saathi Assistant')  # Alias for compatibility
-    COMPANY_NAME = os.getenv('COMPANY_NAME', 'TechSolutions Inc.')
+    COMPANY_NAME = os.getenv('COMPANY_NAME', 'Bharat Saathi')
     TEMPERATURE = float(os.getenv('TEMPERATURE', '0.7'))
     
     # ===== AI ENGINE PREFERENCES =====
