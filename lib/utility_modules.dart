@@ -22,7 +22,7 @@ class UtilityModulesPage extends StatelessWidget {
   const UtilityModulesPage({super.key});
   static const modules=[
     ('QR Code Tools','QR बनाएँ और स्कैन करें',Icons.qr_code_2,'qr'),
-    ('Poster Maker','Gemini AI से पोस्टर बनाएँ',Icons.auto_awesome,'poster'),
+    ('Poster Maker','FLUX AI से फोटो और पोस्टर बनाएँ',Icons.auto_awesome,'poster'),
     ('Reminders & Notes','काम और भुगतान की याद दिलाएँ',Icons.notifications_active_outlined,'reminders'),
     ('Smart Calculator','सामान्य कैलकुलेटर + GST',Icons.calculate_outlined,'calculator'),
     ('Payment Sound Box','पेमेंट API कनेक्शन',Icons.volume_up_outlined,'soundbox'),
@@ -178,7 +178,7 @@ class _PosterToolState extends State<_PosterTool>{
   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}
  }
  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
-  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF4338CA),Color(0xFF9333EA),Color(0xFFEC4899)]),borderRadius:BorderRadius.circular(22)),child:const Row(children:[Icon(Icons.auto_awesome,color:Colors.white,size:32),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('AI Creative Studio',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),Text('पोस्टर, फोटो और AI वीडियो',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
+  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF4338CA),Color(0xFF9333EA),Color(0xFFEC4899)]),borderRadius:BorderRadius.circular(22)),child:const Row(children:[Icon(Icons.auto_awesome,color:Colors.white,size:32),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('AI Creative Studio',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),Text('AI से फोटो और पोस्टर बनाएँ',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
   const SizedBox(height:16),
   SegmentedButton<String>(segments:const [ButtonSegment(value:'creative',label:Text('अपनी पसंद का')),ButtonSegment(value:'shop',label:Text('दुकान / बिजनेस'))],selected:{creativeMode},onSelectionChanged:(v)=>setState(()=>creativeMode=v.first)),
   const SizedBox(height:12),
