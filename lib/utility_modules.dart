@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -369,19 +368,12 @@ class _CallingInfoState extends State<_CallingInfo> {
   final _phone = TextEditingController();
   final _transfer = TextEditingController();
   final _instructions = TextEditingController();
-  final _otp = TextEditingController();
   int _simSlot = 1;
   String _forwardingMode = 'no_answer';
   bool _disclosureAccepted = false;
   bool _transcriptEnabled = false;
   bool _loading = true;
   bool _saving = false;
-  bool _sendingOtp = false;
-  bool _verifyingOtp = false;
-  bool _otpSent = false;
-  bool _phoneVerified = false;
-  String? _pendingPhone;
-  String? _verifiedPhone;
   bool _signedIn = false;
   String? _status;
   List<Map<String, dynamic>> _logs = [];
@@ -397,7 +389,6 @@ class _CallingInfoState extends State<_CallingInfo> {
     _phone.dispose();
     _transfer.dispose();
     _instructions.dispose();
-    _otp.dispose();
     super.dispose();
   }
 
@@ -421,20 +412,13 @@ class _CallingInfoState extends State<_CallingInfo> {
       final logs = (results[1] as List)
           .map((row) => Map<String, dynamic>.from(row as Map))
           .toList();
-      final authPhone = user.phone ?? '';
-      final storedPhone = settings?['phone_number']?.toString() ?? '';
-      final isPhoneVerified = authPhone.isNotEmpty && authPhone == _normalisePhone(storedPhone);
-      final displayPhone = storedPhone.isNotEmpty ? storedPhone : authPhone;
-      final displayDigits = displayPhone.replaceAll(RegExp(r'\D'), '');
       if (!mounted) return;
       setState(() {
         _signedIn = true;
-        _phoneVerified = isPhoneVerified;
-        _verifiedPhone = isPhoneVerified ? authPhone : null;
-        _phone.text = displayDigits.length >= 10 ? displayDigits.substring(displayDigits.length - 10) : displayDigits;
         _loading = false;
         _logs = logs;
         if (settings != null) {
+          _phone.text = settings['phone_number']?.toString() ?? '';
           _transfer.text = settings['transfer_number']?.toString() ?? '';
           _instructions.text = settings['assistant_instructions']?.toString() ?? '';
           _simSlot = (settings['sim_slot'] as num?)?.toInt() ?? 1;
@@ -448,97 +432,8 @@ class _CallingInfoState extends State<_CallingInfo> {
     }
   }
 
-  String _normalisePhone(String value) {
-    final digits = value.replaceAll(RegExp(r'\D'), '');
-    if (digits.length == 10 && RegExp(r'^[6-9]\d{9}$').hasMatch(digits)) return '+91$digits';
-    if (digits.length == 12 && digits.startsWith('91') && RegExp(r'^[6-9]\d{9}$').hasMatch(digits.substring(2))) return '+$digits';
-    if (digits.length == 11 && digits.startsWith('0') && RegExp(r'^[6-9]\d{9}$').hasMatch(digits.substring(1))) return '+91' + digits.substring(1);
-    return value.trim().replaceAll(RegExp(r'\s+'), '');
-  }
-
-  bool _isValidIndianPhone(String value) => RegExp(r'^\+91[6-9]\d{9}$').hasMatch(value);
-
-  Future<void> _sendPhoneOtp() async {
-    final db = Supabase.instance.client;
-    final user = db.auth.currentUser;
-    final phone = _normalisePhone(_phone.text);
-    if (user == null) { setState(() => _status = 'पहले Bharat Saathi में लॉगिन करें।'); return; }
-    if (!_isValidIndianPhone(phone)) { setState(() => _status = 'सही 10 अंकों का भारतीय मोबाइल नंबर दर्ज करें।'); return; }
-    if (user.phone == phone) {
-      setState(() { _phoneVerified = true; _verifiedPhone = phone; _status = 'यह मोबाइल नंबर पहले से वेरिफाई है।'; });
-      return;
-    }
-    setState(() { _sendingOtp = true; _status = null; });
-    try {
-      // Phone-change OTP verifies this number on the existing email/Google account.
-      // It does not create or replace the main Bharat Saathi login.
-      await db.auth.updateUser(UserAttributes(phone: phone));
-      if (!mounted) return;
-      setState(() {
-        _pendingPhone = phone;
-        _otpSent = true;
-        _phoneVerified = false;
-        _verifiedPhone = null;
-        _status = 'OTP भेज दिया गया है। SMS में आया 6 अंकों का कोड डालें।';
-      });
-    } catch (error) {
-      if (mounted) setState(() => _status = 'OTP नहीं भेजा गया: $error');
-    } finally {
-      if (mounted) setState(() => _sendingOtp = false);
-    }
-  }
-
-  Future<void> _resendPhoneOtp() async {
-    final phone = _pendingPhone;
-    if (phone == null) return;
-    setState(() { _sendingOtp = true; _status = null; });
-    try {
-      await Supabase.instance.client.auth.resend(type: OtpType.phoneChange, phone: phone);
-      if (mounted) setState(() => _status = 'नया OTP भेज दिया गया है।');
-    } catch (error) {
-      if (mounted) setState(() => _status = 'OTP दोबारा नहीं भेजा गया: $error');
-    } finally {
-      if (mounted) setState(() => _sendingOtp = false);
-    }
-  }
-
-  Future<void> _verifyPhoneOtp() async {
-    final phone = _pendingPhone;
-    final token = _otp.text.trim();
-    if (phone == null || !RegExp(r'^\d{6}$').hasMatch(token)) {
-      setState(() => _status = '6 अंकों का OTP दर्ज करें।');
-      return;
-    }
-    setState(() { _verifyingOtp = true; _status = null; });
-    try {
-      final db = Supabase.instance.client;
-      final response = await db.auth.verifyOTP(phone: phone, token: token, type: OtpType.phoneChange);
-      final verifiedPhone = response.user?.phone ?? db.auth.currentUser?.phone;
-      if (verifiedPhone != phone) throw Exception('मोबाइल नंबर वेरिफाई नहीं हुआ।');
-      final user = db.auth.currentUser;
-      if (user == null) throw Exception('लॉगिन सेशन उपलब्ध नहीं है।');
-      await db.from('ai_call_assistant_settings').upsert({
-        'user_id': user.id,
-        'phone_number': phone,
-        'sim_slot': _simSlot,
-        'enabled': false,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-      if (!mounted) return;
-      setState(() {
-        _phoneVerified = true;
-        _verifiedPhone = phone;
-        _otpSent = false;
-        _pendingPhone = null;
-        _otp.clear();
-        _status = 'मोबाइल नंबर वेरिफाई हो गया।';
-      });
-    } catch (error) {
-      if (mounted) setState(() => _status = 'OTP वेरिफाई नहीं हुआ: $error');
-    } finally {
-      if (mounted) setState(() => _verifyingOtp = false);
-    }
-  }
+  String _normalisePhone(String value) =>
+      value.trim().replaceAll(RegExp(r'[^0-9+]'), '');
 
   Future<void> _save() async {
     final db = Supabase.instance.client;
@@ -550,10 +445,6 @@ class _CallingInfoState extends State<_CallingInfo> {
     final phone = _normalisePhone(_phone.text);
     if (phone.isEmpty) {
       setState(() => _status = 'अपना मोबाइल नंबर दर्ज करें।');
-      return;
-    }
-    if (!_phoneVerified || _verifiedPhone != phone) {
-      setState(() => _status = 'सेटिंग सेव करने से पहले मोबाइल नंबर का OTP वेरिफिकेशन पूरा करें।');
       return;
     }
     if (!_disclosureAccepted) {
