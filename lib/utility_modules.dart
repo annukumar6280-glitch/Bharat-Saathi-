@@ -98,6 +98,17 @@ class _PosterToolState extends State<_PosterTool>{
  }
  Future<void> _generate()async{
   if(brief.text.trim().isEmpty){setState(()=>error=generationType=='video'?'बताएँ कि किस तरह का वीडियो बनाना है।':'बताएँ कि किस तरह की इमेज बनानी है।');return;}
+  if(generationType=='video'){
+   final confirm=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(
+    title:const Text('AI वीडियो जनरेशन'),
+    content:const Text('सफल वीडियो जनरेशन पर 50 Bharat Saathi कॉइन खर्च होंगे। Gemini API की अलग provider billing भी लागू हो सकती है। क्या आप आगे बढ़ना चाहते हैं?'),
+    actions:[
+     TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('रद्द करें')),
+     FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('50 कॉइन के साथ बनाएँ')),
+    ],
+   ));
+   if(confirm!=true||!mounted)return;
+  }
   setState((){generating=true;error=null;generatedImage=null;generatedVideo=null;usageMessage=null;});
   await videoController?.dispose();
   videoController=null;
