@@ -141,7 +141,12 @@ class _PosterToolState extends State<_PosterTool>{
    }
    if(mounted){
     final remaining=data['freeRemaining'];
-    setState(()=>usageMessage=remaining is num?'इस महीने के फ्री जनरेशन बाकी: ${remaining.toInt()}':'आपका AI क्रिएशन तैयार है।');
+    final coinCost=data['coinCost'];
+    final coinBalance=data['coinBalance'];
+    final usage=coinCost is num && coinCost>0
+      ? 'इस जनरेशन में ${coinCost.toInt()} कॉइन इस्तेमाल हुए। बाकी कॉइन: ${coinBalance is num?coinBalance.toInt():0}.'
+      : 'इस महीने के फ्री जनरेशन बाकी: ${remaining is num?remaining.toInt():0}';
+    setState(()=>usageMessage=usage);
    }
   }catch(e){
    if(mounted)setState(()=>error='जनरेशन नहीं हो पाया: ${e.toString().replaceFirst('Exception: ','')}');
