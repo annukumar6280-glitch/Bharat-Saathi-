@@ -6,7 +6,7 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
@@ -26,8 +26,10 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON request." }, 400); }
-  if (body.generationType !== "image") {
-    return json({ error: "Video generation needs a separately configured Google Veo / Vertex AI project and Cloud Storage bucket. No customer API key is required." }, 501);
+  const generationType = body.generationType === "video" ? "video" : body.generationType === "image" ? "image" : null;
+  if (!generationType) return json({ error: "Choose image or video generation." }, 400);
+  if (generationType === "video") {
+    return json({ error: "AI video generation is not enabled yet. Google Veo / Vertex AI and Cloud Storage must be configured first. No coins have been deducted." }, 501);
   }
   const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
   if (!prompt || prompt.length > 5000) return json({ error: "Please enter a prompt up to 5,000 characters." }, 400);
@@ -38,17 +40,69 @@ Deno.serve(async (req) => {
   }
 
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: quota, error: quotaError } = await admin.rpc("consume_ai_generation_credit", { p_user_id: authData.user.id });
-  if (quotaError) return json({ error: "AI usage limit service is temporarily unavailable." }, 503);
-  if (!quota?.allowed) return json({ error: "Your 10 monthly free generations are used. A paid plan or credit pack will be available after billing is connected.", freeRemaining: 0, paidCredits: 0 }, 402);
+  const { data: quota, error: quotaError } = await admin.rpc("consume_ai_coin_credit", {
+    p_user_id: authData.user.id,
+    p_generation_type: generationType,
+  });
+  if (quotaError) return json({ error: "AI coin wallet service is temporarily unavailable." }, 503);
+  if (!quota?.allowed) {
+    return json({
+      error: "आपके इस महीने के 5 मुफ्त फोटो पूरे हो गए हैं या वॉलेट में पर्याप्त कॉइन नहीं हैं।",
+      freeRemaining: quota?.freeRemaining ?? 0,
+      coinBalance: quota?.coinBalance ?? 0,
+      coinCost: quota?.coinCost ?? 5,
+      needsCoins: true,
+    }, 402);
+  }
   const source = String(quota.creditSource ?? "free");
 
   if (!geminiKey) {
-    await admin.rpc("refund_ai_generation_credit", { p_user_id: authData.user.id, p_source: source });
-    return json({ error: "AI service is not configured yet. Add GEMINI_API_KEY to Supabase Edge Function secrets." }, 503);
+    await admin.rpc("refund_ai_coin_credit", {
+      p_user_id: authData.user.id, p_source: source, p_generation_type: generationType,
+    });
+    return json({ error: "AI service is not configured yet. No coins were charged.", refund: true }, 503);
   }
 
   try {
+    if (generationType === "video") {
+      const videoInput = imageBase64
+        ? [
+            { type: "image", data: imageBase64, mime_type: imageMimeType },
+            { type: "text", text: prompt },
+          ]
+        : prompt;
+      const videoResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+        body: JSON.stringify({
+          model: "gemini-omni-1.2-flash",
+          input: videoInput,
+          response_format: { type: "video", aspect_ratio: "9:16" },
+          store: false,
+        }),
+      });
+      const videoResult = await videoResponse.json();
+      if (!videoResponse.ok) {
+        throw new Error(videoResult?.error?.message ?? "Gemini video generation failed.");
+      }
+      const outputSteps = Array.isArray(videoResult?.steps) ? videoResult.steps : [];
+      const video = outputSteps
+        .flatMap((step: Record<string, unknown>) => Array.isArray(step.content) ? step.content : [])
+        .find((item: Record<string, unknown>) => item.type === "video" && typeof item.data === "string");
+      const videoBase64 = video?.data ?? videoResult?.output_video?.data;
+      if (typeof videoBase64 !== "string" || !videoBase64) {
+        throw new Error("Gemini did not return a completed MP4 video. Please try again.");
+      }
+      return json({
+        videoBase64,
+        mimeType: video?.mime_type ?? "video/mp4",
+        freeRemaining: quota.freeRemaining ?? 0,
+        coinBalance: quota.coinBalance ?? 0,
+        coinCost: quota.coinCost ?? 0,
+        creditSource: source,
+      }, 200);
+    }
+
     const parts: Array<Record<string, unknown>> = [{ text: prompt }];
     if (imageBase64) parts.push({ inlineData: { mimeType: imageMimeType, data: imageBase64 } });
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent", {
@@ -64,10 +118,16 @@ Deno.serve(async (req) => {
     const outputParts = result?.candidates?.[0]?.content?.parts ?? [];
     const image = outputParts.find((part: Record<string, unknown>) => part.inlineData)?.inlineData;
     if (!image?.data) throw new Error("Gemini did not return an image.");
-    return json({ imageBase64: image.data, mimeType: image.mimeType ?? "image/png", freeRemaining: quota.freeRemaining ?? 0, paidCredits: quota.paidCredits ?? 0 }, 200);
+    return json({
+      imageBase64: image.data, mimeType: image.mimeType ?? "image/png",
+      freeRemaining: quota.freeRemaining ?? 0, coinBalance: quota.coinBalance ?? 0,
+      coinCost: quota.coinCost ?? 0, creditSource: source,
+    }, 200);
   } catch (error) {
-    await admin.rpc("refund_ai_generation_credit", { p_user_id: authData.user.id, p_source: source });
-    return json({ error: error instanceof Error ? error.message : "Image generation failed." }, 502);
+    await admin.rpc("refund_ai_coin_credit", {
+      p_user_id: authData.user.id, p_source: source, p_generation_type: generationType,
+    });
+    return json({ error: error instanceof Error ? error.message : "Image generation failed.", refund: true }, 502);
   }
 });
 
