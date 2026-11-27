@@ -443,8 +443,6 @@ class _CallingInfoState extends State<_CallingInfo> {
     return value.trim().replaceAll(RegExp(r'\s+'), '');
   }
 
-  bool _isValidIndianPhone(String value) => RegExp(r'^\+91[6-9]\d{9}$').hasMatch(value);
-
   // SIM ownership verification stays separate from Supabase Auth.
   // Carrier Number Verification (CAMARA/GSMA) will be enabled after operator
   // access is provisioned. This screen never sends an SMS or changes the login phone.
@@ -539,18 +537,13 @@ class _CallingInfoState extends State<_CallingInfo> {
         const SizedBox(height: 8),
         TextField(
           controller: _phone,
-          enabled: !_otpSent,
+          enabled: true,
           keyboardType: TextInputType.phone,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
-          onChanged: (_) {
-            final current = _normalisePhone(_phone.text);
-            if (_phoneVerified && current != _verifiedPhone) setState(() { _phoneVerified = false; _verifiedPhone = null; });
-          },
           decoration: InputDecoration(
             labelText: 'आपका मोबाइल नंबर',
             hintText: '9876543210',
             prefixText: '+91 ',
-            suffixIcon: _phoneVerified ? const Icon(Icons.verified, color: Colors.green) : null,
           ),
         ),
         const SizedBox(height: 10),
