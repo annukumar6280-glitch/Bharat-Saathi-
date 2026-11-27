@@ -424,15 +424,17 @@ class _CallingInfoState extends State<_CallingInfo> {
       final authPhone = user.phone ?? '';
       final storedPhone = settings?['phone_number']?.toString() ?? '';
       final isPhoneVerified = authPhone.isNotEmpty && authPhone == _normalisePhone(storedPhone);
+      final displayPhone = storedPhone.isNotEmpty ? storedPhone : authPhone;
+      final displayDigits = displayPhone.replaceAll(RegExp(r'\D'), '');
       if (!mounted) return;
       setState(() {
         _signedIn = true;
         _phoneVerified = isPhoneVerified;
         _verifiedPhone = isPhoneVerified ? authPhone : null;
+        _phone.text = displayDigits.length >= 10 ? displayDigits.substring(displayDigits.length - 10) : displayDigits;
         _loading = false;
         _logs = logs;
         if (settings != null) {
-          _phone.text = settings['phone_number']?.toString() ?? '';
           _transfer.text = settings['transfer_number']?.toString() ?? '';
           _instructions.text = settings['assistant_instructions']?.toString() ?? '';
           _simSlot = (settings['sim_slot'] as num?)?.toInt() ?? 1;
@@ -548,6 +550,10 @@ class _CallingInfoState extends State<_CallingInfo> {
     final phone = _normalisePhone(_phone.text);
     if (phone.isEmpty) {
       setState(() => _status = 'अपना मोबाइल नंबर दर्ज करें।');
+      return;
+    }
+    if (!_phoneVerified || _verifiedPhone != phone) {
+      setState(() => _status = 'सेटिंग सेव करने से पहले मोबाइल नंबर का OTP वेरिफिकेशन पूरा करें।');
       return;
     }
     if (!_disclosureAccepted) {
