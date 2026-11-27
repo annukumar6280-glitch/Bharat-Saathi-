@@ -1,0 +1,6 @@
+# OpenAI Realtime ↔ Exotel AgentStream (bridge only)
+
+websockets==11.0.3
+python-dotenv
+numpy
+audioop-lts; python_version >= "3.13"
