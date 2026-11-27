@@ -28,9 +28,6 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON request." }, 400); }
   const generationType = body.generationType === "video" ? "video" : body.generationType === "image" ? "image" : null;
   if (!generationType) return json({ error: "Choose image or video generation." }, 400);
-  if (generationType === "video") {
-    return json({ error: "AI video generation is not enabled yet. Google Veo / Vertex AI and Cloud Storage must be configured first. No coins have been deducted." }, 501);
-  }
   const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
   if (!prompt || prompt.length > 5000) return json({ error: "Please enter a prompt up to 5,000 characters." }, 400);
   const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : null;
