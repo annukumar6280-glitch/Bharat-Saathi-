@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
@@ -10,6 +11,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:video_player/video_player.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _ink=Color(0xFF25345B), _teal=Color(0xFF159B88);
@@ -80,11 +83,12 @@ class _PosterToolState extends State<_PosterTool>{
  final shop=TextEditingController(),phone=TextEditingController(),brief=TextEditingController();
  final posterKey=GlobalKey();
  final picker=ImagePicker();
- Uint8List? referenceImage,generatedImage;
+ Uint8List? referenceImage,generatedImage,generatedVideo;
+ VideoPlayerController? videoController;
  String imageMime='image/jpeg',creativeMode='creative',generationType='image';
  bool generating=false;
  String? error,usageMessage;
- @override void dispose(){shop.dispose();phone.dispose();brief.dispose();super.dispose();}
+ @override void dispose(){shop.dispose();phone.dispose();brief.dispose();videoController?.dispose();super.dispose();}
  Future<void> _pickImage()async{
   final file=await picker.pickImage(source:ImageSource.gallery,imageQuality:88,maxWidth:1800,maxHeight:1800);
   if(file==null)return;
@@ -93,20 +97,20 @@ class _PosterToolState extends State<_PosterTool>{
   setState((){referenceImage=bytes;imageMime=file.mimeType??'image/jpeg';error=null;});
  }
  Future<void> _generate()async{
-  if(brief.text.trim().isEmpty){setState(()=>error='बताएँ कि किस तरह की इमेज बनानी है।');return;}
-  if(generationType=='video'){
-   setState(()=>error='AI वीडियो के लिए Google Veo का सर्वर-साइड प्रोजेक्ट और Cloud Storage सेटअप अभी बाकी है। ग्राहक को API Key नहीं डालनी होगी।');
-   return;
-  }
-  setState((){generating=true;error=null;generatedImage=null;usageMessage=null;});
+  if(brief.text.trim().isEmpty){setState(()=>error=generationType=='video'?'बताएँ कि किस तरह का वीडियो बनाना है।':'बताएँ कि किस तरह की इमेज बनानी है।');return;}
+  setState((){generating=true;error=null;generatedImage=null;generatedVideo=null;usageMessage=null;});
+  await videoController?.dispose();
+  videoController=null;
   try{
-   final prompt=creativeMode=='shop'
-    ? 'Create a premium, polished Indian business advertising design. Business/shop name: ${shop.text.trim()}. Contact number: ${phone.text.trim()}. Design brief: ${brief.text.trim()}. Make it suitable for a shop, service, product promotion or offer. Compose a visually striking vertical 4:5 poster. Render any short requested text legibly; do not invent phone numbers or prices.'
-    : 'Create an original high-quality creative image based on this brief: ${brief.text.trim()}. This is general-purpose creative work, not necessarily a shop advertisement. It may be a personal portrait concept, birthday or wedding design, festival greeting, social media creative, wallpaper, illustration, artwork or any other safe creative idea. Use a polished professional composition and vertical 4:5 format.';
+   final prompt=generationType=='video'
+    ? 'Create a polished short vertical 9:16 video with natural synchronized audio. Scene and motion brief: ${brief.text.trim()}. Use cinematic camera movement, coherent motion, professional lighting and a clean composition. If a reference image is supplied, use it as the visual starting reference. Do not add watermarks, fake text, prices or contact details.'
+    : creativeMode=='shop'
+     ? 'Create a premium, polished Indian business advertising design. Business/shop name: ${shop.text.trim()}. Contact number: ${phone.text.trim()}. Design brief: ${brief.text.trim()}. Make it suitable for a shop, service, product promotion or offer. Compose a visually striking vertical 4:5 poster. Render any short requested text legibly; do not invent phone numbers or prices.'
+     : 'Create an original high-quality creative image based on this brief: ${brief.text.trim()}. This is general-purpose creative work, not necessarily a shop advertisement. It may be a personal portrait concept, birthday or wedding design, festival greeting, social media creative, wallpaper, illustration, artwork or any other safe creative idea. Use a polished professional composition and vertical 4:5 format.';
    final response=await Supabase.instance.client.functions.invoke(
     'ai-creative-studio',
     body:{
-     'generationType':'image',
+     'generationType':generationType,
      'mode':creativeMode,
      'prompt':prompt,
      'imageBase64':referenceImage==null?null:base64Encode(referenceImage!),
@@ -116,20 +120,39 @@ class _PosterToolState extends State<_PosterTool>{
    final data=response.data;
    if(data is! Map)throw Exception('AI सर्वर से सही response नहीं मिला।');
    if(data['error']!=null)throw Exception(data['error'].toString());
-   final encoded=data['imageBase64']?.toString();
-   if(encoded==null||encoded.isEmpty)throw Exception('AI ने इमेज डेटा नहीं लौटाया।');
-   if(!mounted)return;
-   setState((){
-    generatedImage=base64Decode(encoded);
+   if(generationType=='video'){
+    final encoded=data['videoBase64']?.toString();
+    if(encoded==null||encoded.isEmpty)throw Exception('AI ने वीडियो डेटा नहीं लौटाया।');
+    final bytes=base64Decode(encoded);
+    final directory=await getTemporaryDirectory();
+    final file=File('${directory.path}/bharat-saathi-ai-video.mp4');
+    await file.writeAsBytes(bytes,flush:true);
+    final controller=VideoPlayerController.file(file);
+    await controller.initialize();
+    await controller.setLooping(true);
+    if(!mounted){await controller.dispose();return;}
+    setState(()=>videoController=controller);
+    await controller.play();
+   }else{
+    final encoded=data['imageBase64']?.toString();
+    if(encoded==null||encoded.isEmpty)throw Exception('AI ने इमेज डेटा नहीं लौटाया।');
+    if(!mounted)return;
+    setState(()=>generatedImage=base64Decode(encoded));
+   }
+   if(mounted){
     final remaining=data['freeRemaining'];
-    usageMessage=remaining is num?'इस महीने के फ्री जनरेशन बाकी: ${remaining.toInt()}':'आपका AI क्रिएशन तैयार है।';
-   });
+    setState(()=>usageMessage=remaining is num?'इस महीने के फ्री जनरेशन बाकी: ${remaining.toInt()}':'आपका AI क्रिएशन तैयार है।');
+   }
   }catch(e){
    if(mounted)setState(()=>error='जनरेशन नहीं हो पाया: ${e.toString().replaceFirst('Exception: ','')}');
   }finally{if(mounted)setState(()=>generating=false);}
  }
  Future<void> _download()async{
   try{
+   if(generatedVideo!=null){
+    await Share.shareXFiles([XFile.fromData(generatedVideo!,mimeType:'video/mp4',name:'bharat-saathi-ai-video.mp4')],text:'Bharat Saathi AI Video');
+    return;
+   }
    final boundary=posterKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
    if(boundary==null)throw Exception('प्रीव्यू तैयार नहीं है।');
    final image=await boundary.toImage(pixelRatio:3);
@@ -139,7 +162,7 @@ class _PosterToolState extends State<_PosterTool>{
   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}
  }
  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
-  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF4338CA),Color(0xFF9333EA),Color(0xFFEC4899)]),borderRadius:BorderRadius.circular(22)),child:const Row(children:[Icon(Icons.auto_awesome,color:Colors.white,size:32),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('AI Creative Studio',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),Text('पोस्टर, फोटो और क्रिएटिव डिजाइन',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
+  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF4338CA),Color(0xFF9333EA),Color(0xFFEC4899)]),borderRadius:BorderRadius.circular(22)),child:const Row(children:[Icon(Icons.auto_awesome,color:Colors.white,size:32),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('AI Creative Studio',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),Text('पोस्टर, फोटो और AI वीडियो',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
   const SizedBox(height:16),
   SegmentedButton<String>(segments:const [ButtonSegment(value:'creative',label:Text('अपनी पसंद का')),ButtonSegment(value:'shop',label:Text('दुकान / बिजनेस'))],selected:{creativeMode},onSelectionChanged:(v)=>setState(()=>creativeMode=v.first)),
   const SizedBox(height:12),
@@ -157,6 +180,13 @@ class _PosterToolState extends State<_PosterTool>{
   FilledButton.icon(onPressed:generating?null:_generate,icon:generating?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.auto_awesome),label:Text(generating?'AI तैयार कर रहा है...':generationType=='video'?'AI वीडियो बनाएँ':'AI फोटो / पोस्टर बनाएँ')),
   if(error!=null)Padding(padding:const EdgeInsets.only(top:10),child:Text(error!,style:const TextStyle(color:Colors.red,fontSize:12))),
   if(usageMessage!=null)Padding(padding:const EdgeInsets.only(top:10),child:Text(usageMessage!,style:const TextStyle(color:Color(0xFF0F8A69),fontWeight:FontWeight.w700))),
+  if(videoController!=null&&videoController!.value.isInitialized)...[
+   const SizedBox(height:18),const Text('आपका AI वीडियो',style:TextStyle(fontSize:17,fontWeight:FontWeight.w900)),
+   const SizedBox(height:10),
+   ClipRRect(borderRadius:BorderRadius.circular(18),child:AspectRatio(aspectRatio:videoController!.value.aspectRatio,child:VideoPlayer(videoController!))),
+   Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>setState(()=>videoController!.value.isPlaying?videoController!.pause():videoController!.play()),icon:Icon(videoController!.value.isPlaying?Icons.pause_circle:Icons.play_circle,size:34)),const SizedBox(width:8),const Text('वीडियो चलाएँ / रोकें')]),
+   FilledButton.icon(onPressed:_download,icon:const Icon(Icons.download_rounded),label:const Text('वीडियो डाउनलोड / शेयर करें')),
+  ],
   if(generatedImage!=null)...[
    const SizedBox(height:18),const Text('आपका AI क्रिएशन',style:TextStyle(fontSize:17,fontWeight:FontWeight.w900)),
    const SizedBox(height:10),
