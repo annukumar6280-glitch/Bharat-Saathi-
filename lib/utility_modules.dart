@@ -358,11 +358,279 @@ class _SoundboxInfoState extends State<_SoundboxInfo>{
   const SizedBox(height:12),const Text('ध्यान दें: यह endpoint और token को सेव करके API की पहुँच जाँचता है। असली पेमेंट की आवाज़ तभी चलेगी जब आपके payment provider का webhook/event format और verified payment callback जोड़ा जाएगा। केवल HTTP response को भुगतान की पुष्टि नहीं माना जाएगा।',style:TextStyle(color:Colors.blueGrey,fontSize:11))
  ]);
 }
-class _CallingInfo extends StatelessWidget{const _CallingInfo();@override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:const [
- Icon(Icons.support_agent,size:64,color:_teal),SizedBox(height:12),
- Text('AI Calling Assistant',style:TextStyle(fontSize:20,fontWeight:FontWeight.w900,color:_ink)),
- Text('इस सुविधा को बाकी मॉड्यूल के बाद सक्रिय किया जाएगा। इसके लिए Android Default Dialer role, conditional call forwarding, सुरक्षित telephony provider और AI voice backend की ज़रूरत होगी।'),
- SizedBox(height:12),ListTile(leading:Icon(Icons.phone_android),title:Text('SIM और कॉल अनुमति'),subtitle:Text('किसी कॉल को अपने आप forward या answer नहीं किया जाएगा।')),
- ListTile(leading:Icon(Icons.privacy_tip_outlined),title:Text('Privacy first'),subtitle:Text('कॉलर को AI assistant से बात होने की जानकारी और रिकॉर्डिंग/डेटा नीति स्पष्ट होनी चाहिए.')),
- Chip(label:Text('IMPLEMENTATION LAST — NOT ACTIVE'))
-]);}
+class _CallingInfo extends StatefulWidget {
+  const _CallingInfo();
+
+  @override
+  State<_CallingInfo> createState() => _CallingInfoState();
+}
+
+class _CallingInfoState extends State<_CallingInfo> {
+  final _phone = TextEditingController();
+  final _transfer = TextEditingController();
+  final _instructions = TextEditingController();
+  int _simSlot = 1;
+  String _forwardingMode = 'no_answer';
+  bool _disclosureAccepted = false;
+  bool _transcriptEnabled = false;
+  bool _loading = true;
+  bool _saving = false;
+  bool _signedIn = false;
+  String? _status;
+  List<Map<String, dynamic>> _logs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _phone.dispose();
+    _transfer.dispose();
+    _instructions.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final db = Supabase.instance.client;
+      final user = db.auth.currentUser;
+      if (user == null) {
+        if (mounted) setState(() { _loading = false; _signedIn = false; });
+        return;
+      }
+      final results = await Future.wait<dynamic>([
+        db.from('ai_call_assistant_settings').select().eq('user_id', user.id).maybeSingle(),
+        db.from('ai_call_logs')
+            .select('id,caller_number,caller_name,call_reason,summary,status,created_at,duration_seconds')
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false)
+            .limit(10),
+      ]);
+      final settings = results[0] as Map<String, dynamic>?;
+      final logs = (results[1] as List)
+          .map((row) => Map<String, dynamic>.from(row as Map))
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _signedIn = true;
+        _loading = false;
+        _logs = logs;
+        if (settings != null) {
+          _phone.text = settings['phone_number']?.toString() ?? '';
+          _transfer.text = settings['transfer_number']?.toString() ?? '';
+          _instructions.text = settings['assistant_instructions']?.toString() ?? '';
+          _simSlot = (settings['sim_slot'] as num?)?.toInt() ?? 1;
+          _forwardingMode = settings['forwarding_mode']?.toString() ?? 'no_answer';
+          _disclosureAccepted = settings['disclosure_accepted_at'] != null;
+          _transcriptEnabled = settings['transcript_enabled'] == true;
+        }
+      });
+    } catch (error) {
+      if (mounted) setState(() { _loading = false; _status = 'सेटिंग लोड नहीं हुई: $error'; });
+    }
+  }
+
+  String _normalisePhone(String value) =>
+      value.trim().replaceAll(RegExp(r'[^0-9+]'), '');
+
+  Future<void> _save() async {
+    final db = Supabase.instance.client;
+    final user = db.auth.currentUser;
+    if (user == null) {
+      setState(() => _status = 'सेटिंग सेव करने के लिए पहले लॉगिन करें।');
+      return;
+    }
+    final phone = _normalisePhone(_phone.text);
+    if (phone.isEmpty) {
+      setState(() => _status = 'अपना मोबाइल नंबर दर्ज करें।');
+      return;
+    }
+    if (!_disclosureAccepted) {
+      setState(() => _status = 'AI पहचान और कॉलर को सूचना देने की सहमति चुनें।');
+      return;
+    }
+    setState(() { _saving = true; _status = null; });
+    try {
+      await db.from('ai_call_assistant_settings').upsert({
+        'user_id': user.id,
+        'sim_slot': _simSlot,
+        'phone_number': phone,
+        'transfer_number': _normalisePhone(_transfer.text),
+        'assistant_instructions': _instructions.text.trim(),
+        'enabled': false,
+        'forwarding_mode': _forwardingMode,
+        'disclosure_accepted_at': DateTime.now().toUtc().toIso8601String(),
+        'transcript_enabled': _transcriptEnabled,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      if (mounted) setState(() => _status = 'आपकी Calling Assistant सेटिंग सुरक्षित रूप से सेव हो गई है।');
+    } catch (error) {
+      if (mounted) setState(() => _status = 'सेटिंग सेव नहीं हुई: $error');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  String _statusLabel(String? value) {
+    switch (value) {
+      case 'completed': return 'पूरी हुई';
+      case 'transferred': return 'आपको ट्रांसफर हुई';
+      case 'missed': return 'मिस्ड कॉल';
+      case 'failed': return 'कनेक्शन विफल';
+      case 'answered': return 'AI ने जवाब दिया';
+      default: return 'कॉल प्राप्त हुई';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (!_signedIn) {
+      return const Center(child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Text('AI Calling Assistant सेट करने के लिए Bharat Saathi में लॉगिन करें।'),
+      ));
+    }
+    return ListView(
+      padding: const EdgeInsets.all(18),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFFE0F4F5), Color(0xFFE6EAFE)]),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.support_agent_rounded, size: 38, color: _teal),
+              SizedBox(height: 10),
+              Text('आपका AI फोन असिस्टेंट', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: _ink)),
+              SizedBox(height: 5),
+              Text('AI आपकी ओर से आने वाली कॉल संभालेगा, ज़रूरी जानकारी लेगा और ज़रूरत पड़ने पर कॉल आपको ट्रांसफर करेगा।', style: TextStyle(color: Color(0xFF52627D), height: 1.4)),
+              SizedBox(height: 10),
+              Row(children: [
+                Icon(Icons.radio_button_checked, size: 13, color: Colors.orange),
+                SizedBox(width: 6),
+                Text('टेलीफोनी कनेक्शन सेटअप बाकी है', style: TextStyle(color: Color(0xFF8B5B13), fontWeight: FontWeight.w800, fontSize: 12)),
+              ]),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        const Text('1. अपना नंबर और SIM चुनें', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<int>(
+          value: _simSlot,
+          decoration: const InputDecoration(labelText: 'किस SIM पर कॉल आती हैं?'),
+          items: const [
+            DropdownMenuItem(value: 1, child: Text('SIM 1')),
+            DropdownMenuItem(value: 2, child: Text('SIM 2')),
+          ],
+          onChanged: (value) { if (value != null) setState(() => _simSlot = value); },
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _phone,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(labelText: 'आपका मोबाइल नंबर', hintText: '+91XXXXXXXXXX'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _transfer,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(labelText: 'कॉल ट्रांसफर नंबर', hintText: 'खाली छोड़ें तो ऊपर वाला नंबर इस्तेमाल होगा'),
+        ),
+        const SizedBox(height: 18),
+        const Text('2. कॉल फॉरवर्डिंग का तरीका', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _forwardingMode,
+          decoration: const InputDecoration(labelText: 'कब AI को कॉल भेजनी है?'),
+          items: const [
+            DropdownMenuItem(value: 'no_answer', child: Text('जब आप कॉल न उठाएँ')),
+            DropdownMenuItem(value: 'busy', child: Text('जब आपका नंबर व्यस्त हो')),
+            DropdownMenuItem(value: 'unreachable', child: Text('जब फोन बंद या नेटवर्क से बाहर हो')),
+          ],
+          onChanged: (value) { if (value != null) setState(() => _forwardingMode = value); },
+        ),
+        const SizedBox(height: 8),
+        const Text('कॉल फॉरवर्डिंग आपके मोबाइल ऑपरेटर के जरिए चालू होगी। अभी ऐप आपके SIM पर कोई कोड अपने-आप नहीं चलाता। सही ऑपरेटर सेटअप मिलने पर ऐप में चरण-दर-चरण निर्देश दिए जाएँगे।', style: TextStyle(color: Colors.blueGrey, fontSize: 12, height: 1.4)),
+        const SizedBox(height: 18),
+        const Text('3. AI को क्या करना है?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _instructions,
+          minLines: 4,
+          maxLines: 7,
+          maxLength: 4000,
+          decoration: const InputDecoration(
+            labelText: 'अपने असिस्टेंट को निर्देश दें',
+            hintText: 'जैसे: कॉल करने वाले का नाम, पता और कॉल का कारण पूछें। जरूरी काम हो तो मुझे कॉल ट्रांसफर करें।',
+            alignLabelWithHint: true,
+          ),
+        ),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _disclosureAccepted,
+          onChanged: (value) => setState(() => _disclosureAccepted = value == true),
+          title: const Text('AI हर कॉल की शुरुआत में अपनी पहचान बताएगा और कॉलर को जानकारी देगा।', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: _transcriptEnabled,
+          onChanged: (value) => setState(() => _transcriptEnabled = value == true),
+          title: const Text('कॉलर को सूचना/सहमति देने के बाद बातचीत का टेक्स्ट और सारांश सेव करें।', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          onPressed: _saving ? null : _save,
+          icon: _saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save_outlined),
+          label: Text(_saving ? 'सेव हो रहा है...' : 'सेटिंग सेव करें'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: null,
+          icon: const Icon(Icons.call),
+          label: const Text('AI को कॉल करें — टेलीफोनी सेटअप के बाद'),
+        ),
+        if (_status != null) ...[
+          const SizedBox(height: 10),
+          Text(_status!, style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
+        ],
+        const SizedBox(height: 22),
+        const Text('हाल की कॉल', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const SizedBox(height: 8),
+        if (_logs.isEmpty)
+          const Text('अभी कोई AI कॉल रिकॉर्ड उपलब्ध नहीं है।', style: TextStyle(color: Colors.blueGrey, fontSize: 12))
+        else
+          ..._logs.map((log) {
+            final name = (log['caller_name']?.toString().trim().isNotEmpty ?? false)
+                ? log['caller_name'].toString()
+                : (log['caller_number']?.toString().isNotEmpty ?? false)
+                    ? log['caller_number'].toString()
+                    : 'अनजान कॉलर';
+            final summary = log['summary']?.toString().trim() ?? '';
+            final date = DateTime.tryParse(log['created_at']?.toString() ?? '');
+            return Card(
+              child: ListTile(
+                leading: const CircleAvatar(child: Icon(Icons.call_received)),
+                title: Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text(summary.isNotEmpty ? summary : (log['call_reason']?.toString() ?? 'कॉल विवरण उपलब्ध नहीं')),
+                trailing: Text(_statusLabel(log['status']?.toString()), style: const TextStyle(fontSize: 10, color: Colors.blueGrey)),
+                isThreeLine: true,
+                dense: true,
+              ),
+            );
+          }),
+        const SizedBox(height: 12),
+        const Text('सुरक्षा: AI कभी भी OTP, UPI PIN, बैंक पासवर्ड या कार्ड PIN नहीं माँगेगा। कॉल संभालना तभी शुरू होगा जब टेलीफोनी प्रोवाइडर, OpenAI SIP webhook और कॉल-फॉरवर्डिंग का परीक्षण पूरा होगा।', style: TextStyle(color: Colors.blueGrey, fontSize: 11, height: 1.4)),
+      ],
+    );
+  }
+}
