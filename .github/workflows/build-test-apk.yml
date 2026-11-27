@@ -121,6 +121,40 @@ jobs:
           if not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", gradle.read_text()):
               raise SystemExit("Target API 36 verification failed")
           PY
+      - name: Set compile SDK 37 for permission_handler
+        run: |
+          sdkmanager "platforms;android-37"
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          candidates = [
+              Path("android/app/build.gradle.kts"),
+              Path("android/app/build.gradle"),
+          ]
+          gradle = next((p for p in candidates if p.exists()), None)
+          if gradle is None:
+              raise SystemExit("Android app Gradle file was not generated")
+
+          content = gradle.read_text()
+          patterns = [
+              (r"compileSdk\\s*=\\s*flutter\\.compileSdkVersion", "compileSdk = 37"),
+              (r"compileSdkVersion\\s+flutter\\.compileSdkVersion", "compileSdkVersion 37"),
+          ]
+          updated = content
+          for pattern, replacement in patterns:
+              updated, count = re.subn(pattern, replacement, updated)
+              if count:
+                  break
+          if updated == content and not re.search(r"compileSdk(?:Version)?\\s*(?:=\\s*)?37\\b", content):
+              raise SystemExit("Could not safely set compileSdk to 37 in " + str(gradle))
+
+          gradle.write_text(updated)
+          verified = gradle.read_text()
+          if not re.search(r"compileSdk(?:Version)?\\s*(?:=\\s*)?37\\b", verified):
+              raise SystemExit("Compile SDK 37 verification failed")
+          print(f"Verified compileSdk 37 in {gradle}")
+          PY
       - name: Configure Google Mobile Ads test App ID
         run: |
           python3 - <<'PY'
