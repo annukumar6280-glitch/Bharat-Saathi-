@@ -616,7 +616,6 @@ class _CallingInfoState extends State<_CallingInfo> {
                     ? log['caller_number'].toString()
                     : 'अनजान कॉलर';
             final summary = log['summary']?.toString().trim() ?? '';
-            final date = DateTime.tryParse(log['created_at']?.toString() ?? '');
             return Card(
               child: ListTile(
                 leading: const CircleAvatar(child: Icon(Icons.call_received)),
