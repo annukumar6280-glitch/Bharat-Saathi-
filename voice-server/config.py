@@ -88,7 +88,8 @@ class Config:
     CALL_TIMEOUT_SECONDS = int(os.getenv('CALL_TIMEOUT_SECONDS', '1800'))
     
     # ===== SECURITY =====
-    REQUIRE_AUTH = os.getenv('REQUIRE_AUTH', 'false').lower() == 'true'
+    EXOTEL_STREAM_TOKEN = os.getenv('EXOTEL_STREAM_TOKEN', '')
+    REQUIRE_AUTH = os.getenv('REQUIRE_AUTH', 'true').lower() == 'true'
     RATE_LIMITING_ENABLED = os.getenv('RATE_LIMITING_ENABLED', 'true').lower() == 'true'
     
     # ===== MONITORING =====
@@ -129,6 +130,9 @@ class Config:
             
         if not cls.COMPANY_NAME:
             errors.append("COMPANY_NAME is required")
+
+        if not cls.EXOTEL_STREAM_TOKEN:
+            errors.append("EXOTEL_STREAM_TOKEN is required to protect the public WebSocket endpoint")
             
         if cls.SERVER_PORT < 1 or cls.SERVER_PORT > 65535:
             errors.append("SERVER_PORT must be between 1 and 65535")
