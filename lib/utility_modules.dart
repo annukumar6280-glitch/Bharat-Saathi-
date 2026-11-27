@@ -369,19 +369,12 @@ class _CallingInfoState extends State<_CallingInfo> {
   final _phone = TextEditingController();
   final _transfer = TextEditingController();
   final _instructions = TextEditingController();
-  final _otp = TextEditingController();
   int _simSlot = 1;
   String _forwardingMode = 'no_answer';
   bool _disclosureAccepted = false;
   bool _transcriptEnabled = false;
   bool _loading = true;
   bool _saving = false;
-  bool _sendingOtp = false;
-  bool _verifyingOtp = false;
-  bool _otpSent = false;
-  bool _phoneVerified = false;
-  String? _pendingPhone;
-  String? _verifiedPhone;
   bool _signedIn = false;
   String? _status;
   List<Map<String, dynamic>> _logs = [];
@@ -397,7 +390,6 @@ class _CallingInfoState extends State<_CallingInfo> {
     _phone.dispose();
     _transfer.dispose();
     _instructions.dispose();
-    _otp.dispose();
     super.dispose();
   }
 
@@ -421,16 +413,11 @@ class _CallingInfoState extends State<_CallingInfo> {
       final logs = (results[1] as List)
           .map((row) => Map<String, dynamic>.from(row as Map))
           .toList();
-      final authPhone = user.phone ?? '';
       final storedPhone = settings?['phone_number']?.toString() ?? '';
-      final displayPhone = storedPhone.isNotEmpty ? storedPhone : authPhone;
-      final displayDigits = displayPhone.replaceAll(RegExp(r'\D'), '');
-      final isPhoneVerified = authPhone.isNotEmpty && authPhone == _normalisePhone(displayPhone);
+      final displayDigits = storedPhone.replaceAll(RegExp(r'\D'), '');
       if (!mounted) return;
       setState(() {
         _signedIn = true;
-        _phoneVerified = isPhoneVerified;
-        _verifiedPhone = isPhoneVerified ? authPhone : null;
         _phone.text = displayDigits.length >= 10 ? displayDigits.substring(displayDigits.length - 10) : displayDigits;
         _loading = false;
         _logs = logs;
@@ -458,87 +445,9 @@ class _CallingInfoState extends State<_CallingInfo> {
 
   bool _isValidIndianPhone(String value) => RegExp(r'^\+91[6-9]\d{9}$').hasMatch(value);
 
-  Future<void> _sendPhoneOtp() async {
-    final db = Supabase.instance.client;
-    final user = db.auth.currentUser;
-    final phone = _normalisePhone(_phone.text);
-    if (user == null) { setState(() => _status = 'पहले Bharat Saathi में लॉगिन करें।'); return; }
-    if (!_isValidIndianPhone(phone)) { setState(() => _status = 'सही 10 अंकों का भारतीय मोबाइल नंबर दर्ज करें।'); return; }
-    if (user.phone == phone) {
-      setState(() { _phoneVerified = true; _verifiedPhone = phone; _status = 'यह मोबाइल नंबर पहले से वेरिफाई है।'; });
-      return;
-    }
-    setState(() { _sendingOtp = true; _status = null; });
-    try {
-      // Phone-change OTP verifies this number on the existing email/Google account.
-      // It does not create or replace the main Bharat Saathi login.
-      await db.auth.updateUser(UserAttributes(phone: phone));
-      if (!mounted) return;
-      setState(() {
-        _pendingPhone = phone;
-        _otpSent = true;
-        _phoneVerified = false;
-        _verifiedPhone = null;
-        _status = 'OTP भेज दिया गया है। SMS में आया 6 अंकों का कोड डालें।';
-      });
-    } catch (error) {
-      if (mounted) setState(() => _status = 'OTP नहीं भेजा गया: $error');
-    } finally {
-      if (mounted) setState(() => _sendingOtp = false);
-    }
-  }
-
-  Future<void> _resendPhoneOtp() async {
-    final phone = _pendingPhone;
-    if (phone == null) return;
-    setState(() { _sendingOtp = true; _status = null; });
-    try {
-      await Supabase.instance.client.auth.resend(type: OtpType.phoneChange, phone: phone);
-      if (mounted) setState(() => _status = 'नया OTP भेज दिया गया है।');
-    } catch (error) {
-      if (mounted) setState(() => _status = 'OTP दोबारा नहीं भेजा गया: $error');
-    } finally {
-      if (mounted) setState(() => _sendingOtp = false);
-    }
-  }
-
-  Future<void> _verifyPhoneOtp() async {
-    final phone = _pendingPhone;
-    final token = _otp.text.trim();
-    if (phone == null || !RegExp(r'^\d{6}$').hasMatch(token)) {
-      setState(() => _status = '6 अंकों का OTP दर्ज करें।');
-      return;
-    }
-    setState(() { _verifyingOtp = true; _status = null; });
-    try {
-      final db = Supabase.instance.client;
-      final response = await db.auth.verifyOTP(phone: phone, token: token, type: OtpType.phoneChange);
-      final verifiedPhone = response.user?.phone ?? db.auth.currentUser?.phone;
-      if (verifiedPhone != phone) throw Exception('मोबाइल नंबर वेरिफाई नहीं हुआ।');
-      final user = db.auth.currentUser;
-      if (user == null) throw Exception('लॉगिन सेशन उपलब्ध नहीं है।');
-      await db.from('ai_call_assistant_settings').upsert({
-        'user_id': user.id,
-        'phone_number': phone,
-        'sim_slot': _simSlot,
-        'enabled': false,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-      if (!mounted) return;
-      setState(() {
-        _phoneVerified = true;
-        _verifiedPhone = phone;
-        _otpSent = false;
-        _pendingPhone = null;
-        _otp.clear();
-        _status = 'मोबाइल नंबर वेरिफाई हो गया।';
-      });
-    } catch (error) {
-      if (mounted) setState(() => _status = 'OTP वेरिफाई नहीं हुआ: $error');
-    } finally {
-      if (mounted) setState(() => _verifyingOtp = false);
-    }
-  }
+  // SIM ownership verification stays separate from Supabase Auth.
+  // Carrier Number Verification (CAMARA/GSMA) will be enabled after operator
+  // access is provisioned. This screen never sends an SMS or changes the login phone.
 
   Future<void> _save() async {
     final db = Supabase.instance.client;
@@ -552,10 +461,6 @@ class _CallingInfoState extends State<_CallingInfo> {
       setState(() => _status = 'अपना मोबाइल नंबर दर्ज करें।');
       return;
     }
-    if (!_phoneVerified || _verifiedPhone != phone) {
-      setState(() => _status = 'सेटिंग सेव करने से पहले मोबाइल नंबर का OTP वेरिफिकेशन पूरा करें।');
-      return;
-    }
     if (!_disclosureAccepted) {
       setState(() => _status = 'AI पहचान और कॉलर को सूचना देने की सहमति चुनें।');
       return;
@@ -566,6 +471,7 @@ class _CallingInfoState extends State<_CallingInfo> {
         'user_id': user.id,
         'sim_slot': _simSlot,
         'phone_number': phone,
+        'phone_verification_status': 'pending',
         'transfer_number': _normalisePhone(_transfer.text),
         'assistant_instructions': _instructions.text.trim(),
         'enabled': false,
@@ -658,49 +564,27 @@ class _CallingInfoState extends State<_CallingInfo> {
           onChanged: (value) { if (value != null) setState(() => _simSlot = value); },
         ),
         const SizedBox(height: 8),
-        if (!_phoneVerified && !_otpSent)
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: _sendingOtp ? null : _sendPhoneOtp,
-              icon: _sendingOtp ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.link),
-              label: Text(_sendingOtp ? 'OTP भेजा जा रहा है...' : 'कनेक्ट करें और OTP भेजें'),
-            ),
-          ),
-        if (_otpSent) ...[
-          TextField(
-            controller: _otp,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
-            decoration: const InputDecoration(labelText: 'SMS में आया 6 अंकों का OTP'),
-          ),
-          const SizedBox(height: 8),
-          Row(children: [
-            Expanded(child: FilledButton(
-              onPressed: _verifyingOtp ? null : _verifyPhoneOtp,
-              child: Text(_verifyingOtp ? 'वेरिफाई हो रहा है...' : 'OTP वेरिफाई करें'),
-            )),
-            const SizedBox(width: 8),
-            TextButton(onPressed: _sendingOtp ? null : _resendPhoneOtp, child: const Text('दोबारा भेजें')),
-          ]),
-          TextButton(
-            onPressed: () => setState(() { _otpSent = false; _pendingPhone = null; _otp.clear(); }),
-            child: const Text('मोबाइल नंबर बदलें'),
-          ),
-        ],
-        if (_phoneVerified)
-          const Padding(
-            padding: EdgeInsets.only(top: 4, bottom: 4),
-            child: Row(children: [
-              Icon(Icons.verified, color: Colors.green, size: 18),
-              SizedBox(width: 6),
-              Text('मोबाइल नंबर वेरिफाई है', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w700, fontSize: 12)),
-            ]),
-          ),
         const SizedBox(height: 6),
-        const Text(
-          'यह OTP केवल AI Call Assistant के मोबाइल नंबर वेरिफिकेशन के लिए है। Bharat Saathi का मुख्य लॉगिन पहले जैसा ही रहेगा। चुना गया SIM कॉल कनेक्शन सेटअप के लिए सेव होगा।',
-          style: TextStyle(color: Colors.blueGrey, fontSize: 11, height: 1.4),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF6E5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFFFE0A3)),
+          ),
+          child: const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline, color: Color(0xFF9A6818), size: 19),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'नंबर और SIM की सेटिंग सेव होगी। अभी कोई SMS OTP नहीं भेजा जाएगा और Bharat Saathi के मुख्य Google/Email लॉगिन में फोन नंबर नहीं बदलेगा। ऑपरेटर की Network Number Verification सेवा जुड़ने के बाद ही नंबर Verified दिखेगा।',
+                  style: TextStyle(color: Color(0xFF79551D), fontSize: 11, height: 1.4),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
         TextField(
