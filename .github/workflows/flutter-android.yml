@@ -69,6 +69,7 @@ jobs:
               '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />',
               '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />',
               '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
+              '    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />',
           ]
           start = content.find("<application")
           if start < 0:
