@@ -524,7 +524,7 @@ class _CallingInfoState extends State<_CallingInfo> {
         const Text('1. अपना नंबर और SIM चुनें', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
         const SizedBox(height: 8),
         DropdownButtonFormField<int>(
-          value: _simSlot,
+          initialValue: _simSlot,
           decoration: const InputDecoration(labelText: 'किस SIM पर कॉल आती हैं?'),
           items: const [
             DropdownMenuItem(value: 1, child: Text('SIM 1')),
@@ -548,7 +548,7 @@ class _CallingInfoState extends State<_CallingInfo> {
         const Text('2. कॉल फॉरवर्डिंग का तरीका', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _forwardingMode,
+          initialValue: _forwardingMode,
           decoration: const InputDecoration(labelText: 'कब AI को कॉल भेजनी है?'),
           items: const [
             DropdownMenuItem(value: 'no_answer', child: Text('जब आप कॉल न उठाएँ')),
