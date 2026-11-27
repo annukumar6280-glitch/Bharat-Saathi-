@@ -101,7 +101,7 @@ class _PosterToolState extends State<_PosterTool>{
   if(generationType=='video'){
    final confirm=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(
     title:const Text('AI वीडियो जनरेशन'),
-    content:const Text('सफल वीडियो जनरेशन पर 50 Bharat Saathi कॉइन खर्च होंगे। Gemini API की अलग provider billing भी लागू हो सकती है। क्या आप आगे बढ़ना चाहते हैं?'),
+    content:const Text('सफल वीडियो जनरेशन पर 50 Bharat Saathi कॉइन खर्च होंगे। fal.ai API की अलग provider billing भी लागू हो सकती है। क्या आप आगे बढ़ना चाहते हैं?'),
     actions:[
      TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('रद्द करें')),
      FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('50 कॉइन के साथ बनाएँ')),
@@ -182,7 +182,6 @@ class _PosterToolState extends State<_PosterTool>{
   const SizedBox(height:16),
   SegmentedButton<String>(segments:const [ButtonSegment(value:'creative',label:Text('अपनी पसंद का')),ButtonSegment(value:'shop',label:Text('दुकान / बिजनेस'))],selected:{creativeMode},onSelectionChanged:(v)=>setState(()=>creativeMode=v.first)),
   const SizedBox(height:12),
-  SegmentedButton<String>(segments:const [ButtonSegment(value:'image',label:Text('AI फोटो / पोस्टर')),ButtonSegment(value:'video',label:Text('AI वीडियो'))],selected:{generationType},onSelectionChanged:(v)=>setState(()=>generationType=v.first)),
   if(creativeMode=='shop')...[
    const SizedBox(height:10),TextField(controller:shop,decoration:const InputDecoration(labelText:'दुकान / बिजनेस का नाम (वैकल्पिक)',prefixIcon:Icon(Icons.storefront))),
    const SizedBox(height:10),TextField(controller:phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'पोस्टर पर मोबाइल नंबर (वैकल्पिक)',prefixIcon:Icon(Icons.phone))),
