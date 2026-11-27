@@ -2,7 +2,7 @@ name: Flutter Android build
 
 on:
   push:
-    branches: [main, feature/family-friends-live-location, feature/ai-poster-calculator-soundbox]
+    branches: [main, feature/family-friends-live-location, feature/ai-poster-calculator-soundbox, feature/ai-call-assistant-sim-otp]
   pull_request:
     branches: [main]
 
