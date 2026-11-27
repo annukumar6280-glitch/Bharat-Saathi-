@@ -435,7 +435,6 @@ class _CallingInfoState extends State<_CallingInfo> {
         _loading = false;
         _logs = logs;
         if (settings != null) {
-          _phone.text = settings['phone_number']?.toString() ?? '';
           _transfer.text = settings['transfer_number']?.toString() ?? '';
           _instructions.text = settings['assistant_instructions']?.toString() ?? '';
           _simSlot = (settings['sim_slot'] as num?)?.toInt() ?? 1;
