@@ -13,6 +13,7 @@ import base64
 import time
 import struct
 import ssl
+import hmac
 import os
 import re
 from typing import Dict, Any, Optional, Tuple
@@ -108,7 +109,15 @@ class OpenAIRealtimeSalesBot:
                         detected_sample_rate = rate
             except Exception:
                 pass
-            logger.info(f"📞 NEW ENHANCED SALES CALL from Exotel: {websocket.remote_address}")
+            # Require a private path token so random Internet clients cannot consume OpenAI Realtime credits.
+            expected_token = Config.EXOTEL_STREAM_TOKEN
+            provided_token = urlparse(websocket_path).path.strip("/").split("/")[0]
+            if not expected_token or not hmac.compare_digest(provided_token, expected_token):
+                logger.warning("Rejected WebSocket connection: invalid stream token")
+                await websocket.close(code=1008, reason="Unauthorized")
+                return
+
+            logger.info(f"📞 NEW BHARAT SAATHI CALL from Exotel: {websocket.remote_address}")
             logger.info(f"🎵 Detected sample rate: {detected_sample_rate}Hz (path={websocket_path})")
             
             # Set up connection keep-alive and error handling
