@@ -234,7 +234,7 @@ class _ReminderToolState extends State<_ReminderTool>{
  DateTime due=DateTime.now().add(const Duration(days:1));
  TimeOfDay dueTime=const TimeOfDay(hour:9,minute:0);
  final FlutterLocalNotificationsPlugin _notifications=FlutterLocalNotificationsPlugin();
- bool loading=true,notificationsReady=false;String tab='reminders';String? notificationMessage;
+ bool loading=true,notificationsReady=false;String tab='reminders';String? notificationMessage;int? editingNoteIndex;
  String get _reminderStorageKey=>'bs_reminders_v1_${Supabase.instance.client.auth.currentUser?.id??'guest'}';
  String get _notesStorageKey=>'bs_notes_v1_${Supabase.instance.client.auth.currentUser?.id??'guest'}';
  DateTime get dueAt=>DateTime(due.year,due.month,due.day,dueTime.hour,dueTime.minute);
@@ -286,11 +286,20 @@ class _ReminderToolState extends State<_ReminderTool>{
   catch(_){if(mounted)setState(()=>notificationMessage='रिमाइंडर सेव है, लेकिन नोटिफिकेशन शेड्यूल नहीं हो पाया।');}
   if(mounted)setState((){});
  }
+ void _editNote(int index){
+  final note=notes[index];
+  noteTitle.text=note['title']?.toString()??'';
+  noteBody.text=note['body']?.toString()??'';
+  setState(()=>editingNoteIndex=index);
+ }
  Future<void> _addNote()async{
   if(noteTitle.text.trim().isEmpty&&noteBody.text.trim().isEmpty)return;
-  notes.insert(0,{'title':noteTitle.text.trim().isEmpty?'नोट':noteTitle.text.trim(),'body':noteBody.text.trim(),'updated':DateTime.now().toIso8601String()});
+  final note=<String,dynamic>{'title':noteTitle.text.trim().isEmpty?'नोट':noteTitle.text.trim(),'body':noteBody.text.trim(),'updated':DateTime.now().toIso8601String()};
+  if(editingNoteIndex!=null&&editingNoteIndex!<notes.length){notes[editingNoteIndex!]=note;editingNoteIndex=null;}
+  else{notes.insert(0,note);}
   noteTitle.clear();noteBody.clear();await _saveNotes();if(mounted)setState((){});
  }
+ void _cancelNoteEdit(){noteTitle.clear();noteBody.clear();setState(()=>editingNoteIndex=null);}
  @override Widget build(BuildContext context)=>loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
   SegmentedButton<String>(segments:const [ButtonSegment(value:'reminders',label:Text('रिमाइंडर'),icon:Icon(Icons.notifications_active_outlined)),ButtonSegment(value:'notes',label:Text('नोट्स'),icon:Icon(Icons.sticky_note_2_outlined))],selected:{tab},onSelectionChanged:(v)=>setState(()=>tab=v.first)),
   const SizedBox(height:14),
@@ -311,10 +320,10 @@ class _ReminderToolState extends State<_ReminderTool>{
    const SizedBox(height:8),
    TextField(controller:noteBody,minLines:3,maxLines:6,decoration:const InputDecoration(labelText:'अपना नोट लिखें',alignLabelWithHint:true)),
    const SizedBox(height:8),
-   FilledButton.icon(onPressed:_addNote,icon:const Icon(Icons.save_outlined),label:const Text('नोट सेव करें')),
+   Row(children:[Expanded(child:FilledButton.icon(onPressed:_addNote,icon:const Icon(Icons.save_outlined),label:Text(editingNoteIndex==null?'नोट सेव करें':'नोट अपडेट करें'))),if(editingNoteIndex!=null)IconButton(tooltip:'एडिट रद्द करें',onPressed:_cancelNoteEdit,icon:const Icon(Icons.close))]),
    const Divider(height:28),
    if(notes.isEmpty)const Text('अभी कोई नोट सेव नहीं है।'),
-   ...notes.asMap().entries.map((e)=>Card(child:ListTile(title:Text(e.value['title'].toString(),style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(e.value['body'].toString(),maxLines:5,overflow:TextOverflow.ellipsis),trailing:IconButton(tooltip:'नोट हटाएँ',onPressed:()async{notes.removeAt(e.key);await _saveNotes();if(mounted)setState((){});},icon:const Icon(Icons.delete_outline))))),
+   ...notes.asMap().entries.map((e)=>Card(child:ListTile(onTap:()=>_editNote(e.key),title:Text(e.value['title'].toString(),style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(e.value['body'].toString(),maxLines:5,overflow:TextOverflow.ellipsis),trailing:IconButton(tooltip:'नोट हटाएँ',onPressed:()async{notes.removeAt(e.key);if(editingNoteIndex==e.key)_cancelNoteEdit();await _saveNotes();if(mounted)setState((){});},icon:const Icon(Icons.delete_outline))))),
   ],
  ]);
 }
