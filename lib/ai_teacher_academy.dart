@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,11 +16,12 @@ class AiTeacherAcademyPage extends StatefulWidget {
   State<AiTeacherAcademyPage> createState() => _AiTeacherAcademyPageState();
 }
 
-class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
+class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with WidgetsBindingObserver {
   final _question = TextEditingController();
   final SpeechToText _speech = SpeechToText();
   final FlutterTts _tts = FlutterTts();
   final Stopwatch _voiceStopwatch = Stopwatch();
+  Timer? _voiceTimer;
   bool _speechInitialized = false, _listening = false, _speaking = false;
   int _voiceUsedSeconds = 0;
   String? _voiceMessage;
@@ -40,6 +43,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadVoiceUsage();
     _loadProgress();
     _tts.awaitSpeakCompletion(true);
@@ -297,11 +301,16 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
         if (mounted) setState(() => _voiceMessage = 'आज की 5 मिनट की वॉइस सीमा पूरी हो गई है।');
         return;
       }
+      final allowedSeconds = _voiceRemaining;
       await _tts.setLanguage(widget.english ? 'en-IN' : 'hi-IN');
       await _tts.setSpeechRate(0.45);
       if (mounted) setState(() => _speaking = true);
       _voiceStopwatch.start();
+      _voiceTimer?.cancel();
+      _voiceTimer = Timer(Duration(seconds: allowedSeconds), _stopSpeech);
       await _tts.speak(answer);
+      _voiceTimer?.cancel();
+      _voiceTimer = null;
       await _finishVoiceSession();
     } catch (_) {
       await _finishVoiceSession();
@@ -310,12 +319,29 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
   }
 
   Future<void> _stopSpeech() async {
+    _voiceTimer?.cancel();
+    _voiceTimer = null;
     await _tts.stop();
+    await _finishVoiceSession();
     if (mounted) setState(() => _speaking = false);
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed && _voiceStopwatch.isRunning) {
+      if (_listening) _speech.stop();
+      if (_speaking) _tts.stop();
+      _voiceTimer?.cancel();
+      _voiceTimer = null;
+      _finishVoiceSession();
+      if (mounted) setState(() { _listening = false; _speaking = false; });
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _voiceTimer?.cancel();
     _speech.cancel();
     _tts.stop();
     _question.dispose();
