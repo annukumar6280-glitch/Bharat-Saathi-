@@ -31,6 +31,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   String? _answer;
   String? _error;
   String _topic = 'English Skills';
+  String _part = 'Speaking & Conversation';
   String _lesson = 'Daily conversation';
   String _provider = '';
 
@@ -40,6 +41,38 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     (title: 'Maths & General Knowledge', subtitle: 'गणित और सामान्य ज्ञान', icon: Icons.calculate_rounded, color: Color(0xFFFFF1D9), lessons: ['Basic mathematics', 'Percentages', 'General knowledge']),
     (title: 'Business Skills', subtitle: 'छोटा कारोबार और हिसाब', icon: Icons.storefront_rounded, color: Color(0xFFF0E8FF), lessons: ['Business basics', 'Customer handling', 'Profit and loss']),
   ];
+
+  // Course -> Part -> Lesson curriculum. Keep each level selectable so learners
+  // can study only the skill they need instead of being forced through one long list.
+  static const _courseParts = <String, List<({String title, List<String> lessons})>>{
+    'English Skills': [
+      (title: 'Speaking & Conversation', lessons: ['Daily conversation', 'Self introduction', 'Asking questions']),
+      (title: 'Grammar & Vocabulary', lessons: ['Grammar basics', 'Tenses', 'Daily vocabulary']),
+      (title: 'Reading & Writing', lessons: ['Reading practice', 'Sentence writing', 'Messages & emails']),
+    ],
+    'Computer & Digital Skills': [
+      (title: 'Computer Fundamentals', lessons: ['Computer basics', 'Parts of a computer', 'Keyboard and mouse']),
+      (title: 'Files & Office Work', lessons: ['Files and folders', 'Word processing', 'Spreadsheets']),
+      (title: 'Internet & Digital Safety', lessons: ['Internet basics', 'Internet safety', 'Digital payments']),
+    ],
+    'Maths & General Knowledge': [
+      (title: 'Number Skills', lessons: ['Basic mathematics', 'Addition and subtraction', 'Multiplication and division']),
+      (title: 'Fractions & Percentages', lessons: ['Fractions and decimals', 'Percentages', 'Ratio and proportion']),
+      (title: 'Practical Maths & General Knowledge', lessons: ['Money calculations', 'General knowledge', 'Science and geography']),
+    ],
+    'Business Skills': [
+      (title: 'Business Foundation', lessons: ['Business basics', 'Business planning', 'Products and pricing']),
+      (title: 'Customers & Sales', lessons: ['Customer handling', 'Sales skills', 'Customer service']),
+      (title: 'Accounts & Growth', lessons: ['Bookkeeping', 'Profit and loss', 'Budget and savings']),
+    ],
+  };
+
+  List<({String title, List<String> lessons})> get _selectedParts =>
+      _courseParts[_topic] ?? const [];
+
+  ({String title, List<String> lessons}) get _selectedPart =>
+      _selectedParts.firstWhere((part) => part.title == _part,
+          orElse: () => _selectedParts.first);
 
   @override
   void initState() {
@@ -75,7 +108,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     final saved = prefs.getStringList(_progressKey) ?? <String>[];
     // Progress is tracked per lesson, not merely per course. Ignore legacy
     // course-only entries so the displayed 12-lesson total stays accurate.
-    final completedLessons = saved.where((value) => value.contains('::')).toSet();
+    final completedLessons = saved.where((value) => value.split('::').length == 3).toSet();
     if (mounted) {
       setState(() {
         _completedQuizzes..clear()..addAll(completedLessons);
@@ -112,7 +145,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   }
 
 
-  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_' + _accountId + '_' + _topic + '_' + _lesson;
+  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_' + _accountId + '_' + _topic + '_' + _part + '_' + _lesson;
 
   Map<String, dynamic> _quizQuestion(String id, String question, String answer, List<String> distractors) {
     final options = <String>[];
@@ -318,7 +351,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     );
     if (result == null) return;
     await prefs.setStringList(_quizSeenKey, seen.toList());
-    _completedQuizzes.add(_topic + '::' + _lesson);
+    _completedQuizzes.add(_topic + '::' + _part + '::' + _lesson);
     await prefs.setStringList(_progressKey, _completedQuizzes.toList());
     if (mounted) {
       setState(() {});
@@ -553,7 +586,9 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   @override
   Widget build(BuildContext context) {
     final selected = _courses.firstWhere((c) => c.title == _topic, orElse: () => _courses.first);
-    final currentLessonStatus = _completedQuizzes.contains(_topic + '::' + _lesson)
+    final selectedPart = _selectedPart;
+    final totalLessons = _courseParts.values.fold<int>(0, (total, parts) => total + parts.fold<int>(0, (count, part) => count + part.lessons.length));
+    final currentLessonStatus = _completedQuizzes.contains(_topic + '::' + _part + '::' + _lesson)
         ? 'यह पाठ पूरा है' : 'यह पाठ बाकी है';
     return Scaffold(
       appBar: AppBar(
@@ -621,27 +656,41 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
               title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.w800)),
               subtitle: Padding(padding: const EdgeInsets.only(top: 3), child: Text(course.subtitle)),
               trailing: Icon(active ? Icons.check_circle_rounded : Icons.arrow_forward_ios_rounded, size: active ? 22 : 16, color: active ? accent : Colors.blueGrey),
-              onTap: () => setState(() { _topic = course.title; _lesson = course.lessons.first; _answer = null; _error = null; }),
+              onTap: () => setState(() { _topic = course.title; _part = _courseParts[course.title]!.first.title; _lesson = _courseParts[course.title]!.first.lessons.first; _answer = null; _error = null; }),
             ),
           );
         }),
         const SizedBox(height: 10),
-        Text('आज का पाठ', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
+        Text('अपना पार्ट चुनें', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 8),
-        Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          child: DropdownButtonFormField<String>(
-            initialValue: _lesson,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'पाठ चुनें',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.menu_book_outlined),
-            ),
-            items: selected.lessons.map((lesson) => DropdownMenuItem(value: lesson, child: Text(lesson, overflow: TextOverflow.ellipsis))).toList(),
-            onChanged: (value) => setState(() { if (value != null) { _lesson = value; _answer = null; } }),
+        DropdownButtonFormField<String>(
+          initialValue: _part,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'कोर्स का पार्ट',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.category_outlined),
           ),
+          items: _selectedParts.map((part) => DropdownMenuItem(value: part.title, child: Text(part.title, overflow: TextOverflow.ellipsis))).toList(),
+          onChanged: (value) => setState(() {
+            if (value != null) {
+              _part = value;
+              _lesson = _selectedParts.firstWhere((part) => part.title == value).lessons.first;
+              _answer = null; _error = null;
+            }
+          }),
+        ),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<String>(
+          initialValue: _lesson,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'इस पार्ट का लेसन चुनें',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.menu_book_outlined),
+          ),
+          items: selectedPart.lessons.map((lesson) => DropdownMenuItem(value: lesson, child: Text(lesson, overflow: TextOverflow.ellipsis))).toList(),
+          onChanged: (value) => setState(() { if (value != null) { _lesson = value; _answer = null; _error = null; } }),
         ),
         const SizedBox(height: 10),
         Card(child: ExpansionTile(
@@ -653,7 +702,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         Card(child: ListTile(
           leading: const Icon(Icons.quiz_outlined),
           title: const Text('अभ्यास टेस्ट', style: TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text('प्रगति: ${_completedQuizzes.length} / 12 पाठ के टेस्ट पूरे • $currentLessonStatus'),
+          subtitle: Text('प्रगति: ${_completedQuizzes.length} / $totalLessons लेसन पूरे • $currentLessonStatus'),
           trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
           onTap: _runQuiz,
         )),
