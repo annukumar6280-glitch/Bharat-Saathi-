@@ -661,7 +661,7 @@ class _BillListPageState extends State<BillListPage>{
  final List<_BillRow> _rows=[_BillRow()];
  String _mode='bill';bool _started=false,_pdfBusy=false,_homeUse=false;
  List<Map<String,dynamic>> _history=[];
- String get _historyKey=>'bs_bill_history_${Supabase.instance.client.auth.currentUser?.id??'guest'}';
+ String get _historyKey{try{return 'bs_bill_history_${Supabase.instance.client.auth.currentUser?.id??'guest'}';}catch(_){return 'bs_bill_history_guest';}}
  static const Map<String,String> _units={'kg':'किलो','g':'ग्राम','packet':'पैकेट','piece':'पीस','ft':'फिट','m':'मीटर'};
  @override void initState(){super.initState();_watch(_rows.first);_loadHistory();}
  Future<void> _loadHistory()async{final p=await SharedPreferences.getInstance();final raw=p.getString(_historyKey);if(raw!=null){try{_history=List<Map<String,dynamic>>.from(jsonDecode(raw));}catch(_){}}if(mounted)setState((){});}
