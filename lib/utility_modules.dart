@@ -38,14 +38,16 @@ class _QrToolState extends State<_QrTool>{
  final input=TextEditingController();final qrKey=GlobalKey();String mode='text';String? scanned;
  @override void dispose(){input.dispose();super.dispose();}
  Future<void> _shareQr()async{
+  ui.Image? image;
   try{
    final boundary=qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
    if(boundary==null)throw Exception('पहले QR कोड बनाएँ।');
-   final image=await boundary.toImage(pixelRatio:3);
+   image=await boundary.toImage(pixelRatio:3);
    final data=await image.toByteData(format:ui.ImageByteFormat.png);
    if(data==null)throw Exception('QR इमेज तैयार नहीं हुई।');
    await Share.shareXFiles([XFile.fromData(data.buffer.asUint8List(),mimeType:'image/png',name:'bharat-saathi-qr.png')],text:'Bharat Saathi QR Code');
   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}
+  finally{image?.dispose();}
  }
  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:[
   Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF3D4CE0),Color(0xFF8B45D6),Color(0xFF10AFA2)]),borderRadius:BorderRadius.circular(22),boxShadow:const [BoxShadow(color:Color(0x333D4CE0),blurRadius:16,offset:Offset(0,7))]),child:const Row(children:[CircleAvatar(radius:25,backgroundColor:Color(0x33FFFFFF),child:Icon(Icons.qr_code_2_rounded,color:Colors.white,size:30)),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('QR Code Studio',style:TextStyle(color:Colors.white,fontSize:19,fontWeight:FontWeight.w900)),SizedBox(height:4),Text('QR बनाएँ, शेयर करें और तुरंत स्कैन करें',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
@@ -61,7 +63,27 @@ class _QrToolState extends State<_QrTool>{
   if(input.text.trim().isNotEmpty)FilledButton.icon(onPressed:_shareQr,icon:const Icon(Icons.download_rounded),label:const Text('QR इमेज डाउनलोड / शेयर करें')),
  ]);
 }
-class _QrScanner extends StatelessWidget{final ValueChanged<String> onValue;const _QrScanner({required this.onValue});@override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('QR स्कैन करें')),body:MobileScanner(onDetect:(capture){final value=(capture.barcodes.isNotEmpty?capture.barcodes.first.rawValue:null);if(value!=null&&value.isNotEmpty)onValue(value);}));}
+class _QrScanner extends StatefulWidget {
+ final ValueChanged<String> onValue;
+ const _QrScanner({required this.onValue});
+ @override State<_QrScanner> createState() => _QrScannerState();
+}
+class _QrScannerState extends State<_QrScanner> {
+ bool _handled = false;
+ void _onDetect(BarcodeCapture capture) {
+  if (_handled) return;
+  final value = capture.barcodes.isNotEmpty
+      ? capture.barcodes.first.rawValue
+      : null;
+  if (value == null || value.isEmpty) return;
+  _handled = true;
+  widget.onValue(value);
+ }
+ @override Widget build(BuildContext context) => Scaffold(
+  appBar: AppBar(title: const Text('QR स्कैन करें')),
+  body: MobileScanner(onDetect: _onDetect),
+ );
+}
 
 class _PosterTool extends StatefulWidget{const _PosterTool();@override State<_PosterTool> createState()=>_PosterToolState();}
 class _PosterToolState extends State<_PosterTool>{
@@ -75,11 +97,15 @@ class _PosterToolState extends State<_PosterTool>{
  String? error,usageMessage;
  @override void dispose(){shop.dispose();phone.dispose();brief.dispose();videoController?.dispose();super.dispose();}
  Future<void> _pickImage()async{
-  final file=await picker.pickImage(source:ImageSource.gallery,imageQuality:88,maxWidth:1800,maxHeight:1800);
-  if(file==null)return;
-  final bytes=await file.readAsBytes();
-  if(!mounted)return;
-  setState((){referenceImage=bytes;imageMime=file.mimeType??'image/jpeg';error=null;});
+  try{
+   final file=await picker.pickImage(source:ImageSource.gallery,imageQuality:88,maxWidth:1800,maxHeight:1800);
+   if(file==null||!mounted)return;
+   final bytes=await file.readAsBytes();
+   if(!mounted)return;
+   setState((){referenceImage=bytes;imageMime=file.mimeType??'image/jpeg';error=null;});
+  }catch(e){
+   if(mounted)setState(()=>error='फोटो नहीं चुनी जा सकी: $e');
+  }
  }
  Future<void> _generate()async{
   if(brief.text.trim().isEmpty){setState(()=>error=generationType=='video'?'बताएँ कि किस तरह का वीडियो बनाना है।':'बताएँ कि किस तरह की इमेज बनानी है।');return;}
@@ -95,9 +121,9 @@ class _PosterToolState extends State<_PosterTool>{
    if(confirm!=true||!mounted)return;
   }
   setState((){generating=true;error=null;generatedImage=null;generatedVideo=null;usageMessage=null;});
-  await videoController?.dispose();
-  videoController=null;
   try{
+   await videoController?.dispose();
+   videoController=null;
    final prompt=generationType=='video'
     ? 'Create a polished short vertical 9:16 silent video. Scene and motion brief: ${brief.text.trim()}. Use cinematic camera movement, coherent motion, professional lighting and a clean composition. If a reference image is supplied, use it as the visual starting reference. Do not add watermarks, fake text, prices or contact details.'
     : creativeMode=='shop'
