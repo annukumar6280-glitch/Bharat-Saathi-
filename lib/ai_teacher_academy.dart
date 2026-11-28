@@ -50,8 +50,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     if (grade <= 2) return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'पर्यावरण अध्ययन'];
     if (grade <= 5) return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'पर्यावरण अध्ययन', 'सामान्य ज्ञान'];
     if (grade <= 8) return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'विज्ञान', 'सामाजिक विज्ञान', 'संस्कृत'];
-    if (grade <= 10) return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'विज्ञान', 'सामाजिक विज्ञान',
-      'इतिहास', 'भूगोल', 'नागरिक शास्त्र', 'अर्थशास्त्र', 'संस्कृत'];
+    if (grade <= 10) {\n      return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'विज्ञान', 'सामाजिक विज्ञान',\n        'इतिहास', 'भूगोल', 'नागरिक शास्त्र', 'अर्थशास्त्र', 'संस्कृत'];\n    }
     return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'भौतिक विज्ञान', 'रसायन विज्ञान',
       'जीव विज्ञान', 'इतिहास', 'भूगोल', 'राजनीति विज्ञान', 'अर्थशास्त्र',
       'लेखांकन', 'व्यवसाय अध्ययन', 'कंप्यूटर साइंस', 'इन्फॉर्मेटिक्स प्रैक्टिसेज', 'संस्कृत'];
@@ -81,12 +80,6 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   String _lesson = 'Alphabet and pronunciation';
   String _provider = '';
 
-  static const _courses = <({String title, String subtitle, IconData icon, Color color, List<String> lessons})>[
-    (title: 'English Skills', subtitle: 'बोलना, पढ़ना और लिखना', icon: Icons.translate_rounded, color: Color(0xFFE8EEFF), lessons: ['Daily conversation', 'Grammar basics', 'Writing practice']),
-    (title: 'Computer & Digital Skills', subtitle: 'कंप्यूटर और डिजिटल जानकारी', icon: Icons.computer_rounded, color: Color(0xFFE1F5F0), lessons: ['Computer basics', 'Internet safety', 'Digital payments']),
-    (title: 'Maths & General Knowledge', subtitle: 'गणित और सामान्य ज्ञान', icon: Icons.calculate_rounded, color: Color(0xFFFFF1D9), lessons: ['Basic mathematics', 'Percentages', 'General knowledge']),
-    (title: 'Business Skills', subtitle: 'छोटा कारोबार और हिसाब', icon: Icons.storefront_rounded, color: Color(0xFFF0E8FF), lessons: ['Business basics', 'Customer handling', 'Profit and loss']),
-  ];
 
   // Course -> Part -> Lesson curriculum. Keep each level selectable so learners
   // can study only the skill they need instead of being forced through one long list.
@@ -435,8 +428,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       'Student name: $_studentName. Study level/class: $_studentClass. '
       'Learning interests: ${_learningGoals.join(', ')}. '
       'Additional requested subject: ${_otherLearningGoal.isEmpty ? 'None' : _otherLearningGoal}. '
-      'Selected subject/course: $_topic. Selected part: $_part. Selected lesson: $_lesson. ' +
-      'If this is a custom subject, create a complete, accurate, age-appropriate curriculum for it. Adapt vocabulary, explanations, examples, lesson difficulty, homework and quiz difficulty to this learner. '
+      'Selected subject/course: $_topic. Selected part: $_part. Selected lesson: $_lesson. '\n      'If this is a custom subject, create a complete, accurate, age-appropriate curriculum for it. Adapt vocabulary, explanations, examples, lesson difficulty, homework and quiz difficulty to this learner. '
       'Address the learner by their first name naturally when helpful. Do not assume knowledge above their class level.';
 
   String get _voiceUsageKey {
