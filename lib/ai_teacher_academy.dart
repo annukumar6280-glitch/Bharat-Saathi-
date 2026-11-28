@@ -113,6 +113,19 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   List<Map<String, dynamic>> _questionsForTopic() {
     final bank = <Map<String, dynamic>>[];
     if (_topic == 'Maths & General Knowledge') {
+      // Large generated arithmetic bank: each operand pair has a stable unique ID.
+      for (var a = 10; a <= 59; a++) {
+        for (var b = 1; b <= 40; b++) {
+          final sum = a + b;
+          bank.add(_quizQuestion('addpractice_${a}_$b', '$a + $b कितना होगा?', '$sum',
+              ['${sum + 1}', '${sum - 1}', '${a * b}']));
+          if (a >= b) {
+            final difference = a - b;
+            bank.add(_quizQuestion('subpractice_${a}_$b', '$a − $b कितना होगा?', '$difference',
+                ['${difference + 1}', '${difference + 2}', '${a + b}']));
+          }
+        }
+      }
       for (var a = 2; a <= 30; a++) {
         for (var b = 2; b <= 12; b++) {
           bank.add(_quizQuestion('mul_${a}_$b', '$a × $b कितना होगा?', '${a * b}',
