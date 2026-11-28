@@ -33,7 +33,8 @@ jobs:
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           content = manifest.read_text()
           scheme = 'android:scheme="bharatsaathi"'
-          if scheme not in content:
+          host = 'android:host="login-callback"'
+          if scheme not in content or host not in content:
               main_action = content.find('android:name="android.intent.action.MAIN"')
               if main_action < 0:
                   raise SystemExit("MainActivity launcher intent filter not found")
