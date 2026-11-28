@@ -7,12 +7,12 @@ Bharat Saathi is an Android-first Flutter app centred on eight core features: Kh
 - Hindi-first dashboard with exactly eight primary feature tiles: Khata Book, Bill / Item List, QR Code Maker, AI Poster Maker & Video Maker, Reminders & Notes, Family & Friends Live Location, Smart Calculator and AI Teacher Academy.
 - Khata Book supports shop and personal ledgers, linked khata requests and linked-account entries.
 - Bill / Item List supports bill creation, item lists, PDF export and sharing.
-- QR Code Maker supports QR creation and scanning.
-- AI Poster Maker & Video Maker uses the existing AI creative studio flow; provider-side video support must be verified before release.
-- Reminders & Notes stores user reminders locally.
+- QR Code Maker supports text/URL and UPI QR creation, camera scanning, and PNG image export/share.
+- AI Poster Maker & Video Maker supports Fal AI image generation/editing and queued 5-second vertical Kling video generation. Video generation costs 50 Bharat Saathi coins plus Fal provider billing (currently about US$0.35 per 5-second output); it requires a configured `FAL_KEY` and has not been run in CI because that would incur provider charges.
+- Reminders & Notes stores reminders and notes locally. New reminders can schedule Android local notifications after the user grants notification permission; exact delivery can still be affected by OEM battery restrictions.
 - Family & Friends Live Location supports phone-number invitations, two-way opt-in, live satellite map updates, location pause/resume and re-share requests.
-- Smart Calculator includes standard arithmetic and GST calculations.
-- AI Teacher Academy includes course categories and authenticated text-based AI Q&A through the `ai-teacher-assistant` Edge Function. Push-to-talk voice questions, speech playback and the daily voice quota are not yet implemented.
+- Smart Calculator includes standard arithmetic, GST add/remove, discount percentage and profit/margin calculations.
+- AI Teacher Academy includes four course categories, short lesson notes, course quizzes, locally saved progress, push-to-talk speech-to-text, spoken answers and a five-minute daily on-device voice allowance. The allowance is stored locally (not server-enforced). Actual course video lessons are not bundled. Text Q&A uses the authenticated `ai-teacher-assistant` Edge Function.
 - Profile and account shell retain sign-in, privacy, language, help and cloud backup controls. Recharge, bill payment, challan, Payment Sound Box, AI Calling Assistant, referral and commission modules are retired from this branch.
 - Transactional on-device SQLite persistence with one-time import of older SharedPreferences records.
 - Google Mobile Ads SDK is included with Google's test ad identifiers in the development build.
@@ -49,12 +49,15 @@ GitHub Actions workflow: `.github/workflows/flutter-android.yml`
 5. Run widget tests.
 6. Build a debug APK and upload it as an artifact.
 
-## Next implementation priorities
+## Remaining release checks
 
-1. Complete AI Teacher Academy voice capture, speech playback and server-enforced daily voice quota; verify AI provider secrets and test text Q&A with an authenticated account.
-2. Complete device-level testing of Family & Friends background location, permission flows, battery restrictions and Play Store background-location disclosures.
-3. Verify end-to-end AI video generation with the selected provider before release.
-4. Strengthen and test account-scoped automatic cloud snapshot sync/restore, account switching, offline retry behavior and recovery from interrupted writes.
-5. Complete Auth hardening: enable leaked-password protection where the Supabase plan supports it, configure production SMTP, verify password recovery and document an MFA strategy.
-6. Complete signed Android release configuration, real-device testing and Play Store declarations.
-7. Configure Firebase Cloud Messaging for system push notifications when the app is closed; the current request inbox uses Supabase Realtime while connected.
+1. Confirm `FAL_KEY` is configured in Supabase Edge Function Secrets, then run one paid video generation only after reviewing the 50-coin app charge and Fal provider billing. CI does not invoke the paid model.
+2. Sign in with a real Bharat Saathi test account and verify `OPENAI_API_KEY` / `GEMINI_API_KEY` are configured for AI Teacher text Q&A.
+3. Test speech recognition, Hindi/English TTS, the five-minute local voice cap and microphone permission on physical Android devices. The local cap can be reset by clearing app data and is not a server-enforced entitlement.
+4. Test scheduled reminder notifications after granting Android notification permission, including reboot and battery restrictions on Vivo and other OEM devices.
+5. Test Family & Friends background location, precise/background permissions, battery restrictions and Google Play background-location disclosures. Firebase Cloud Messaging is still needed for push notifications when the app is fully closed, and phone-number ownership is not SMS-OTP verified.
+6. Complete real-device tests for QR export, PDF/WhatsApp sharing, Khata/Expenses sync and account switching. The current cloud backup is account-scoped snapshot synchronization, not a conflict-safe normalized multi-device ledger.
+7. Add verified, licensed course video content if video lessons are required; the current Academy has lesson notes, quizzes and voice-based tutoring but no bundled course video library.
+8. Complete signed Android release configuration, production SMTP/password recovery checks, privacy/Data Safety review and Play Store declarations.
+
+Flutter analysis, widget tests and Android debug APK build must pass before merging. Paid AI generation and real-device background behavior are not validated by CI.
