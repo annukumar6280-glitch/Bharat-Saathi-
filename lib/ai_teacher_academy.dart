@@ -403,8 +403,28 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   @override
   Widget build(BuildContext context) {
     final selected = _courses.firstWhere((c) => c.title == _topic, orElse: () => _courses.first);
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('AI Teacher Academy'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: .09),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.school_rounded, color: Theme.of(context).colorScheme.primary),
+            ),
+          ),
+        ],
+      ),
+      body: Material(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
       children: [
         Container(
           padding: const EdgeInsets.all(20),
@@ -425,24 +445,51 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         const SizedBox(height: 18),
         Text('अपना कोर्स चुनें', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 10),
-        ..._courses.map((course) => Card(
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-            leading: Container(width: 48, height: 48, decoration: BoxDecoration(color: course.color, borderRadius: BorderRadius.circular(14)), child: Icon(course.icon, color: const Color(0xFF394D91))),
-            title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.w800)),
-            subtitle: Text(course.subtitle),
-            trailing: Icon(_topic == course.title ? Icons.check_circle : Icons.chevron_right, color: _topic == course.title ? Colors.green : null),
-            onTap: () => setState(() { _topic = course.title; _lesson = course.lessons.first; _answer = null; _error = null; }),
-          ),
-        )),
+        ..._courses.map((course) {
+          final active = _topic == course.title;
+          final accent = Theme.of(context).colorScheme.primary;
+          return Card(
+            margin: const EdgeInsets.only(bottom: 9),
+            elevation: active ? 2 : 0.5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: BorderSide(color: active ? accent.withValues(alpha: .55) : Theme.of(context).dividerColor.withValues(alpha: .45), width: active ? 1.4 : .8),
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              leading: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [course.color, Color.lerp(course.color, Colors.white, .48)!]),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(course.icon, color: accent, size: 27),
+              ),
+              title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.w800)),
+              subtitle: Padding(padding: const EdgeInsets.only(top: 3), child: Text(course.subtitle)),
+              trailing: Icon(active ? Icons.check_circle_rounded : Icons.arrow_forward_ios_rounded, size: active ? 22 : 16, color: active ? accent : Colors.blueGrey),
+              onTap: () => setState(() { _topic = course.title; _lesson = course.lessons.first; _answer = null; _error = null; }),
+            ),
+          );
+        }),
         const SizedBox(height: 10),
         Text('आज का पाठ', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _lesson,
-          decoration: const InputDecoration(border: OutlineInputBorder(), prefixIcon: Icon(Icons.menu_book_outlined)),
-          items: selected.lessons.map((lesson) => DropdownMenuItem(value: lesson, child: Text(lesson))).toList(),
-          onChanged: (value) => setState(() { if (value != null) { _lesson = value; _answer = null; } }),
+        Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          child: DropdownButtonFormField<String>(
+            initialValue: _lesson,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'पाठ चुनें',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.menu_book_outlined),
+            ),
+            items: selected.lessons.map((lesson) => DropdownMenuItem(value: lesson, child: Text(lesson, overflow: TextOverflow.ellipsis))).toList(),
+            onChanged: (value) => setState(() { if (value != null) { _lesson = value; _answer = null; } }),
+          ),
         ),
         const SizedBox(height: 10),
         Card(child: ExpansionTile(
@@ -461,7 +508,18 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         const SizedBox(height: 18),
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: const Color(0xFFF1F3FF), borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFDDE3FA))),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).colorScheme.primary.withValues(alpha: .08),
+                Theme.of(context).colorScheme.secondary.withValues(alpha: .06),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: .14)),
+          ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Row(children: [Icon(Icons.auto_awesome, color: Color(0xFF6252B8)), SizedBox(width: 8), Text('AI Teacher से पूछें', style: TextStyle(color: Color(0xFF25345B), fontSize: 16, fontWeight: FontWeight.w900))]),
             const SizedBox(height: 10),
@@ -502,6 +560,8 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         const SizedBox(height: 10),
         const Text('AI टीचर जवाबों को आसान भाषा में समझाने के लिए बनाया गया है। महत्वपूर्ण जानकारी को अपनी किताब या शिक्षक से भी जाँचें।', style: TextStyle(color: Colors.blueGrey, fontSize: 11)),
       ],
+        ),
+      ),
     );
   }
 }
