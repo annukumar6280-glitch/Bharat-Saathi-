@@ -442,7 +442,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
           ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(t('लाइव लोकेशन के लिए फिलहाल सर्वर कनेक्शन उपलब्ध नहीं है।', 'Live location is unavailable because the server connection is not ready.'))))
           : _loading ? const Center(child: CircularProgressIndicator()) :
       RefreshIndicator(onRefresh: _load, child: ListView(padding: const EdgeInsets.fromLTRB(14, 8, 14, 28), children: [
-        Card(color: const Color(0xFF102A43), child: Padding(padding: const EdgeInsets.all(16), child: Column(
+        Card(color: const Color(0xFF5639C8), child: Padding(padding: const EdgeInsets.all(16), child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               const Icon(Icons.location_on, color: Color(0xFFFFD166), size: 28),
@@ -542,7 +542,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
             time.month.toString().padLeft(2, '0') + ' ' + time.hour.toString().padLeft(2, '0') +
             ':' + time.minute.toString().padLeft(2, '0');
           return Card(child: ListTile(
-            leading: CircleAvatar(backgroundColor: sharing ? const Color(0xFFDDF6EB) : const Color(0xFFE8EEF8),
+            leading: CircleAvatar(backgroundColor: sharing ? const Color(0xFFD9F8EE) : const Color(0xFFFFE6C7),
               child: Icon(sharing ? Icons.location_on : Icons.person_outline,
                 color: sharing ? const Color(0xFF16845D) : const Color(0xFF52627D))),
             title: Text(friend['display_name']?.toString() ?? 'Bharat Saathi User'),
