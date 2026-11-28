@@ -30,7 +30,7 @@ String money(num amount){
  final fixed=absolute.toStringAsFixed(2);
  final parts=fixed.split('.');
  final integer=parts.first;
- final grouped=integer.length<=3?integer:'${integer.substring(0,integer.length-3).replaceAllMapped(RegExp(r'\\B(?=(\\d{2})+(?!\\d))'),(m)=>',')},${integer.substring(integer.length-3)}';
+ final grouped=integer.length<=3?integer:'${integer.substring(0,integer.length-3).replaceAllMapped(RegExp(r'\B(?=(\d{2})+(?!\d))'),(m)=>',')},${integer.substring(integer.length-3)}';
  final decimals=parts.length>1&&parts[1]!='00'?'.${parts[1]}':'';
  return '${negative?'−':''}$grouped$decimals';
 }
