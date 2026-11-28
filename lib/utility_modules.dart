@@ -81,7 +81,7 @@ class _PosterToolState extends State<_PosterTool>{
   if(generationType=='video'){
    final confirm=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(
     title:const Text('AI वीडियो जनरेशन'),
-    content:const Text('सफल वीडियो जनरेशन पर 50 Bharat Saathi कॉइन खर्च होंगे। fal.ai API की अलग provider billing भी लागू हो सकती है। क्या आप आगे बढ़ना चाहते हैं?'),
+    content:const Text('5 सेकंड के वीडियो पर 50 Bharat Saathi कॉइन खर्च होंगे। Fal AI की अलग लागत लगभग $0.35 प्रति 5 सेकंड है और आपके Fal खाते से कटेगी; दर बदल सकती है। क्या आप आगे बढ़ना चाहते हैं?'),
     actions:[
      TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('रद्द करें')),
      FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('50 कॉइन के साथ बनाएँ')),
