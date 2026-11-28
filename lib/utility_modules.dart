@@ -8,6 +8,9 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
@@ -227,8 +230,32 @@ class _ReminderToolState extends State<_ReminderTool>{
  final title=TextEditingController(),noteTitle=TextEditingController(),noteBody=TextEditingController();
  List<Map<String,dynamic>> items=[],notes=[];
  DateTime due=DateTime.now().add(const Duration(days:1));
- bool loading=true;String tab='reminders';
- @override void initState(){super.initState();_load();}
+ TimeOfDay dueTime=const TimeOfDay(hour:9,minute:0);
+ final FlutterLocalNotificationsPlugin _notifications=FlutterLocalNotificationsPlugin();
+ bool loading=true,notificationsReady=false;String tab='reminders';String? notificationMessage;
+ DateTime get dueAt=>DateTime(due.year,due.month,due.day,dueTime.hour,dueTime.minute);
+ @override void initState(){super.initState();_initNotifications();_load();}
+ Future<void> _initNotifications()async{
+  try{
+   tzdata.initializeTimeZones();
+   tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
+   await _notifications.initialize(const InitializationSettings(android:AndroidInitializationSettings('@mipmap/ic_launcher')));
+   if(mounted)setState(()=>notificationsReady=true);
+  }catch(_){if(mounted)setState(()=>notificationMessage='इस फोन पर रिमाइंडर नोटिफिकेशन शुरू नहीं हो पाए।');}
+ }
+ Future<bool> _scheduleReminder(int id,String reminderTitle,DateTime when)async{
+  if(!notificationsReady)return false;
+  final android=_notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+  final permission=await android?.requestNotificationsPermission();
+  if(permission==false){if(mounted)setState(()=>notificationMessage='रिमाइंडर सेव है, लेकिन Android Notifications बंद हैं।');return false;}
+  await _notifications.zonedSchedule(
+   id, 'Bharat Saathi • रिमाइंडर', reminderTitle,
+   tz.TZDateTime.from(when,tz.local),
+   const NotificationDetails(android:AndroidNotificationDetails('bharat_saathi_reminders','Bharat Saathi Reminders',channelDescription:'आपके सेव किए हुए काम और भुगतान की याद दिलाने के लिए।',importance:Importance.high,priority:Priority.high)),
+   androidScheduleMode:AndroidScheduleMode.inexactAllowWhileIdle,
+  );
+  return true;
+ }
  @override void dispose(){title.dispose();noteTitle.dispose();noteBody.dispose();super.dispose();}
  Future<void> _load()async{
   final p=await SharedPreferences.getInstance();
@@ -242,8 +269,16 @@ class _ReminderToolState extends State<_ReminderTool>{
  Future<void> _saveNotes()async{final p=await SharedPreferences.getInstance();await p.setString('bs_notes_v1',jsonEncode(notes));}
  Future<void> _add()async{
   if(title.text.trim().isEmpty)return;
-  items.insert(0,{'title':title.text.trim(),'due':due.toIso8601String(),'done':false});
-  title.clear();await _saveReminders();if(mounted)setState((){});
+  final when=dueAt;
+  if(!when.isAfter(DateTime.now())){if(mounted)setState(()=>notificationMessage='भविष्य की तारीख और समय चुनें।');return;}
+  var id=when.millisecondsSinceEpoch~/1000;
+  while(items.any((e)=>e['notificationId']==id)){id++;}
+  final reminderTitle=title.text.trim();
+  items.insert(0,{'title':reminderTitle,'due':when.toIso8601String(),'done':false,'notificationId':id});
+  title.clear();await _saveReminders();
+  try{final scheduled=await _scheduleReminder(id,reminderTitle,when);if(scheduled&&mounted)setState(()=>notificationMessage='रिमाइंडर सेव और शेड्यूल हो गया।');}
+  catch(_){if(mounted)setState(()=>notificationMessage='रिमाइंडर सेव है, लेकिन नोटिफिकेशन शेड्यूल नहीं हो पाया।');}
+  if(mounted)setState((){});
  }
  Future<void> _addNote()async{
   if(noteTitle.text.trim().isEmpty&&noteBody.text.trim().isEmpty)return;
@@ -257,11 +292,14 @@ class _ReminderToolState extends State<_ReminderTool>{
    TextField(controller:title,decoration:const InputDecoration(labelText:'काम / भुगतान की याद')),
    const SizedBox(height:8),
    OutlinedButton.icon(onPressed:()async{final d=await showDatePicker(context:context,initialDate:due.isBefore(DateTime.now())?DateTime.now():due,firstDate:DateTime.now(),lastDate:DateTime.now().add(const Duration(days:3650)));if(d!=null)setState(()=>due=d);},icon:const Icon(Icons.calendar_month),label:Text('तारीख: ${due.day}-${due.month}-${due.year}')),
-   FilledButton(onPressed:_add,child:const Text('याद सेव करें')),
-   const Padding(padding:EdgeInsets.only(top:8),child:Text('रिमाइंडर इस डिवाइस में सेव होते हैं। Android लॉक-स्क्रीन नोटिफिकेशन अभी उपलब्ध नहीं है।',style:TextStyle(color:Colors.blueGrey,fontSize:11))),
+   const SizedBox(height:6),
+   OutlinedButton.icon(onPressed:()async{final t=await showTimePicker(context:context,initialTime:dueTime);if(t!=null)setState(()=>dueTime=t);},icon:const Icon(Icons.access_time),label:Text('समय: ${dueTime.format(context)}')),
+   FilledButton(onPressed:_add,child:const Text('रिमाइंडर सेव करें')),
+   if(notificationMessage!=null)Padding(padding:const EdgeInsets.only(top:8),child:Text(notificationMessage!,style:const TextStyle(color:Colors.blueGrey,fontSize:11))),
+   const Padding(padding:EdgeInsets.only(top:4),child:Text('Android Notifications की अनुमति माँगी जाएगी। कुछ फोन बैटरी प्रतिबंधों के कारण समय पर नोटिफिकेशन रोक सकते हैं।',style:TextStyle(color:Colors.blueGrey,fontSize:11))),
    const Divider(height:28),
    if(items.isEmpty)const Text('अभी कोई रिमाइंडर नहीं है।'),
-   ...items.asMap().entries.map((e)=>Card(child:CheckboxListTile(value:e.value['done'] as bool,onChanged:(v)async{items[e.key]['done']=v??false;await _saveReminders();setState((){});},title:Text(e.value['title'].toString()),subtitle:Text(DateTime.parse(e.value['due'].toString()).toLocal().toString().split(' ').first),secondary:IconButton(onPressed:()async{items.removeAt(e.key);await _saveReminders();setState((){});},icon:const Icon(Icons.delete_outline))))),
+   ...items.asMap().entries.map((e)=>Card(child:CheckboxListTile(value:e.value['done'] as bool,onChanged:(v)async{items[e.key]['done']=v??false;final id=items[e.key]['notificationId'];if((v??false)&&id is int)await _notifications.cancel(id);await _saveReminders();setState((){});},title:Text(e.value['title'].toString()),subtitle:Text(DateTime.parse(e.value['due'].toString()).toLocal().toString().split(' ').first),secondary:IconButton(onPressed:()async{final id=e.value['notificationId'];if(id is int)await _notifications.cancel(id);items.removeAt(e.key);await _saveReminders();setState((){});},icon:const Icon(Icons.delete_outline))))),
   ]else...[
    TextField(controller:noteTitle,decoration:const InputDecoration(labelText:'नोट का शीर्षक (वैकल्पिक)')),
    const SizedBox(height:8),
