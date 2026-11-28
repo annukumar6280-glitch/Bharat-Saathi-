@@ -50,22 +50,24 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
   String get _voiceUsageKey {
     final userId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
     final day = DateTime.now().toIso8601String().substring(0, 10);
-    return 'bs_ai_teacher_voice_${userId}_${day}';
+    return 'bs_ai_teacher_voice_' + userId + '_' + day;
   }
 
   int get _voiceRemaining => (300 - _voiceUsedSeconds).clamp(0, 300);
 
   String get _progressKey {
     final userId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
-    return 'bs_ai_teacher_quiz_progress_${userId}';
+    return 'bs_ai_teacher_quiz_progress_' + userId;
   }
 
   Future<void> _loadProgress() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getStringList(_progressKey) ?? <String>[];
-    if (mounted) setState(() { _completedQuizzes
-      ..clear()
-      ..addAll(saved); });
+    if (mounted) {
+      setState(() {
+        _completedQuizzes..clear()..addAll(saved);
+      });
+    }
   }
 
   String _lessonSummary() {
@@ -90,21 +92,27 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
   }
 
   List<Map<String, dynamic>> _questionsForTopic() {
-    if (_topic == 'English Skills') return [
+    if (_topic == 'English Skills') {
+      return [
       {'q':'सुबह मिलने पर सही अभिवादन क्या है?','o':['Good morning','Good night','Goodbye'],'a':0},
       {'q':'“I ___ a student.” में क्या आएगा?','o':['am','is','are'],'a':0},
       {'q':'“Thank you” का सामान्य जवाब क्या है?','o':['You are welcome','Good night','Excuse me'],'a':0},
     ];
-    if (_topic == 'Computer & Digital Skills') return [
+    }
+    if (_topic == 'Computer & Digital Skills') {
+      return [
       {'q':'टाइप करने के लिए किसका उपयोग होता है?','o':['Keyboard','Monitor','Printer'],'a':0},
       {'q':'OTP किसके साथ साझा करना चाहिए?','o':['किसी के साथ नहीं','अनजान कॉलर से','सोशल मीडिया पर'],'a':0},
       {'q':'UPI PIN कब डालना चाहिए?','o':['जब आप भुगतान भेज रहे हों और विवरण जाँच लिया हो','पैसा प्राप्त करने के लिए','किसी को बताने के लिए'],'a':0},
     ];
-    if (_topic == 'Maths & General Knowledge') return [
+    }
+    if (_topic == 'Maths & General Knowledge') {
+      return [
       {'q':'200 का 25% कितना है?','o':['50','25','100'],'a':0},
       {'q':'12 × 8 कितना है?','o':['96','88','108'],'a':0},
       {'q':'आधा किस दशमलव के बराबर है?','o':['0.5','0.2','1.5'],'a':0},
     ];
+    }
     return [
       {'q':'मुनाफा कैसे निकालते हैं?','o':['बिक्री मूल्य − लागत','लागत + बिक्री','केवल बिक्री'],'a':0},
       {'q':'ग्राहक की शिकायत पर क्या करना चाहिए?','o':['ध्यान से सुनकर समाधान देना','बात काटना','अनदेखा करना'],'a':0},
@@ -128,10 +136,14 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
             const SizedBox(height: 8),
             Text(question['q'] as String, style: const TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
-            ...List.generate(options.length, (i) => RadioListTile<int>(
-              dense: true, contentPadding: EdgeInsets.zero, value: i, groupValue: selected,
-              title: Text(options[i]), onChanged: (v) => setDialogState(() => selected = v ?? -1),
-            )),
+            RadioGroup<int>(
+              groupValue: selected,
+              onChanged: (value) => setDialogState(() => selected = value ?? -1),
+              child: Column(children: List.generate(options.length, (i) => RadioListTile<int>(
+                dense: true, contentPadding: EdgeInsets.zero, value: i,
+                title: Text(options[i]),
+              ))),
+            ),
           ]),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('बंद करें')),
@@ -166,7 +178,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
 
   String get _voicePendingKey {
     final userId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
-    return 'bs_ai_teacher_voice_pending_${userId}';
+    return 'bs_ai_teacher_voice_pending_' + userId;
   }
 
   Future<bool> _refreshVoiceUsageFromServer() async {
@@ -387,7 +399,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
         Text('आज का पाठ', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _lesson,
+          initialValue: _lesson,
           decoration: const InputDecoration(border: OutlineInputBorder(), prefixIcon: Icon(Icons.menu_book_outlined)),
           items: selected.lessons.map((lesson) => DropdownMenuItem(value: lesson, child: Text(lesson))).toList(),
           onChanged: (value) => setState(() { if (value != null) { _lesson = value; _answer = null; } }),
