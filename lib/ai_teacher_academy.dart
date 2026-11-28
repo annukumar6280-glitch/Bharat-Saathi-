@@ -399,7 +399,8 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       await prefs.setString(_learnerProfileKey + '_name', name);
       await prefs.setString(_learnerProfileKey + '_class', selectedClass);
       await prefs.setString(_learnerProfileKey + '_other', other);
-      if (other.isNotEmpty) goals.add(other);\n      await prefs.setStringList(_learnerProfileKey + '_goals', goals.toList());
+      if (other.isNotEmpty) goals.add(other);
+      await prefs.setStringList(_learnerProfileKey + '_goals', goals.toList());
       if (!mounted) return;
       setState(() {
         _studentName = name;
@@ -431,7 +432,8 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       'Student name: $_studentName. Study level/class: $_studentClass. '
       'Learning interests: ${_learningGoals.join(', ')}. '
       'Additional requested subject: ${_otherLearningGoal.isEmpty ? 'None' : _otherLearningGoal}. '
-      'Selected subject/course: $_topic. Selected part: $_part. Selected lesson: $_lesson. ' +\n      'If this is a custom subject, create a complete, accurate, age-appropriate curriculum for it. Adapt vocabulary, explanations, examples, lesson difficulty, homework and quiz difficulty to this learner. '
+      'Selected subject/course: $_topic. Selected part: $_part. Selected lesson: $_lesson. ' +
+      'If this is a custom subject, create a complete, accurate, age-appropriate curriculum for it. Adapt vocabulary, explanations, examples, lesson difficulty, homework and quiz difficulty to this learner. '
       'Address the learner by their first name naturally when helpful. Do not assume knowledge above their class level.';
 
   String get _voiceUsageKey {
@@ -462,7 +464,8 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
 
   String _lessonSummary() {
     final lessonContent = _lessonContent[_lesson];
-    if (lessonContent != null) return lessonContent;\n    if (!_courseParts.containsKey(_topic)) return '$_topic को $_studentClass के स्तर पर शुरुआत से सीखें। AI Teacher इस विषय का क्रमवार पाठ, उदाहरण, अभ्यास और टेस्ट तैयार करेगा।';
+    if (lessonContent != null) return lessonContent;
+    if (!_courseParts.containsKey(_topic)) return '$_topic को $_studentClass के स्तर पर शुरुआत से सीखें। AI Teacher इस विषय का क्रमवार पाठ, उदाहरण, अभ्यास और टेस्ट तैयार करेगा।';
     if (_topic == 'English Skills') {
       if (_lesson == 'Daily conversation') {
         return 'अभ्यास: इन पाँच बातचीतों को बोलकर दोहराएँ। टेस्ट में इन्हीं वाक्यों के जवाब पूछे जाएँगे।\\n'
