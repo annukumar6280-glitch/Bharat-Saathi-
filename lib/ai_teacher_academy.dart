@@ -105,8 +105,19 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   String get _quizSeenKey => 'bs_ai_teacher_seen_questions_${_accountId}_$_topic';
 
   Map<String, dynamic> _quizQuestion(String id, String question, String answer, List<String> distractors) {
-    final options = <String>{answer, ...distractors}.take(4).toList();
-    while (options.length < 4) { options.add('इनमें से कोई नहीं'); }
+    final options = <String>[];
+    for (final candidate in [answer, ...distractors]) {
+      if (options.length == 4) break;
+      if (candidate.trim().isNotEmpty && !options.contains(candidate)) {
+        options.add(candidate);
+      }
+    }
+    var fillerIndex = 1;
+    while (options.length < 4) {
+      final filler = 'विकल्प $fillerIndex';
+      if (!options.contains(filler)) options.add(filler);
+      fillerIndex++;
+    }
     return <String, dynamic>{'id': id, 'q': question, 'o': options, 'a': options.indexOf(answer)};
   }
 
@@ -389,12 +400,14 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   Future<void> _startVoiceInput() async {
     if (_listening) { await _speech.stop(); await _finishVoiceSession(); return; }
     if (!await _refreshVoiceUsageFromServer()) return;
+    if (!mounted) return;
     final remaining = _voiceRemaining;
     if (remaining <= 0) {
       setState(() => _voiceMessage = 'आज की 5 मिनट की वॉइस सीमा पूरी हो गई है।');
       return;
     }
     final microphone = await Permission.microphone.request();
+    if (!mounted) return;
     if (!microphone.isGranted) {
       setState(() => _voiceMessage = 'बोलकर सवाल पूछने के लिए माइक्रोफोन की अनुमति दें।');
       return;
@@ -404,6 +417,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         onStatus: (status) { if (status == 'notListening') _finishVoiceSession(); },
         onError: (_) { _finishVoiceSession(); if (mounted) setState(() => _voiceMessage = 'आवाज़ पहचान नहीं हो पाई। दोबारा कोशिश करें।'); },
       );
+      if (!mounted) return;
     }
     if (!_speechInitialized) {
       setState(() => _voiceMessage = 'इस फोन में Speech Recognition उपलब्ध नहीं है।');
@@ -441,8 +455,10 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       }
       final allowedSeconds = _voiceRemaining;
       await _tts.setLanguage(widget.english ? 'en-IN' : 'hi-IN');
+      if (!mounted) return;
       await _tts.setSpeechRate(0.45);
-      if (mounted) setState(() => _speaking = true);
+      if (!mounted) return;
+      setState(() => _speaking = true);
       _voiceStopwatch.start();
       _voiceTimer?.cancel();
       _voiceTimer = Timer(Duration(seconds: allowedSeconds), _stopSpeech);
