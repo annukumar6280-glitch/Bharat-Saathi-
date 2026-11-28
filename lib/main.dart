@@ -22,6 +22,18 @@ const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
 const privacyPolicyUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/privacy-policy.html';
 const termsConditionsUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/terms-and-conditions.html';
 const termsVersion='1.0';
+
+/// Formats an amount using Indian digit grouping for the app's rupee displays.
+String money(num amount){
+ final negative=amount<0;
+ final absolute=amount.abs();
+ final fixed=absolute.toStringAsFixed(2);
+ final parts=fixed.split('.');
+ final integer=parts.first;
+ final grouped=integer.length<=3?integer:'${integer.substring(0,integer.length-3).replaceAllMapped(RegExp(r'\\B(?=(\\d{2})+(?!\\d))'),(m)=>',')},${integer.substring(integer.length-3)}';
+ final decimals=parts.length>1&&parts[1]!='00'?'.${parts[1]}':'';
+ return '${negative?'−':''}$grouped$decimals';
+}
 Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();var ready=false;try{await Supabase.initialize(url:supabaseUrl,publishableKey:supabasePublishableKey);ready=true;}catch(_){}if(!kIsWeb&&(defaultTargetPlatform==TargetPlatform.android||defaultTargetPlatform==TargetPlatform.iOS)){await MobileAds.instance.initialize();}runApp(BharatSaathiApp(supabaseAvailable:ready,requireAuth:true));if(ready){WidgetsBinding.instance.addPostFrameCallback((_)async{try{await LiveLocationTracker.instance.resumeIfEnabled(Supabase.instance.client);}catch(_){}});}}
 
 bool bannerAdsEnabled=true;
