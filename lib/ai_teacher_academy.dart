@@ -164,10 +164,39 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
     }
   }
 
+  String get _voicePendingKey => '${_voiceUsageKey}_pending';
+
+  Future<bool> _refreshVoiceUsageFromServer() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final pending = prefs.getInt(_voicePendingKey) ?? 0;
+      if (pending > 0) {
+        await Supabase.instance.client.rpc(
+          'consume_ai_teacher_voice_seconds',
+          params: {'p_seconds': pending.clamp(1, 300)},
+        );
+        await prefs.remove(_voicePendingKey);
+      }
+      final result = await Supabase.instance.client.rpc('get_ai_teacher_voice_usage');
+      if (result is! List || result.isEmpty || result.first is! Map) {
+        throw Exception('Invalid voice quota response');
+      }
+      final row = result.first as Map;
+      final used = (row['used_seconds'] as num?)?.toInt() ?? 0;
+      await prefs.setInt(_voiceUsageKey, used.clamp(0, 300));
+      if (mounted) setState(() => _voiceUsedSeconds = used.clamp(0, 300));
+      return true;
+    } catch (_) {
+      if (mounted) setState(() => _voiceMessage = 'वॉइस सीमा जाँचने के लिए इंटरनेट कनेक्शन जरूरी है।');
+      return false;
+    }
+  }
+
   Future<void> _loadVoiceUsage() async {
     final prefs = await SharedPreferences.getInstance();
     final used = prefs.getInt(_voiceUsageKey) ?? 0;
     if (mounted) setState(() => _voiceUsedSeconds = used.clamp(0, 300));
+    await _refreshVoiceUsageFromServer();
   }
 
   Future<void> _finishVoiceSession() async {
@@ -175,14 +204,34 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
     _voiceStopwatch.stop();
     final elapsed = _voiceStopwatch.elapsed.inSeconds;
     _voiceStopwatch.reset();
-    final updated = (_voiceUsedSeconds + elapsed).clamp(0, 300);
+    var updated = (_voiceUsedSeconds + elapsed).clamp(0, 300);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_voiceUsageKey, updated);
+    if (elapsed > 0) {
+      try {
+        final result = await Supabase.instance.client.rpc(
+          'consume_ai_teacher_voice_seconds',
+          params: {'p_seconds': elapsed.clamp(1, 300)},
+        );
+        if (result is! List || result.isEmpty || result.first is! Map) {
+          throw Exception('Invalid voice quota response');
+        }
+        final row = result.first as Map;
+        updated = ((row['used_seconds'] as num?)?.toInt() ?? updated).clamp(0, 300);
+        await prefs.setInt(_voiceUsageKey, updated);
+        await prefs.remove(_voicePendingKey);
+      } catch (_) {
+        final pending = prefs.getInt(_voicePendingKey) ?? 0;
+        await prefs.setInt(_voicePendingKey, (pending + elapsed).clamp(0, 300));
+        updated = 300;
+        if (mounted) setState(() => _voiceMessage = 'वॉइस उपयोग सर्वर से सिंक नहीं हुआ। इंटरनेट जुड़ने पर दोबारा जाँचें।');
+      }
+    }
     if (mounted) setState(() { _voiceUsedSeconds = updated; _listening = false; });
   }
 
   Future<void> _startVoiceInput() async {
     if (_listening) { await _speech.stop(); await _finishVoiceSession(); return; }
+    if (!await _refreshVoiceUsageFromServer()) return;
     final remaining = _voiceRemaining;
     if (remaining <= 0) {
       setState(() => _voiceMessage = 'आज की 5 मिनट की वॉइस सीमा पूरी हो गई है।');
