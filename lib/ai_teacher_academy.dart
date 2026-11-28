@@ -43,6 +43,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   final Stopwatch _voiceStopwatch = Stopwatch();
   Timer? _voiceTimer;
   bool _speechInitialized = false, _listening = false, _speaking = false;
+  bool _voiceConversationMode = false;
   int _voiceUsedSeconds = 0;
   String? _voiceMessage;
   final Set<String> _completedQuizzes = {};
@@ -825,7 +826,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   }
 
   Future<void> _startVoiceInput() async {
-    if (_listening) { await _speech.stop(); await _finishVoiceSession(); return; }
+    if (_listening) { _voiceConversationMode = false; await _speech.stop(); await _finishVoiceSession(); return; }
     if (!await _refreshVoiceUsageFromServer()) return;
     if (!mounted) return;
     final remaining = _voiceRemaining;
@@ -850,7 +851,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       setState(() => _voiceMessage = 'इस फोन में Speech Recognition उपलब्ध नहीं है।');
       return;
     }
-    setState(() { _voiceMessage = null; _listening = true; });
+    setState(() { _voiceMessage = null; _listening = true; _voiceConversationMode = true; });
     _voiceStopwatch.start();
     try {
       await _speech.listen(
@@ -858,7 +859,15 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
           if (result.recognizedWords.isNotEmpty && mounted) {
             setState(() => _question.text = result.recognizedWords);
           }
-          if (result.finalResult) { _speech.stop(); _finishVoiceSession(); }
+          if (result.finalResult) {
+            _speech.stop();
+            if (_voiceConversationMode) {
+              _voiceConversationMode = false;
+              _handleVoiceQuestion();
+            } else {
+              _finishVoiceSession();
+            }
+          }
         },
         listenOptions: SpeechListenOptions(
           localeId: widget.english ? 'en-IN' : 'hi-IN',
@@ -870,6 +879,13 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       await _finishVoiceSession();
       if (mounted) setState(() => _voiceMessage = 'माइक्रोफोन शुरू नहीं हो पाया।');
     }
+  }
+
+  Future<void> _handleVoiceQuestion() async {
+    await _finishVoiceSession();
+    if (!mounted) return;
+    await _askTeacher();
+    if (mounted && _answer != null) await _speakAnswer();
   }
 
   Future<void> _speakAnswer() async {
@@ -1017,6 +1033,26 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
             trailing: IconButton(icon: const Icon(Icons.edit_outlined), onPressed: () => _showLearnerProfileDialog()),
           )),
         ),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFEAF2FF), Color(0xFFF6ECFF)])),
+            child: Column(children: [
+              Row(children: [const Icon(Icons.video_call_rounded, color: Color(0xFF4556C8)), const SizedBox(width: 8), const Expanded(child: Text('Live AI Teacher', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF24345B)))), Text(_listening ? 'सुन रहा हूँ' : _speaking ? 'समझा रहा हूँ' : 'ऑनलाइन', style: const TextStyle(fontSize: 11, color: Color(0xFF52617D)))]),
+              const SizedBox(height: 8),
+              AnimatedTeacherAvatar(speaking: _speaking, listening: _listening),
+              const SizedBox(height: 8),
+              Text(_speaking ? 'ध्यान से सुनिए, मैं समझा रहा हूँ।' : _listening ? 'जी, अपना सवाल बोलिए…' : 'नमस्ते' + (_studentName.isEmpty ? '' : ' ' + _studentName) + '! मैं आपका AI शिक्षक हूँ।', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF26365C))),
+              const SizedBox(height: 10),
+              SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: _asking ? null : _startVoiceInput, icon: Icon(_listening ? Icons.stop_circle_outlined : Icons.video_call_rounded), label: Text(_listening ? 'बातचीत रोकें' : 'लाइव बातचीत शुरू करें'))),
+              const SizedBox(height: 4),
+              const Text('बोलकर सवाल पूछें — शिक्षक जवाब आवाज़ में देगा।', style: TextStyle(fontSize: 11, color: Color(0xFF596783))),
+            ]),
+          ),
+        ),
+        const SizedBox(height: 14),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -1182,4 +1218,113 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       ),
     );
   }
+}
+
+
+class AnimatedTeacherAvatar extends StatefulWidget {
+  final bool speaking;
+  final bool listening;
+  const AnimatedTeacherAvatar({super.key, required this.speaking, required this.listening});
+
+  @override
+  State<AnimatedTeacherAvatar> createState() => _AnimatedTeacherAvatarState();
+}
+
+class _AnimatedTeacherAvatarState extends State<AnimatedTeacherAvatar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _motion = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 520),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _motion.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _motion,
+      builder: (context, child) => SizedBox(
+        height: 176,
+        width: 176,
+        child: CustomPaint(
+          painter: _TeacherFacePainter(
+            mouthOpen: widget.speaking ? .18 + _motion.value * .30 : widget.listening ? .10 : 0,
+            listening: widget.listening,
+            speaking: widget.speaking,
+            phase: _motion.value,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TeacherFacePainter extends CustomPainter {
+  final double mouthOpen;
+  final bool listening;
+  final bool speaking;
+  final double phase;
+  const _TeacherFacePainter({required this.mouthOpen, required this.listening, required this.speaking, required this.phase});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height * .43);
+    final p = Paint()..isAntiAlias = true;
+    p.color = const Color(0xFF3449A8);
+    canvas.drawOval(Rect.fromCenter(center: Offset(center.dx, size.height * .91), width: 145, height: 78), p);
+    p.color = const Color(0xFFFFD7B8);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(center.dx, center.dy + 59), width: 32, height: 42), const Radius.circular(10)), p);
+    p.color = const Color(0xFF9B5B3B);
+    canvas.drawOval(Rect.fromCenter(center: Offset(center.dx, center.dy - 7), width: 105, height: 116), p);
+    p.color = const Color(0xFFFFD7B8);
+    canvas.drawOval(Rect.fromCenter(center: center, width: 91, height: 108), p);
+    p.color = const Color(0xFF25305B);
+    final hair = Path()
+      ..moveTo(center.dx - 47, center.dy - 13)
+      ..quadraticBezierTo(center.dx - 49, center.dy - 69, center.dx + 3, center.dy - 61)
+      ..quadraticBezierTo(center.dx + 48, center.dy - 62, center.dx + 47, center.dy - 8)
+      ..quadraticBezierTo(center.dx + 25, center.dy - 35, center.dx + 4, center.dy - 31)
+      ..quadraticBezierTo(center.dx - 23, center.dy - 24, center.dx - 47, center.dy - 13)
+      ..close();
+    canvas.drawPath(hair, p);
+    p.color = const Color(0xFF51382F);
+    for (final dx in [-18.0, 18.0]) {
+      canvas.drawOval(Rect.fromCenter(center: Offset(center.dx + dx, center.dy - 3), width: 7, height: listening ? 2 : 9), p);
+    }
+    p.color = const Color(0xFFB97859);
+    p.strokeWidth = 2;
+    p.style = PaintingStyle.stroke;
+    canvas.drawLine(Offset(center.dx, center.dy + 2), Offset(center.dx - 2, center.dy + 19), p);
+    p.style = PaintingStyle.fill;
+    p.color = const Color(0xFF8E3548);
+    if (mouthOpen > .03) {
+      canvas.drawOval(Rect.fromCenter(center: Offset(center.dx, center.dy + 34), width: 18, height: 5 + mouthOpen * 34), p);
+      p.color = const Color(0xFFFFFFFF);
+      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(center.dx, center.dy + 36), width: 12, height: 3), const Radius.circular(2)), p);
+    } else {
+      p.strokeWidth = 2.5;
+      p.style = PaintingStyle.stroke;
+      canvas.drawArc(Rect.fromCenter(center: Offset(center.dx, center.dy + 28), width: 20, height: 13), .15, math.pi - .3, false, p);
+      p.style = PaintingStyle.fill;
+    }
+    p.color = const Color(0xFFB97859);
+    canvas.drawCircle(Offset(center.dx - 48, center.dy + 13), 5, p);
+    canvas.drawCircle(Offset(center.dx + 48, center.dy + 13), 5, p);
+    if (speaking) {
+      p.color = const Color(0xFF6478E8).withValues(alpha: .18 + phase * .12);
+      p.style = PaintingStyle.stroke;
+      p.strokeWidth = 4;
+      canvas.drawCircle(center, 68 + phase * 3, p);
+      p.style = PaintingStyle.fill;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _TeacherFacePainter oldDelegate) =>
+      oldDelegate.mouthOpen != mouthOpen || oldDelegate.listening != listening ||
+      oldDelegate.speaking != speaking || oldDelegate.phase != phase;
 }
