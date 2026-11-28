@@ -84,7 +84,7 @@ class _PosterToolState extends State<_PosterTool>{
   if(generationType=='video'){
    final confirm=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(
     title:const Text('AI वीडियो जनरेशन'),
-    content:const Text('5 सेकंड के वीडियो पर 50 Bharat Saathi कॉइन खर्च होंगे। Fal AI की अलग लागत लगभग $0.35 प्रति 5 सेकंड है और आपके Fal खाते से कटेगी; दर बदल सकती है। क्या आप आगे बढ़ना चाहते हैं?'),
+    content:const Text('5 सेकंड के वीडियो पर 50 Bharat Saathi कॉइन खर्च होंगे। Fal AI की अलग लागत लगभग \$0.35 प्रति 5 सेकंड है और आपके Fal खाते से कटेगी; दर बदल सकती है। क्या आप आगे बढ़ना चाहते हैं?'),
     actions:[
      TextButton(onPressed:()=>Navigator.pop(context,false),child:const Text('रद्द करें')),
      FilledButton(onPressed:()=>Navigator.pop(context,true),child:const Text('50 कॉइन के साथ बनाएँ')),
@@ -241,7 +241,7 @@ class _ReminderToolState extends State<_ReminderTool>{
   try{
    tzdata.initializeTimeZones();
    tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
-   await _notifications.initialize(const InitializationSettings(android:AndroidInitializationSettings('@mipmap/ic_launcher')));
+   await _notifications.initialize(settings:const InitializationSettings(android:AndroidInitializationSettings('@mipmap/ic_launcher')));
    if(mounted)setState(()=>notificationsReady=true);
   }catch(_){if(mounted)setState(()=>notificationMessage='इस फोन पर रिमाइंडर नोटिफिकेशन शुरू नहीं हो पाए।');}
  }
@@ -251,9 +251,11 @@ class _ReminderToolState extends State<_ReminderTool>{
   final permission=await android?.requestNotificationsPermission();
   if(permission==false){if(mounted)setState(()=>notificationMessage='रिमाइंडर सेव है, लेकिन Android Notifications बंद हैं।');return false;}
   await _notifications.zonedSchedule(
-   id, 'Bharat Saathi • रिमाइंडर', reminderTitle,
-   tz.TZDateTime.from(when,tz.local),
-   const NotificationDetails(android:AndroidNotificationDetails('bharat_saathi_reminders','Bharat Saathi Reminders',channelDescription:'आपके सेव किए हुए काम और भुगतान की याद दिलाने के लिए।',importance:Importance.high,priority:Priority.high)),
+   id:id,
+   title:'Bharat Saathi • रिमाइंडर',
+   body:reminderTitle,
+   scheduledDate:tz.TZDateTime.from(when,tz.local),
+   notificationDetails:const NotificationDetails(android:AndroidNotificationDetails('bharat_saathi_reminders','Bharat Saathi Reminders',channelDescription:'आपके सेव किए हुए काम और भुगतान की याद दिलाने के लिए।',importance:Importance.high,priority:Priority.high)),
    androidScheduleMode:AndroidScheduleMode.inexactAllowWhileIdle,
   );
   return true;
@@ -301,7 +303,7 @@ class _ReminderToolState extends State<_ReminderTool>{
    const Padding(padding:EdgeInsets.only(top:4),child:Text('Android Notifications की अनुमति माँगी जाएगी। कुछ फोन बैटरी प्रतिबंधों के कारण समय पर नोटिफिकेशन रोक सकते हैं।',style:TextStyle(color:Colors.blueGrey,fontSize:11))),
    const Divider(height:28),
    if(items.isEmpty)const Text('अभी कोई रिमाइंडर नहीं है।'),
-   ...items.asMap().entries.map((e)=>Card(child:CheckboxListTile(value:e.value['done'] as bool,onChanged:(v)async{items[e.key]['done']=v??false;final id=items[e.key]['notificationId'];if((v??false)&&id is int)await _notifications.cancel(id);await _saveReminders();setState((){});},title:Text(e.value['title'].toString()),subtitle:Text(DateTime.parse(e.value['due'].toString()).toLocal().toString().split(' ').first),secondary:IconButton(onPressed:()async{final id=e.value['notificationId'];if(id is int)await _notifications.cancel(id);items.removeAt(e.key);await _saveReminders();setState((){});},icon:const Icon(Icons.delete_outline))))),
+   ...items.asMap().entries.map((e)=>Card(child:CheckboxListTile(value:e.value['done'] as bool,onChanged:(v)async{items[e.key]['done']=v??false;final id=items[e.key]['notificationId'];if((v??false)&&id is int)await _notifications.cancel(id:id);await _saveReminders();setState((){});},title:Text(e.value['title'].toString()),subtitle:Text(DateTime.parse(e.value['due'].toString()).toLocal().toString().split(' ').first),secondary:IconButton(onPressed:()async{final id=e.value['notificationId'];if(id is int)await _notifications.cancel(id);items.removeAt(e.key);await _saveReminders();setState((){});},icon:const Icon(Icons.delete_outline))))),
   ]else...[
    TextField(controller:noteTitle,decoration:const InputDecoration(labelText:'नोट का शीर्षक (वैकल्पिक)')),
    const SizedBox(height:8),
