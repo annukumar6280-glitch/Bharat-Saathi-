@@ -105,7 +105,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   String get _quizSeenKey => 'bs_ai_teacher_seen_questions_${_accountId}_$_topic';
 
   Map<String, dynamic> _quizQuestion(String id, String question, String answer, List<String> distractors) {
-    final options = <String>[answer, ...distractors.where((item) => item != answer).take(3)];
+    final options = <String>{answer, ...distractors}.take(4).toList();
     while (options.length < 4) { options.add('इनमें से कोई नहीं'); }
     return <String, dynamic>{'id': id, 'q': question, 'o': options, 'a': options.indexOf(answer)};
   }
