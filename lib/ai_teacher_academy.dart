@@ -1234,7 +1234,7 @@ class _AnimatedTeacherAvatarState extends State<AnimatedTeacherAvatar>
     with SingleTickerProviderStateMixin {
   late final AnimationController _motion = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 520),
+    duration: const Duration(milliseconds: 1800),
   )..repeat(reverse: true);
 
   @override
@@ -1248,11 +1248,11 @@ class _AnimatedTeacherAvatarState extends State<AnimatedTeacherAvatar>
     return AnimatedBuilder(
       animation: _motion,
       builder: (context, child) => SizedBox(
-        height: 176,
-        width: 176,
+        height: 206,
+        width: 206,
         child: CustomPaint(
           painter: _TeacherFacePainter(
-            mouthOpen: widget.speaking ? .18 + _motion.value * .30 : widget.listening ? .10 : 0,
+            mouthOpen: widget.speaking ? .22 + _motion.value * .42 : widget.listening ? .08 : 0,
             listening: widget.listening,
             speaking: widget.speaking,
             phase: _motion.value,
@@ -1263,68 +1263,165 @@ class _AnimatedTeacherAvatarState extends State<AnimatedTeacherAvatar>
   }
 }
 
+/// A layered, shaded 2.5D avatar painted locally in Flutter. It uses lighting,
+/// gradients, depth shadows and subtle head movement; it does not require a
+/// paid streaming-avatar service or a downloaded 3D model.
 class _TeacherFacePainter extends CustomPainter {
   final double mouthOpen;
   final bool listening;
   final bool speaking;
   final double phase;
-  const _TeacherFacePainter({required this.mouthOpen, required this.listening, required this.speaking, required this.phase});
+  const _TeacherFacePainter({
+    required this.mouthOpen,
+    required this.listening,
+    required this.speaking,
+    required this.phase,
+  });
+
+  Paint _gradient(Rect rect, List<Color> colors, {Alignment begin = Alignment.topLeft, Alignment end = Alignment.bottomRight}) {
+    return Paint()
+      ..isAntiAlias = true
+      ..shader = LinearGradient(begin: begin, end: end, colors: colors).createShader(rect);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height * .43);
-    final p = Paint()..isAntiAlias = true;
-    p.color = const Color(0xFF3449A8);
-    canvas.drawOval(Rect.fromCenter(center: Offset(center.dx, size.height * .91), width: 145, height: 78), p);
-    p.color = const Color(0xFFFFD7B8);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(center.dx, center.dy + 59), width: 32, height: 42), const Radius.circular(10)), p);
-    p.color = const Color(0xFF9B5B3B);
-    canvas.drawOval(Rect.fromCenter(center: Offset(center.dx, center.dy - 7), width: 105, height: 116), p);
-    p.color = const Color(0xFFFFD7B8);
-    canvas.drawOval(Rect.fromCenter(center: center, width: 91, height: 108), p);
-    p.color = const Color(0xFF25305B);
-    final hair = Path()
-      ..moveTo(center.dx - 47, center.dy - 13)
-      ..quadraticBezierTo(center.dx - 49, center.dy - 69, center.dx + 3, center.dy - 61)
-      ..quadraticBezierTo(center.dx + 48, center.dy - 62, center.dx + 47, center.dy - 8)
-      ..quadraticBezierTo(center.dx + 25, center.dy - 35, center.dx + 4, center.dy - 31)
-      ..quadraticBezierTo(center.dx - 23, center.dy - 24, center.dx - 47, center.dy - 13)
+    final cx = size.width / 2;
+    final bob = math.sin(phase * math.pi) * 2.2;
+    final tilt = (phase - .5) * .035;
+    canvas.save();
+    canvas.translate(cx, size.height * .47 + bob);
+    canvas.rotate(tilt);
+    canvas.translate(-cx, -size.height * .47);
+
+    // Soft studio halo and shoulders.
+    final halo = Paint()
+      ..color = const Color(0xFF8EA8FF).withValues(alpha: .10 + (speaking ? phase * .08 : 0))
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 13);
+    canvas.drawCircle(Offset(cx, 87), 84, halo);
+
+    final shoulderRect = Rect.fromCenter(center: Offset(cx, 185), width: 174, height: 94);
+    canvas.drawOval(shoulderRect.shift(const Offset(0, 5)), Paint()..color = const Color(0x220D1740)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7));
+    canvas.drawOval(shoulderRect, _gradient(shoulderRect, const [Color(0xFF7189E8), Color(0xFF3549A8), Color(0xFF1D2D70)]));
+    final shirt = Path()
+      ..moveTo(cx - 36, 151)
+      ..lineTo(cx - 18, 137)
+      ..quadraticBezierTo(cx, 150, cx + 18, 137)
+      ..lineTo(cx + 36, 151)
+      ..lineTo(cx + 26, 201)
+      ..lineTo(cx - 26, 201)
       ..close();
-    canvas.drawPath(hair, p);
-    p.color = const Color(0xFF51382F);
-    for (final dx in [-18.0, 18.0]) {
-      canvas.drawOval(Rect.fromCenter(center: Offset(center.dx + dx, center.dy - 3), width: 7, height: listening ? 2 : 9), p);
+    canvas.drawPath(shirt, _gradient(const Rect.fromLTWH(70, 135, 66, 70), const [Color(0xFFF8FAFF), Color(0xFFD6E0FF), Color(0xFF9EAFE8)]));
+
+    // Neck with a cast shadow.
+    final neck = Rect.fromCenter(center: Offset(cx, 139), width: 38, height: 48);
+    canvas.drawRRect(RRect.fromRectAndRadius(neck.shift(const Offset(2, 3)), const Radius.circular(13)), Paint()..color = const Color(0x553D241D));
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(neck, const Radius.circular(13)),
+      _gradient(neck, const [Color(0xFFFFE0C8), Color(0xFFD99A77), Color(0xFFB97559)]),
+    );
+
+    // Ears sit behind the face.
+    for (final side in [-1.0, 1.0]) {
+      final ear = Rect.fromCenter(center: Offset(cx + side * 48, 91), width: 22, height: 34);
+      canvas.drawOval(ear, _gradient(ear, const [Color(0xFFFFD9C0), Color(0xFFC98367)]));
+      canvas.drawOval(ear.deflate(7), Paint()..color = const Color(0xFFB96F58).withValues(alpha: .65));
     }
-    p.color = const Color(0xFFB97859);
-    p.strokeWidth = 2;
-    p.style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(center.dx, center.dy + 2), Offset(center.dx - 2, center.dy + 19), p);
-    p.style = PaintingStyle.fill;
-    p.color = const Color(0xFF8E3548);
+
+    // Face silhouette and layered skin lighting create rounded depth.
+    final face = Rect.fromCenter(center: Offset(cx, 88), width: 96, height: 119);
+    canvas.drawOval(face.shift(const Offset(2, 5)), Paint()..color = const Color(0x66351F1A)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
+    canvas.drawOval(face, _gradient(face, const [
+      Color(0xFFFFE9D8), Color(0xFFFFD6BA), Color(0xFFE8AD8E), Color(0xFFC98468),
+    ], begin: Alignment.topLeft, end: Alignment.bottomRight));
+    final faceLight = Rect.fromCenter(center: Offset(cx - 17, 76), width: 52, height: 91);
+    canvas.drawOval(faceLight, Paint()
+      ..shader = RadialGradient(colors: [const Color(0xFFFFF5E9).withValues(alpha: .62), const Color(0x00FFF5E9)]).createShader(faceLight));
+
+    // Hair cap with side volume and highlighted strands.
+    final hair = Path()
+      ..moveTo(cx - 49, 82)
+      ..quadraticBezierTo(cx - 55, 13, cx - 4, 21)
+      ..quadraticBezierTo(cx + 43, 7, cx + 51, 62)
+      ..lineTo(cx + 47, 83)
+      ..quadraticBezierTo(cx + 28, 54, cx + 6, 53)
+      ..quadraticBezierTo(cx - 19, 69, cx - 49, 82)
+      ..close();
+    canvas.drawPath(hair, _gradient(const Rect.fromLTWH(52, 14, 104, 76), const [
+      Color(0xFF34436E), Color(0xFF172342), Color(0xFF080F24),
+    ]));
+    final hairShine = Paint()
+      ..color = const Color(0xFF9BAAD8).withValues(alpha: .42)
+      ..strokeWidth = 2.1
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    canvas.drawPath(Path()
+      ..moveTo(cx - 31, 46)
+      ..quadraticBezierTo(cx - 15, 23, cx + 9, 30)
+      ..moveTo(cx - 20, 54)
+      ..quadraticBezierTo(cx - 4, 36, cx + 20, 39), hairShine);
+
+    // Eyebrows, eyes, irises and catchlights.
+    for (final side in [-1.0, 1.0]) {
+      final ex = cx + side * 20;
+      final brow = Paint()..color = const Color(0xFF49302A)..strokeWidth = 3.2..strokeCap = StrokeCap.round;
+      canvas.drawLine(Offset(ex - 8, 76), Offset(ex + 7, 74), brow);
+      final eyeRect = Rect.fromCenter(center: Offset(ex, 88), width: 17, height: listening ? 3.5 : 10);
+      canvas.drawOval(eyeRect, Paint()..color = const Color(0xFFFFFEFA));
+      if (!listening) {
+        canvas.drawCircle(Offset(ex + 1, 88), 4.2, Paint()..color = const Color(0xFF68463A));
+        canvas.drawCircle(Offset(ex + 1, 88), 2.1, Paint()..color = const Color(0xFF171B2C));
+        canvas.drawCircle(Offset(ex - .5, 86.3), 1.35, Paint()..color = Colors.white);
+      }
+    }
+
+    // Nose bridge and soft shadow.
+    final nose = Path()
+      ..moveTo(cx, 88)
+      ..quadraticBezierTo(cx - 2, 103, cx - 5, 108)
+      ..quadraticBezierTo(cx, 113, cx + 6, 108);
+    canvas.drawPath(nose, Paint()..color = const Color(0xFFB8755C)..style = PaintingStyle.stroke..strokeWidth = 2.1..strokeCap = StrokeCap.round);
+    canvas.drawOval(Rect.fromCenter(center: Offset(cx - 2, 109), width: 5, height: 2.5), Paint()..color = const Color(0xFFFFE6D6).withValues(alpha: .7));
+
+    // Cheeks and mouth.
+    for (final side in [-1.0, 1.0]) {
+      final cheek = Rect.fromCenter(center: Offset(cx + side * 30, 111), width: 16, height: 8);
+      canvas.drawOval(cheek, Paint()
+        ..shader = RadialGradient(colors: [const Color(0xFFE98E83).withValues(alpha: .36), const Color(0x00E98E83)]).createShader(cheek));
+    }
+    final mouthCenter = Offset(cx, 124);
     if (mouthOpen > .03) {
-      canvas.drawOval(Rect.fromCenter(center: Offset(center.dx, center.dy + 34), width: 18, height: 5 + mouthOpen * 34), p);
-      p.color = const Color(0xFFFFFFFF);
-      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(center.dx, center.dy + 36), width: 12, height: 3), const Radius.circular(2)), p);
+      final mouth = Rect.fromCenter(center: mouthCenter, width: 19, height: 4 + mouthOpen * 14);
+      canvas.drawOval(mouth.shift(const Offset(0, 1.5)), Paint()..color = const Color(0xFF8C3545));
+      canvas.drawOval(mouth, _gradient(mouth, const [Color(0xFF4E1829), Color(0xFFB84C60)]));
+      if (mouth.height > 8) {
+        canvas.drawRRect(RRect.fromRectAndRadius(
+          Rect.fromLTWH(mouth.left + 3, mouth.top + 1, mouth.width - 6, 3.2),
+          const Radius.circular(2),
+        ), Paint()..color = const Color(0xFFFFF7EF));
+      }
     } else {
-      p.strokeWidth = 2.5;
-      p.style = PaintingStyle.stroke;
-      canvas.drawArc(Rect.fromCenter(center: Offset(center.dx, center.dy + 28), width: 20, height: 13), .15, math.pi - .3, false, p);
-      p.style = PaintingStyle.fill;
+      final smile = Path()
+        ..moveTo(cx - 10, 122)
+        ..quadraticBezierTo(cx, 132, cx + 10, 122);
+      canvas.drawPath(smile, Paint()..color = const Color(0xFF9C4B4D)..style = PaintingStyle.stroke..strokeWidth = 2.2..strokeCap = StrokeCap.round);
     }
-    p.color = const Color(0xFFB97859);
-    canvas.drawCircle(Offset(center.dx - 48, center.dy + 13), 5, p);
-    canvas.drawCircle(Offset(center.dx + 48, center.dy + 13), 5, p);
+
+    // Subtle light rim around the head while the teacher is speaking.
     if (speaking) {
-      p.color = const Color(0xFF6478E8).withValues(alpha: .18 + phase * .12);
-      p.style = PaintingStyle.stroke;
-      p.strokeWidth = 4;
-      canvas.drawCircle(center, 68 + phase * 3, p);
-      p.style = PaintingStyle.fill;
+      final ring = Paint()
+        ..color = const Color(0xFF8DA2FF).withValues(alpha: .20 + phase * .18)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.2;
+      canvas.drawOval(Rect.fromCenter(center: Offset(cx, 88), width: 111 + phase * 2, height: 133), ring);
     }
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _TeacherFacePainter oldDelegate) =>
-      oldDelegate.mouthOpen != mouthOpen || oldDelegate.listening != listening ||
-      oldDelegate.speaking != speaking || oldDelegate.phase != phase;
+      oldDelegate.mouthOpen != mouthOpen ||
+      oldDelegate.listening != listening ||
+      oldDelegate.speaking != speaking ||
+      oldDelegate.phase != phase;
 }
