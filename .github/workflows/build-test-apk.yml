@@ -137,19 +137,19 @@ jobs:
               raise SystemExit("Android Gradle file missing")
           text = gradle.read_text()
           replacements = [
-              (r"compileSdk\\s*=\\s*flutter\\.compileSdkVersion", "compileSdk = 36"),
-              (r"compileSdkVersion\\s+flutter\\.compileSdkVersion", "compileSdkVersion 36"),
-              (r"targetSdk\\s*=\\s*flutter\\.targetSdkVersion", "targetSdk = 36"),
-              (r"targetSdkVersion\\s+flutter\\.targetSdkVersion", "targetSdkVersion 36"),
-              (r"minSdk\\s*=\\s*flutter\\.minSdkVersion", "minSdk = 24"),
-              (r"minSdkVersion\\s+flutter\\.minSdkVersion", "minSdkVersion 24"),
+              (r"compileSdk\s*=\s*flutter\.compileSdkVersion", "compileSdk = 36"),
+              (r"compileSdkVersion\s+flutter\.compileSdkVersion", "compileSdkVersion 36"),
+              (r"targetSdk\s*=\s*flutter\.targetSdkVersion", "targetSdk = 36"),
+              (r"targetSdkVersion\s+flutter\.targetSdkVersion", "targetSdkVersion 36"),
+              (r"minSdk\s*=\s*flutter\.minSdkVersion", "minSdk = 24"),
+              (r"minSdkVersion\s+flutter\.minSdkVersion", "minSdkVersion 24"),
           ]
           for pattern, replacement in replacements:
               text, _ = re.subn(pattern, replacement, text)
           for label, pattern in [
-              ("compileSdk", r"compileSdk(?:Version)?\\s*(?:=\\s*)?36\\b"),
-              ("targetSdk", r"targetSdk(?:Version)?\\s*(?:=\\s*)?36\\b"),
-              ("minSdk", r"minSdk(?:Version)?\\s*(?:=\\s*)?24\\b"),
+              ("compileSdk", r"compileSdk(?:Version)?\s*(?:=\s*)?36\b"),
+              ("targetSdk", r"targetSdk(?:Version)?\s*(?:=\s*)?36\b"),
+              ("minSdk", r"minSdk(?:Version)?\s*(?:=\s*)?24\b"),
           ]:
               if not re.search(pattern, text):
                   raise SystemExit("Could not verify " + label + " in " + str(gradle))
