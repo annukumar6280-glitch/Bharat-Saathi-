@@ -164,7 +164,10 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
     }
   }
 
-  String get _voicePendingKey => '${_voiceUsageKey}_pending';
+  String get _voicePendingKey {
+    final userId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
+    return 'bs_ai_teacher_voice_pending_${userId}';
+  }
 
   Future<bool> _refreshVoiceUsageFromServer() async {
     try {
@@ -204,7 +207,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
     _voiceStopwatch.stop();
     final elapsed = _voiceStopwatch.elapsed.inSeconds;
     _voiceStopwatch.reset();
-    var updated = (_voiceUsedSeconds + elapsed).clamp(0, 300);
+    var updated = (_voiceUsedSeconds + elapsed).clamp(0, 300).toInt();
     final prefs = await SharedPreferences.getInstance();
     if (elapsed > 0) {
       try {
@@ -216,7 +219,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
           throw Exception('Invalid voice quota response');
         }
         final row = result.first as Map;
-        updated = ((row['used_seconds'] as num?)?.toInt() ?? updated).clamp(0, 300);
+        updated = ((row['used_seconds'] as num?)?.toInt() ?? updated).clamp(0, 300).toInt();
         await prefs.setInt(_voiceUsageKey, updated);
         await prefs.remove(_voicePendingKey);
       } catch (_) {
@@ -262,9 +265,11 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
           }
           if (result.finalResult) { _speech.stop(); _finishVoiceSession(); }
         },
-        localeId: widget.english ? 'en-IN' : 'hi-IN',
-        listenFor: Duration(seconds: remaining),
-        pauseFor: const Duration(seconds: 5),
+        listenOptions: SpeechListenOptions(
+          localeId: widget.english ? 'en-IN' : 'hi-IN',
+          listenFor: Duration(seconds: remaining),
+          pauseFor: const Duration(seconds: 5),
+        ),
       );
     } catch (_) {
       await _finishVoiceSession();
@@ -287,6 +292,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
       await _tts.speak(answer);
       await _finishVoiceSession();
     } catch (_) {
+      await _finishVoiceSession();
       if (mounted) setState(() { _speaking = false; _voiceMessage = 'इस फोन में चुनी गई भाषा की आवाज़ उपलब्ध नहीं है।'; });
     }
   }
