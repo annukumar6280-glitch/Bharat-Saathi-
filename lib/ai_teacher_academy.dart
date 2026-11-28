@@ -1,3 +1,4 @@
+import 'ai_teacher_curriculum.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -44,28 +45,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
 
   // Course -> Part -> Lesson curriculum. Keep each level selectable so learners
   // can study only the skill they need instead of being forced through one long list.
-  static const _courseParts = <String, List<({String title, List<String> lessons})>>{
-    'English Skills': [
-      (title: 'Speaking & Conversation', lessons: ['Daily conversation', 'Self introduction', 'Asking questions']),
-      (title: 'Grammar & Vocabulary', lessons: ['Grammar basics', 'Tenses', 'Daily vocabulary']),
-      (title: 'Reading & Writing', lessons: ['Reading practice', 'Sentence writing', 'Messages & emails']),
-    ],
-    'Computer & Digital Skills': [
-      (title: 'Computer Fundamentals', lessons: ['Computer basics', 'Parts of a computer', 'Keyboard and mouse']),
-      (title: 'Files & Office Work', lessons: ['Files and folders', 'Word processing', 'Spreadsheets']),
-      (title: 'Internet & Digital Safety', lessons: ['Internet basics', 'Internet safety', 'Digital payments']),
-    ],
-    'Maths & General Knowledge': [
-      (title: 'Number Skills', lessons: ['Basic mathematics', 'Addition and subtraction', 'Multiplication and division']),
-      (title: 'Fractions & Percentages', lessons: ['Fractions and decimals', 'Percentages', 'Ratio and proportion']),
-      (title: 'Practical Maths & General Knowledge', lessons: ['Money calculations', 'General knowledge', 'Science and geography']),
-    ],
-    'Business Skills': [
-      (title: 'Business Foundation', lessons: ['Business basics', 'Business planning', 'Products and pricing']),
-      (title: 'Customers & Sales', lessons: ['Customer handling', 'Sales skills', 'Customer service']),
-      (title: 'Accounts & Growth', lessons: ['Bookkeeping', 'Profit and loss', 'Budget and savings']),
-    ],
-  };
+  static const _courseParts = AiTeacherCurriculum.courseParts;
 
   List<({String title, List<String> lessons})> get _selectedParts =>
       _courseParts[_topic] ?? const [];
@@ -705,6 +685,11 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     super.dispose();
   }
 
+  Future<void> _teachFullLesson() async {
+    _question.text = 'मुझे इस चुने हुए लेसन को बिल्कुल शुरुआत से विस्तार से पढ़ाइए। पहले सीखने के लक्ष्य बताइए, फिर सरल परिभाषाएँ और जरूरी शब्द समझाइए, हर अवधारणा को क्रमवार उदाहरणों के साथ सिखाइए, जहाँ लागू हो वहाँ हल किए हुए सवाल या व्यावहारिक चरण दिखाइए, आम गलतियाँ और उनसे बचने के तरीके बताइए, फिर आसान से कठिन अभ्यास दीजिए। अंत में 5 जाँच प्रश्न और एक छोटा गृहकार्य दीजिए। उत्तर इतना पूरा हो कि विद्यार्थी बिना दूसरी वेबसाइट खोले इस लेसन का अध्ययन कर सके।';
+    await _askTeacher();
+  }
+
   Future<void> _askTeacher() async {
     final question = _question.text.trim();
     if (question.isEmpty) {
@@ -857,7 +842,20 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
           leading: const Icon(Icons.menu_book_rounded),
           title: const Text('पाठ सामग्री', style: TextStyle(fontWeight: FontWeight.w800)),
           subtitle: const Text('चुने हुए पार्ट और लेसन की सामग्री'),
-          children: [Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), child: Text(_lessonSummary(), style: const TextStyle(height: 1.5)))],
+          children: [
+            Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 10), child: Text(_lessonSummary(), style: const TextStyle(height: 1.5))),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _asking ? null : _teachFullLesson,
+                  icon: const Icon(Icons.auto_awesome_rounded),
+                  label: const Text('AI Teacher से पूरा लेसन सीखें'),
+                ),
+              ),
+            ),
+          ],
         )),
         Card(child: ListTile(
           leading: const Icon(Icons.quiz_outlined),
