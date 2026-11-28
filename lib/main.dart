@@ -478,7 +478,7 @@ class Dashboard extends StatelessWidget {
                       ? (english ? 'Account: $accountName' : 'खाता: $accountName')
                       : (english ? 'Your account' : 'आपका खाता'),
                   style: const TextStyle(
-                    color: Color(0xFF25345B),
+                    color: Colors.white,
                     fontSize: 21,
                     fontWeight: FontWeight.w900,
                   ),
@@ -491,7 +491,7 @@ class Dashboard extends StatelessWidget {
                       ? 'Your daily business at a glance'
                       : 'आपके रोज़ के कारोबार का साफ़ और आसान हिसाब',
                   style: const TextStyle(
-                    color: Color(0xFF5F6D91),
+                    color: Colors.white70,
                     fontSize: 12,
                   ),
                 ),
