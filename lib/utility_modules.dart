@@ -341,7 +341,27 @@ class _ReminderToolState extends State<_ReminderTool>{
    const Padding(padding:EdgeInsets.only(top:4),child:Text('Android Notifications की अनुमति माँगी जाएगी। कुछ फोन बैटरी प्रतिबंधों के कारण समय पर नोटिफिकेशन रोक सकते हैं।',style:TextStyle(color:Colors.blueGrey,fontSize:11))),
    const Divider(height:28),
    if(items.isEmpty)const Text('अभी कोई रिमाइंडर नहीं है।'),
-   ...items.asMap().entries.map((e)=>Card(child:CheckboxListTile(value:e.value['done'] as bool,onChanged:(v)async{items[e.key]['done']=v??false;final id=items[e.key]['notificationId'];if((v??false)&&id is int)await _notifications.cancel(id:id);await _saveReminders();setState((){});},title:Text(e.value['title'].toString()),subtitle:Text(DateTime.parse(e.value['due'].toString()).toLocal().toString().split(' ').first),secondary:Row(mainAxisSize:MainAxisSize.min,children:[IconButton(tooltip:'बदलें',onPressed:()=>_editReminder(e.key),icon:const Icon(Icons.edit_outlined)),IconButton(tooltip:'हटाएँ',onPressed:()async{final id=e.value['notificationId'];if(id is int)await _notifications.cancel(id:id);items.removeAt(e.key);await _saveReminders();setState((){});},icon:const Icon(Icons.delete_outline))])))),
+   ...items.asMap().entries.map((e){
+    final reminderDue=DateTime.parse(e.value['due'].toString()).toLocal();
+    return Card(child:CheckboxListTile(
+     value:e.value['done'] as bool,
+     onChanged:(v)async{
+      items[e.key]['done']=v??false;
+      final id=items[e.key]['notificationId'];
+      if(id is int){
+       if(v??false){await _notifications.cancel(id:id);}
+       else if(reminderDue.isAfter(DateTime.now())){await _scheduleReminder(id,items[e.key]['title'].toString(),reminderDue);}
+      }
+      await _saveReminders();setState((){});
+     },
+     title:Text(e.value['title'].toString()),
+     subtitle:Text('${reminderDue.day}-${reminderDue.month}-${reminderDue.year} • ${TimeOfDay.fromDateTime(reminderDue).format(context)}'),
+     secondary:Row(mainAxisSize:MainAxisSize.min,children:[
+      IconButton(tooltip:'बदलें',onPressed:()=>_editReminder(e.key),icon:const Icon(Icons.edit_outlined)),
+      IconButton(tooltip:'हटाएँ',onPressed:()async{final id=e.value['notificationId'];if(id is int)await _notifications.cancel(id:id);items.removeAt(e.key);await _saveReminders();setState((){});},icon:const Icon(Icons.delete_outline)),
+     ]),
+    ));
+   }),
   ]else...[
    TextField(controller:noteTitle,decoration:const InputDecoration(labelText:'नोट का शीर्षक (वैकल्पिक)')),
    const SizedBox(height:8),
