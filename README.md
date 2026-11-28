@@ -12,7 +12,7 @@ Bharat Saathi is an Android-first Flutter app centred on eight core features: Kh
 - Reminders & Notes stores reminders and notes locally. New reminders can schedule Android local notifications after the user grants notification permission; exact delivery can still be affected by OEM battery restrictions.
 - Family & Friends Live Location supports phone-number invitations, two-way opt-in, live satellite map updates, location pause/resume and re-share requests.
 - Smart Calculator includes standard arithmetic, GST add/remove, discount percentage and profit/margin calculations.
-- AI Teacher Academy includes four course categories, short lesson notes, course quizzes, locally saved progress, push-to-talk speech-to-text, spoken answers and a five-minute daily on-device voice allowance. The allowance is stored locally (not server-enforced). Actual course video lessons are not bundled. Text Q&A uses the authenticated `ai-teacher-assistant` Edge Function.
+- AI Teacher Academy includes four course categories, short lesson notes, course quizzes, locally saved progress, push-to-talk speech-to-text, spoken answers and a five-minute daily voice allowance enforced per signed-in account through Supabase; speech recognition and spoken answers use the Android/device speech services. Actual course video lessons are not bundled. Text Q&A uses the authenticated `ai-teacher-assistant` Edge Function.
 - Profile and account shell retain sign-in, privacy, language, help and cloud backup controls. Recharge, bill payment, challan, Payment Sound Box, AI Calling Assistant, referral and commission modules are retired from this branch.
 - Transactional on-device SQLite persistence with one-time import of older SharedPreferences records.
 - Google Mobile Ads SDK is included with Google's test ad identifiers in the development build.
@@ -53,7 +53,7 @@ GitHub Actions workflow: `.github/workflows/flutter-android.yml`
 
 1. Confirm `FAL_KEY` is configured in Supabase Edge Function Secrets, then run one paid video generation only after reviewing the 50-coin app charge and Fal provider billing. CI does not invoke the paid model.
 2. Sign in with a real Bharat Saathi test account and verify `OPENAI_API_KEY` / `GEMINI_API_KEY` are configured for AI Teacher text Q&A.
-3. Test speech recognition, Hindi/English TTS, the five-minute local voice cap and microphone permission on physical Android devices. The local cap can be reset by clearing app data and is not a server-enforced entitlement.
+3. Test speech recognition, Hindi/English TTS, the five-minute local voice cap and microphone permission on physical Android devices. Voice usage is recorded per account in Supabase and is not reset by clearing app data.
 4. Test scheduled reminder notifications after granting Android notification permission, including reboot and battery restrictions on Vivo and other OEM devices.
 5. Test Family & Friends background location, precise/background permissions, battery restrictions and Google Play background-location disclosures. Firebase Cloud Messaging is still needed for push notifications when the app is fully closed, and phone-number ownership is not SMS-OTP verified.
 6. Complete real-device tests for QR export, PDF/WhatsApp sharing, Khata/Expenses sync and account switching. The current cloud backup is account-scoped snapshot synchronization, not a conflict-safe normalized multi-device ledger.
