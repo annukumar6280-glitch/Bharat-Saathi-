@@ -251,7 +251,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
             const SizedBox(height: 10),
             RadioGroup<int>(
               groupValue: selected,
-              onChanged: feedback == null ? (value) => setDialogState(() => selected = value ?? -1) : null,
+              onChanged: (value) { if (feedback == null) setDialogState(() => selected = value ?? -1); },
               child: Column(children: List.generate(options.length, (i) => RadioListTile<int>(
                 dense: true, contentPadding: EdgeInsets.zero, value: i, title: Text(options[i]),
               ))),
