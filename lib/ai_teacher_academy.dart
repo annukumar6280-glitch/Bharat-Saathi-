@@ -306,7 +306,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
                 const Text('आप किस क्लास में पढ़ते हैं या आपकी पढ़ाई का स्तर क्या है?'),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
-                  value: selectedClass,
+                  initialValue: selectedClass,
                   isExpanded: true,
                   decoration: const InputDecoration(border: OutlineInputBorder()),
                   items: _classOptions.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
