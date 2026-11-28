@@ -184,17 +184,22 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     final userId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
     return 'bs_ai_teacher_voice_pending_' + userId;
   }
+  String get _voicePendingSessionKey => _voicePendingKey + '_session';
 
   Future<bool> _refreshVoiceUsageFromServer() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final pending = prefs.getInt(_voicePendingKey) ?? 0;
       if (pending > 0) {
+        var sessionId = prefs.getString(_voicePendingSessionKey);
+        sessionId ??= '${Supabase.instance.client.auth.currentUser?.id ?? 'user'}_${DateTime.now().microsecondsSinceEpoch}';
+        await prefs.setString(_voicePendingSessionKey, sessionId);
         await Supabase.instance.client.rpc(
           'consume_ai_teacher_voice_seconds',
-          params: {'p_seconds': pending.clamp(1, 300)},
+          params: {'p_seconds': pending.clamp(1, 300), 'p_session_id': sessionId},
         );
         await prefs.remove(_voicePendingKey);
+        await prefs.remove(_voicePendingSessionKey);
       }
       final result = await Supabase.instance.client.rpc('get_ai_teacher_voice_usage');
       if (result is! List || result.isEmpty || result.first is! Map) {
@@ -226,10 +231,15 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     var updated = (_voiceUsedSeconds + elapsed).clamp(0, 300).toInt();
     final prefs = await SharedPreferences.getInstance();
     if (elapsed > 0) {
+      final pending = prefs.getInt(_voicePendingKey) ?? 0;
+      final pendingSeconds = (pending + elapsed).clamp(1, 300).toInt();
+      final sessionId = '${Supabase.instance.client.auth.currentUser?.id ?? 'user'}_${DateTime.now().microsecondsSinceEpoch}';
+      await prefs.setInt(_voicePendingKey, pendingSeconds);
+      await prefs.setString(_voicePendingSessionKey, sessionId);
       try {
         final result = await Supabase.instance.client.rpc(
           'consume_ai_teacher_voice_seconds',
-          params: {'p_seconds': elapsed.clamp(1, 300)},
+          params: {'p_seconds': pendingSeconds, 'p_session_id': sessionId},
         );
         if (result is! List || result.isEmpty || result.first is! Map) {
           throw Exception('Invalid voice quota response');
@@ -238,9 +248,8 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         updated = ((row['used_seconds'] as num?)?.toInt() ?? updated).clamp(0, 300).toInt();
         await prefs.setInt(_voiceUsageKey, updated);
         await prefs.remove(_voicePendingKey);
+        await prefs.remove(_voicePendingSessionKey);
       } catch (_) {
-        final pending = prefs.getInt(_voicePendingKey) ?? 0;
-        await prefs.setInt(_voicePendingKey, (pending + elapsed).clamp(0, 300));
         updated = 300;
         if (mounted) setState(() => _voiceMessage = 'वॉइस उपयोग सर्वर से सिंक नहीं हुआ। इंटरनेट जुड़ने पर दोबारा जाँचें।');
       }
