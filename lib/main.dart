@@ -412,7 +412,7 @@ final serviceTransactions=<Record>[];
  final metadataName=currentUser?.userMetadata?['full_name'];
  final accountName=metadataName is String&&metadataName.trim().isNotEmpty?metadataName.trim():(currentUser?.email?.split('@').first??'').trim();
  final pages=<Widget>[
-  Dashboard(english:english,accountName:accountName,onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>kind=='location'?LiveLocationPage(supabaseAvailable:widget.supabaseAvailable,english:english):UtilityModulePage(kind:kind,title:const {'qr':'QR Code Tools','poster':'Poster Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator','location':'Family & Friends Live Location','calling':'AI Calling Assistant'}[kind]??'Tools')))),
+  Dashboard(english:english,accountName:accountName,onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>kind=='location'?LiveLocationPage(supabaseAvailable:widget.supabaseAvailable,english:english):UtilityModulePage(kind:kind,title:const {'qr':'QR Code Tools','poster':'Poster Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator','location':'Family & Friends Live Location'}[kind]??'Tools')))),
   KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onAddPerson:()=>addLedgerPerson(khata),onCreditForPerson:(n)=>entry(false,n),onPaymentForPerson:(n)=>entry(true,n),onEditRecord:(r)=>editLedgerRecord(r,khata),onRenamePerson:(n)=>renameLedgerPerson(n,khata)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onAddPerson:()=>addLedgerPerson(personalKhata),onCreditForPerson:(n)=>personalLoanEntry(false,n),onPaymentForPerson:(n)=>personalLoanEntry(true,n),onEditRecord:(r)=>editLedgerRecord(r,personalKhata),onRenamePerson:(n)=>renameLedgerPerson(n,personalKhata)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
   ExpenseOnlyPage(items:expensesList,onAdd:expense,onEdit:editExpense),
    ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,darkMode:darkMode,onDarkMode:(v){setState(()=>darkMode=v);_persist();},onLanguage:(v){setState(()=>english=v);_persist();},expensesList:expensesList,khata:khata,personalTransactions:personalTransactions)
@@ -548,9 +548,6 @@ class Dashboard extends StatelessWidget {
               _tile('Family & Friends Live Location', 'फैमिली की लाइव लोकेशन',
                   Icons.location_on_outlined, const Color(0xFFDDF6EB),
                   () => onTools('location')),
-              _tile('AI Calling Assistant', 'कॉल असिस्टेंट',
-                  Icons.support_agent, const Color(0xFFFFF2DE),
-                  () => onTools('calling')),
             ],
           ),
           const SizedBox(height: 12),
@@ -1299,9 +1296,9 @@ class ProfilePage extends StatelessWidget{
    setting(Icons.lock_outline,english?'Account & Security':'अकाउंट और सुरक्षा',english?'Login or create your account':'लॉगिन करें या नया अकाउंट रजिस्टर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AuthPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const PrivacyPolicyPage(english:false)))),
    Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
-   setting(Icons.account_balance_wallet_outlined,english?'Coin Wallet':'कॉइन वॉलेट',english?'Balance, history and AI Call redemption':'कॉइन बैलेंस, हिस्ट्री और AI Call सब्सक्रिप्शन',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>AiCoinWalletPage(supabaseAvailable:supabaseAvailable)))),
+   setting(Icons.account_balance_wallet_outlined,english?'Coin Wallet':'कॉइन वॉलेट',english?'Balance and history for AI photo/video credits':'AI फोटो और वीडियो के कॉइन का बैलेंस और हिस्ट्री',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CoinWalletPage(supabaseAvailable:supabaseAvailable)))),
     setting(Icons.location_on_outlined,english?'Family & Friends Live Location':'फैमिली लाइव लोकेशन',english?'Share live location with accepted family and friends':'परिवार और दोस्तों के साथ लाइव लोकेशन शेयर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LiveLocationPage(supabaseAvailable:supabaseAvailable,english:english)))),
-   setting(Icons.card_giftcard,english?'Refer & Earn':'रेफर एंड अर्न',english?'Earn coins and unlock AI Call Assistant':'सफल रेफरल पर 10 कॉइन पाएँ; 100 कॉइन पर AI Call Assistant का 1 महीना',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
+   setting(Icons.card_giftcard,english?'Refer & Earn':'रेफर एंड अर्न',english?'Earn 10 coins for every successful referral':'सफल रेफरल पर 10 कॉइन पाएँ',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
     setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),
    setting(Icons.cloud_sync,english?'Automatic cloud sync':'ऑटोमैटिक क्लाउड सिंक',english?'Records sync automatically; restore from cloud':'रिकॉर्ड अपने-आप सिंक होते हैं; क्लाउड से रीस्टोर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),
@@ -1382,13 +1379,13 @@ class _CommerceWalletPageState extends State<CommerceWalletPage>{
  ]));
  Widget _walletCard(String title,String subtitle,String amount,IconData icon)=>Container(padding:EdgeInsets.all(16),decoration:BoxDecoration(color:navy,borderRadius:BorderRadius.circular(17)),child:Row(children:[Icon(icon,color:gold,size:28),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900)),Text(subtitle,style:TextStyle(color:Colors.white70,fontSize:11))])),Text(amount,style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:18))]));
 }
-class AiCoinWalletPage extends StatefulWidget{
+class CoinWalletPage extends StatefulWidget{
  final bool supabaseAvailable;
- const AiCoinWalletPage({super.key,required this.supabaseAvailable});
- @override State<AiCoinWalletPage> createState()=>_AiCoinWalletPageState();
+ const CoinWalletPage({super.key,required this.supabaseAvailable});
+ @override State<CoinWalletPage> createState()=>_CoinWalletPageState();
 }
-class _AiCoinWalletPageState extends State<AiCoinWalletPage>{
- bool loading=true,busy=false;int balance=0;List<Map<String,dynamic>> history=[];DateTime? callExpiry;String? error;
+class _CoinWalletPageState extends State<CoinWalletPage>{
+ bool loading=true;int balance=0;List<Map<String,dynamic>> history=[];String? error;
  @override void initState(){super.initState();_load();}
  Future<void> _load()async{
   final client=Supabase.instance.client;final user=client.auth.currentUser;
@@ -1397,26 +1394,18 @@ class _AiCoinWalletPageState extends State<AiCoinWalletPage>{
    final results=await Future.wait([
     client.from('ai_coin_wallets').select('balance').eq('user_id',user.id).maybeSingle(),
     client.from('ai_coin_transactions').select('direction,amount,reason,description,created_at').eq('user_id',user.id).order('created_at',ascending:false).limit(40),
-    client.from('ai_call_subscriptions').select('expires_at').eq('user_id',user.id).maybeSingle(),
    ]);
    if(!mounted)return;
    setState(() {
     final wallet=results[0] as Map<String,dynamic>?;
     final transactions=results[1] as List;
-    final subscription=results[2] as Map<String,dynamic>?;
     balance=(wallet?['balance'] as num?)?.toInt()??0;
     history=transactions.map((e)=>Map<String,dynamic>.from(e as Map)).toList();
-    callExpiry=DateTime.tryParse(subscription?['expires_at']?.toString()??'');
     loading=false;error=null;
    });
   }catch(e){if(mounted)setState((){loading=false;error=e.toString();});}
  }
- Future<void> _redeem()async{
-  if(busy)return;setState(()=>busy=true);
-  try{await Supabase.instance.client.rpc('redeem_ai_call_month');await _load();if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('AI Call Assistant का एक महीना रिडीम हो गया।')));}
-  catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('रिडीम नहीं हुआ: $e')));}
-  finally{if(mounted)setState(()=>busy=false);}
- }
+
  @override Widget build(BuildContext context)=>Scaffold(
   bottomNavigationBar:const BannerAdSlot(),appBar:AppBar(title:const Text('Coin Wallet')),
   body:loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
@@ -1425,7 +1414,7 @@ class _AiCoinWalletPageState extends State<AiCoinWalletPage>{
    Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF24345B),Color(0xFF52628A)]),borderRadius:BorderRadius.circular(20)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     const Text('आपका Coin Balance',style:TextStyle(color:Colors.white70)),const SizedBox(height:7),
     Text('$balance Coins',style:TextStyle(color:gold,fontSize:30,fontWeight:FontWeight.w900)),
-    const SizedBox(height:8),const Text('एक ही वॉलेट से AI फोटो, AI वीडियो और Call Assistant के कॉइन इस्तेमाल होंगे।',style:TextStyle(color:Colors.white70,fontSize:12))
+    const SizedBox(height:8),const Text('एक ही वॉलेट से AI फोटो और AI वीडियो के कॉइन इस्तेमाल होंगे।',style:TextStyle(color:Colors.white70,fontSize:12))
    ])),
    const SizedBox(height:12),
    Card(color:surfaceColor,child:const ListTile(leading:Icon(Icons.ondemand_video),title:Text('विज्ञापन देखकर कॉइन कमाएँ'),subtitle:Text('Rewarded Ad की सर्वर-साइड पुष्टि जोड़ने के बाद यह विकल्प चालू होगा।'))),
@@ -1464,7 +1453,6 @@ class _ReferralPageState extends State<ReferralPage>{
   Card(color:surfaceColor,child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
    Text('10 कॉइन प्रति सफल रेफरल',style:TextStyle(color:navy,fontWeight:FontWeight.w900)),
    const SizedBox(height:5),const Text('आपका रेफरल कोड लगाकर नया यूज़र अकाउंट जोड़ेगा तो आपके Coin Wallet में 10 कॉइन जुड़ेंगे। खुद का कोड इस्तेमाल नहीं किया जा सकता।'),
-   const SizedBox(height:8),const Text('100 कॉइन से AI Call Assistant का 1 महीने का सब्सक्रिप्शन रिडीम करें।')
   ])))
  ]));
 }
