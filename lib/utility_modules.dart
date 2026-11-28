@@ -267,7 +267,7 @@ class _ReminderToolState extends State<_ReminderTool>{
   final p=await SharedPreferences.getInstance();
   for(final entry in [(_reminderStorageKey,'reminders'),(_notesStorageKey,'notes')]){
    final raw=p.getString(entry.$1);
-   if(raw!=null){try{final data=List<Map<String,dynamic>>.from(jsonDecode(raw));if(entry.$2=='reminders')items=data;else notes=data;}catch(_){}}
+   if(raw!=null){try{final data=List<Map<String,dynamic>>.from(jsonDecode(raw));if(entry.$2=='reminders'){items=data;}else{notes=data;}}catch(_){}}
   }
   if(mounted)setState(()=>loading=false);
  }
