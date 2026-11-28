@@ -194,11 +194,11 @@ Color get surfaceColor=>Colors.white;
 Color get appBgColor=>const Color(0xFFF4F6FB);
 Color get borderColor=>const Color(0xFFE3E8F2);
 ThemeData buildAppTheme(bool dark){
- const ink=Color(0xFF18264A),primary=Color(0xFF4055C8),teal=Color(0xFF0F9D91),amber=Color(0xFFF59E0B),canvas=Color(0xFFF4F6FB),line=Color(0xFFE3E8F2),pale=Color(0xFFE9EDFF);
+ const ink=Color(0xFF17234A),primary=Color(0xFF5146D8),teal=Color(0xFF00A99A),amber=Color(0xFFFFA928),canvas=Color(0xFFEAF0FF),line=Color(0xFFD4DDF5),pale=Color(0xFFDCD9FF);
  final scheme=ColorScheme.fromSeed(seedColor:primary,brightness:Brightness.light).copyWith(primary:primary,secondary:teal,tertiary:amber,surface:Colors.white,onSurface:ink);
  return ThemeData(useMaterial3:true,brightness:Brightness.light,scaffoldBackgroundColor:canvas,colorScheme:scheme,
- appBarTheme:const AppBarTheme(backgroundColor:canvas,foregroundColor:ink,elevation:0,scrolledUnderElevation:0,centerTitle:false,toolbarHeight:62,titleTextStyle:TextStyle(color:ink,fontSize:19,fontWeight:FontWeight.w800),iconTheme:IconThemeData(color:primary)),
- cardTheme:CardThemeData(color:Colors.white,elevation:1.5,shadowColor:const Color(0x18304488),margin:const EdgeInsets.symmetric(vertical:6),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(20),side:const BorderSide(color:line))),
+ appBarTheme:const AppBarTheme(backgroundColor:Color(0xFFEAF0FF),foregroundColor:ink,elevation:0,scrolledUnderElevation:0,centerTitle:false,toolbarHeight:62,titleTextStyle:TextStyle(color:ink,fontSize:19,fontWeight:FontWeight.w800),iconTheme:IconThemeData(color:primary)),
+ cardTheme:CardThemeData(color:const Color(0xFFFCFDFF),elevation:3,shadowColor:const Color(0x283F4CC0),margin:const EdgeInsets.symmetric(vertical:6),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(22),side:const BorderSide(color:line))),
  inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:Colors.white,contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:15),hintStyle:const TextStyle(color:Color(0xFF98A2B3)),border:OutlineInputBorder(borderRadius:BorderRadius.circular(15),borderSide:const BorderSide(color:line)),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(15),borderSide:const BorderSide(color:line)),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(15),borderSide:const BorderSide(color:primary,width:1.6))),
  filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:primary,foregroundColor:Colors.white,minimumSize:const Size(0,49),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),textStyle:const TextStyle(fontWeight:FontWeight.w800),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15)))),
  outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:primary,minimumSize:const Size(0,46),side:const BorderSide(color:line),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),
@@ -549,19 +549,19 @@ class Dashboard extends StatelessWidget {
             childAspectRatio: 1.12,
             children: [
               _tile('QR Code Maker', 'QR बनाएँ और स्कैन करें', Icons.qr_code_2,
-                  const Color(0xFFE8F0FF), () => onTools('qr')),
-              _tile('AI Poster Maker & Video Maker', 'AI से पोस्टर, फोटो और वीडियो बनाएँ', Icons.auto_awesome_rounded,
-                  const Color(0xFFFFF2DE), () => onTools('poster')),
+                  const Color(0xFFB8E7FF), () => onTools('qr')),
+              _tile('AI Poster Maker & Video Maker', 'AI से पोस्टर, फोटो और वीडियो बनाएँ', Icons.movie_creation_rounded,
+                  const Color(0xFFFFC6E7), () => onTools('poster')),
               _tile('AI Teacher Academy', 'सीखें, अभ्यास करें और AI टीचर से पूछें', Icons.school_rounded,
-                  const Color(0xFFEAE3FF), () => onTools('academy')),
+                  const Color(0xFFD4C5FF), () => onTools('academy')),
               _tile('Reminders & Notes', 'काम और भुगतान याद रखें',
-                  Icons.notifications_active_outlined, const Color(0xFFDDF6EB),
+                  Icons.notifications_active_rounded, const Color(0xFFB9F1D8),
                   () => onTools('reminders')),
               _tile('Smart Calculator', 'GST, छूट और मुनाफा',
-                  Icons.calculate_outlined, const Color(0xFFEAE3FF),
+                  Icons.calculate_rounded, const Color(0xFFFFD89A),
                   () => onTools('calculator')),
               _tile('Family & Friends Live Location', 'फैमिली की लाइव लोकेशन',
-                  Icons.location_on_outlined, const Color(0xFFDDF6EB),
+                  Icons.location_on_rounded, const Color(0xFFFFC4B8),
                   () => onTools('location')),
             ],
           ),
@@ -608,26 +608,27 @@ class Dashboard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 54,
+                    height: 54,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [iconBg, Color.lerp(iconBg, Colors.white, .42)!],
+                        colors: [iconBg, Color.lerp(iconBg, Colors.white, .34)!],
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [BoxShadow(color: accent.withValues(alpha: .14), blurRadius: 12, offset: const Offset(0, 5))],
                     ),
-                    child: Icon(icon, color: accent, size: 27),
+                    child: Icon(icon, color: accent, size: 30),
                   ),
                   Container(
-                    width: 28,
-                    height: 28,
+                    width: 30,
+                    height: 30,
                     decoration: BoxDecoration(
-                      color: accent.withValues(alpha: .08),
+                      color: accent.withValues(alpha: .10),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.arrow_outward_rounded, color: accent, size: 15),
+                    child: Icon(Icons.arrow_outward_rounded, color: accent, size: 16),
                   ),
                 ],
               ),
