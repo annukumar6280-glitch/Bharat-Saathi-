@@ -110,10 +110,7 @@ Deno.serve(async (req: Request) => {
             method: "PUT", headers: { "Authorization": `Key ${falKey}` },
           });
         } catch (_) {}
-        await admin.rpc("refund_ai_coin_credit", {
-          p_user_id: authData.user.id, p_source: source, p_generation_type: "video",
-        });
-        throw new Error("वीडियो जॉब सेव नहीं हो पाई; कॉइन वापस कर दिए गए हैं।");
+        throw new Error("वीडियो जॉब सेव नहीं हो पाई। अनुरोध रद्द करने की कोशिश की गई है।");
       }
       return json({
         requestId: queued.request_id, model, status: "IN_QUEUE",
