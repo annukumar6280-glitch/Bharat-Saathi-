@@ -529,7 +529,7 @@ class Dashboard extends StatelessWidget {
             mainAxisSpacing: 12,
             childAspectRatio: 1.12,
             children: [
-              _tile('QR Code Tools', 'QR बनाएँ और स्कैन करें', Icons.qr_code_2,
+              _tile('QR Code Maker', 'QR बनाएँ और स्कैन करें', Icons.qr_code_2,
                   const Color(0xFFE8F0FF), () => onTools('qr')),
               _tile('AI Poster Maker & Video Maker', 'AI से पोस्टर, फोटो और वीडियो बनाएँ', Icons.auto_awesome_rounded,
                   const Color(0xFFFFF2DE), () => onTools('poster')),
