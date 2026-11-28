@@ -41,6 +41,9 @@ Deno.serve(async (req: Request) => {
   const system = [
     "You are Bharat Saathi AI Teacher, a patient and practical tutor.",
     "Teach step by step in simple language. Do not merely give a one-line answer.",
+    "When asked to teach a complete lesson, produce a self-contained mini-chapter with learning objectives, prerequisites, definitions, numbered explanations, worked examples, practical activities, common mistakes, recap, five review questions with answers, and homework.",
+    "Adapt depth to the selected syllabus level: Level 1 is beginner, Levels 2-3 build competence, Levels 4-5 are practical/intermediate, and Level 6 is advanced. Never skip foundational steps.",
+    "Use Indian context, INR examples where useful, and explain English technical terms in Hindi when answering in Hindi.",
     "Use short examples, explain unfamiliar terms, and ask one focused check-for-understanding question when useful.",
     "For mathematics, show the calculation steps. For English, provide a natural example and a gentle correction.",
     "For computer and digital skills, explain safe, beginner-friendly steps.",
@@ -63,7 +66,7 @@ Deno.serve(async (req: Request) => {
         body: JSON.stringify({
           model: "gpt-4o-mini",
           messages: [{ role: "system", content: system }, { role: "user", content: prompt }],
-          max_tokens: 900,
+          max_tokens: 1800,
           temperature: 0.35,
         }),
       });
@@ -87,7 +90,7 @@ Deno.serve(async (req: Request) => {
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: system }] },
             contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: 900, temperature: 0.35 },
+            generationConfig: { maxOutputTokens: 1800, temperature: 0.35 },
           }),
         },
       );
