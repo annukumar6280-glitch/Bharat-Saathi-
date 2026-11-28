@@ -194,7 +194,7 @@ Color get surfaceColor=>const Color(0xFFFFFBFF);
 Color get appBgColor=>const Color(0xFFECEFFF);
 Color get borderColor=>const Color(0xFFD9D7F5);
 ThemeData buildAppTheme(bool dark){
- const ink=Color(0xFF25205C),primary=Color(0xFF6246EA),teal=Color(0xFF00A995),amber=Color(0xFFFFB02E),canvas=Color(0xFFECEFFF),line=Color(0xFFD9D7F5),pale=Color(0xFFFFDFA1);
+ const ink=Color(0xFF25205C),primary=Color(0xFF6246EA),teal=Color(0xFF00A995),amber=Color(0xFFFFB02E),canvas=Color(0xFFECEFFF),line=Color(0xFFD9D7F5);
  final scheme=ColorScheme.fromSeed(seedColor:primary,brightness:Brightness.light).copyWith(primary:primary,secondary:teal,tertiary:amber,surface:const Color(0xFFFFFBFF),onSurface:ink);
  return ThemeData(
   useMaterial3:true,brightness:Brightness.light,scaffoldBackgroundColor:canvas,colorScheme:scheme,
