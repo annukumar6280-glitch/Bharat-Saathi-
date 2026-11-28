@@ -83,6 +83,31 @@ jobs:
           manifest.write_text(prefix + suffix)
           print("Configured fine, background and foreground-service location permissions")
           PY
+      - name: Configure AI Teacher voice permissions and Android speech services
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          content = manifest.read_text()
+          start = content.find("<application")
+          if start < 0:
+              raise SystemExit("Android application tag missing")
+          prefix, suffix = content[:start], content[start:]
+          permission = '    <uses-permission android:name="android.permission.RECORD_AUDIO" />'
+          if "android.permission.RECORD_AUDIO" not in content:
+              prefix += permission + "\\n"
+          content = prefix + suffix
+          if "<queries>" not in content:
+              queries = """    <queries>
+                  <intent><action android:name="android.speech.RecognitionService" /></intent>
+                  <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
+              </queries>
+          """
+              start = content.find("<application")
+              content = content[:start] + queries + content[start:]
+          manifest.write_text(content)
+          print("Configured microphone permission and speech/TTS service visibility")
+          PY
       - name: Set and verify Android 16 target API
         run: |
           python3 - <<'PY'
