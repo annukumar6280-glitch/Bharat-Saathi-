@@ -26,7 +26,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
   bool _asking = false;
   String? _answer;
   String? _error;
-  String _topic = 'English';
+  String _topic = 'English Skills';
   String _lesson = 'Daily conversation';
   String _provider = '';
 
