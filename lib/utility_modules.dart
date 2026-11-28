@@ -224,18 +224,54 @@ class _PosterToolState extends State<_PosterTool>{
 }
 class _ReminderTool extends StatefulWidget{const _ReminderTool();@override State<_ReminderTool> createState()=>_ReminderToolState();}
 class _ReminderToolState extends State<_ReminderTool>{
- final title=TextEditingController();List<Map<String,dynamic>> items=[];DateTime due=DateTime.now().add(const Duration(days:1));bool loading=true;
+ final title=TextEditingController(),noteTitle=TextEditingController(),noteBody=TextEditingController();
+ List<Map<String,dynamic>> items=[],notes=[];
+ DateTime due=DateTime.now().add(const Duration(days:1));
+ bool loading=true;String tab='reminders';
  @override void initState(){super.initState();_load();}
- Future<void> _load()async{final p=await SharedPreferences.getInstance();final raw=p.getString('bs_reminders_v1');if(raw!=null){try{items=List<Map<String,dynamic>>.from(jsonDecode(raw));}catch(_){}}if(mounted)setState(()=>loading=false);}
- Future<void> _save()async{final p=await SharedPreferences.getInstance();await p.setString('bs_reminders_v1',jsonEncode(items));}
- Future<void> _add()async{if(title.text.trim().isEmpty)return;items.insert(0,{'title':title.text.trim(),'due':due.toIso8601String(),'done':false});title.clear();await _save();if(mounted)setState((){});}
+ @override void dispose(){title.dispose();noteTitle.dispose();noteBody.dispose();super.dispose();}
+ Future<void> _load()async{
+  final p=await SharedPreferences.getInstance();
+  for(final entry in [('bs_reminders_v1','reminders'),('bs_notes_v1','notes')]){
+   final raw=p.getString(entry.$1);
+   if(raw!=null){try{final data=List<Map<String,dynamic>>.from(jsonDecode(raw));if(entry.$2=='reminders')items=data;else notes=data;}catch(_){}}
+  }
+  if(mounted)setState(()=>loading=false);
+ }
+ Future<void> _saveReminders()async{final p=await SharedPreferences.getInstance();await p.setString('bs_reminders_v1',jsonEncode(items));}
+ Future<void> _saveNotes()async{final p=await SharedPreferences.getInstance();await p.setString('bs_notes_v1',jsonEncode(notes));}
+ Future<void> _add()async{
+  if(title.text.trim().isEmpty)return;
+  items.insert(0,{'title':title.text.trim(),'due':due.toIso8601String(),'done':false});
+  title.clear();await _saveReminders();if(mounted)setState((){});
+ }
+ Future<void> _addNote()async{
+  if(noteTitle.text.trim().isEmpty&&noteBody.text.trim().isEmpty)return;
+  notes.insert(0,{'title':noteTitle.text.trim().isEmpty?'नोट':noteTitle.text.trim(),'body':noteBody.text.trim(),'updated':DateTime.now().toIso8601String()});
+  noteTitle.clear();noteBody.clear();await _saveNotes();if(mounted)setState((){});
+ }
  @override Widget build(BuildContext context)=>loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
-  TextField(controller:title,decoration:const InputDecoration(labelText:'काम / भुगतान की याद')),
-  const SizedBox(height:8),OutlinedButton.icon(onPressed:()async{final d=await showDatePicker(context:context,initialDate:due,firstDate:DateTime.now(),lastDate:DateTime.now().add(const Duration(days:3650)));if(d!=null)setState(()=>due=d);},icon:const Icon(Icons.calendar_month),label:Text('तारीख: ${due.day}-${due.month}-${due.year}')),
-  FilledButton(onPressed:_add,child:const Text('याद सेव करें')),
-  const Divider(height:28),
-  if(items.isEmpty)const Text('अभी कोई रिमाइंडर नहीं है।'),
-  ...items.asMap().entries.map((e)=>Card(child:CheckboxListTile(value:e.value['done'] as bool,onChanged:(v)async{items[e.key]['done']=v??false;await _save();setState((){});},title:Text(e.value['title'].toString()),subtitle:Text(DateTime.parse(e.value['due'].toString()).toLocal().toString().split(' ').first),secondary:IconButton(onPressed:()async{items.removeAt(e.key);await _save();setState((){});},icon:const Icon(Icons.delete_outline))))),
+  SegmentedButton<String>(segments:const [ButtonSegment(value:'reminders',label:Text('रिमाइंडर'),icon:Icon(Icons.notifications_active_outlined)),ButtonSegment(value:'notes',label:Text('नोट्स'),icon:Icon(Icons.sticky_note_2_outlined))],selected:{tab},onSelectionChanged:(v)=>setState(()=>tab=v.first)),
+  const SizedBox(height:14),
+  if(tab=='reminders')...[
+   TextField(controller:title,decoration:const InputDecoration(labelText:'काम / भुगतान की याद')),
+   const SizedBox(height:8),
+   OutlinedButton.icon(onPressed:()async{final d=await showDatePicker(context:context,initialDate:due.isBefore(DateTime.now())?DateTime.now():due,firstDate:DateTime.now(),lastDate:DateTime.now().add(const Duration(days:3650)));if(d!=null)setState(()=>due=d);},icon:const Icon(Icons.calendar_month),label:Text('तारीख: ${due.day}-${due.month}-${due.year}')),
+   FilledButton(onPressed:_add,child:const Text('याद सेव करें')),
+   const Padding(padding:EdgeInsets.only(top:8),child:Text('रिमाइंडर इस डिवाइस में सेव होते हैं। Android लॉक-स्क्रीन नोटिफिकेशन अभी उपलब्ध नहीं है।',style:TextStyle(color:Colors.blueGrey,fontSize:11))),
+   const Divider(height:28),
+   if(items.isEmpty)const Text('अभी कोई रिमाइंडर नहीं है।'),
+   ...items.asMap().entries.map((e)=>Card(child:CheckboxListTile(value:e.value['done'] as bool,onChanged:(v)async{items[e.key]['done']=v??false;await _saveReminders();setState((){});},title:Text(e.value['title'].toString()),subtitle:Text(DateTime.parse(e.value['due'].toString()).toLocal().toString().split(' ').first),secondary:IconButton(onPressed:()async{items.removeAt(e.key);await _saveReminders();setState((){});},icon:const Icon(Icons.delete_outline))))),
+  ]else...[
+   TextField(controller:noteTitle,decoration:const InputDecoration(labelText:'नोट का शीर्षक (वैकल्पिक)')),
+   const SizedBox(height:8),
+   TextField(controller:noteBody,minLines:3,maxLines:6,decoration:const InputDecoration(labelText:'अपना नोट लिखें',alignLabelWithHint:true)),
+   const SizedBox(height:8),
+   FilledButton.icon(onPressed:_addNote,icon:const Icon(Icons.save_outlined),label:const Text('नोट सेव करें')),
+   const Divider(height:28),
+   if(notes.isEmpty)const Text('अभी कोई नोट सेव नहीं है।'),
+   ...notes.asMap().entries.map((e)=>Card(child:ListTile(title:Text(e.value['title'].toString(),style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(e.value['body'].toString(),maxLines:5,overflow:TextOverflow.ellipsis),trailing:IconButton(tooltip:'नोट हटाएँ',onPressed:()async{notes.removeAt(e.key);await _saveNotes();if(mounted)setState((){});},icon:const Icon(Icons.delete_outline))))),
+  ],
  ]);
 }
 
