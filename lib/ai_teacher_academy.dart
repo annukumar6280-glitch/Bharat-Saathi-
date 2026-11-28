@@ -268,20 +268,20 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       setState(() => _profileLoaded = true);
       if (_studentName.trim().isEmpty || _studentClass.isEmpty || _learningGoals.isEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showLearnerProfileDialog(required: true);
+          if (mounted) _showLearnerProfileDialog(isRequired: true);
         });
       }
     }
   }
 
-  Future<void> _showLearnerProfileDialog({bool required = false}) async {
+  Future<void> _showLearnerProfileDialog({bool isRequired = false}) async {
     final goals = Set<String>.from(_learningGoals);
     String selectedClass = _studentClass.isEmpty ? _classOptions.first : _studentClass;
     final otherController = TextEditingController(text: _otherLearningGoal);
     final nameController = TextEditingController(text: _studentName);
     final saved = await showDialog<bool>(
       context: context,
-      barrierDismissible: !required,
+      barrierDismissible: !isRequired,
       builder: (dialogContext) => StatefulBuilder(builder: (context, setDialogState) =>
         AlertDialog(
           title: const Text('AI Teacher से अपना परिचय दें'),
@@ -343,7 +343,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
             )),
           ),
           actions: [
-            if (!required) TextButton(
+            if (!isRequired) TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text('बाद में'),
             ),
