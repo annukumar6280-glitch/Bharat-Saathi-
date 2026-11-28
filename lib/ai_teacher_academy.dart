@@ -456,7 +456,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         final question = questions[index];
         final options = question['o'] as List<String>;
         return AlertDialog(
-          title: Text('$_topic • अभ्यास टेस्ट'),
+          title: Text('$_topic • $_part • $_lesson'),
           content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('प्रश्न ${index + 1} / ${questions.length}  •  सही उत्तर $score', style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
             const SizedBox(height: 12),
@@ -722,6 +722,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         body: {
           'question': question,
           'course': _topic,
+          'part': _part,
           'lesson': _lesson,
           'language': widget.english ? 'English' : 'Hindi',
         },
@@ -856,7 +857,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         Card(child: ExpansionTile(
           leading: const Icon(Icons.menu_book_rounded),
           title: const Text('पाठ सामग्री', style: TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: const Text('चुने हुए पाठ का छोटा अभ्यास'),
+          subtitle: const Text('चुने हुए पार्ट और लेसन की सामग्री'),
           children: [Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), child: Text(_lessonSummary(), style: const TextStyle(height: 1.5)))],
         )),
         Card(child: ListTile(
