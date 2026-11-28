@@ -6,10 +6,10 @@ Bharat Saathi is an Android-first Flutter app centred on eight core features: Kh
 
 - Hindi-first dashboard with exactly eight primary feature tiles: Khata Book, Bill / Item List, QR Code Maker, AI Poster Maker & Video Maker, Reminders & Notes, Family & Friends Live Location, Smart Calculator and AI Teacher Academy.
 - Khata Book supports shop and personal ledgers, linked khata requests and linked-account entries.
-- Bill / Item List supports bill creation, item lists, PDF export and sharing.
+- Bill / Item List supports bill creation, item lists, PDF export/printing/sharing, and account-specific local saved-document history.
 - QR Code Maker supports text/URL and UPI QR creation, camera scanning, and PNG image export/share.
 - AI Poster Maker & Video Maker supports Fal AI image generation/editing and queued 5-second vertical Kling video generation. Video generation costs 50 Bharat Saathi coins plus Fal provider billing (currently about US$0.35 per 5-second output); it requires a configured `FAL_KEY` and has not been run in CI because that would incur provider charges.
-- Reminders & Notes stores reminders and notes locally. New reminders can schedule Android local notifications after the user grants notification permission; exact delivery can still be affected by OEM battery restrictions.
+- Reminders & Notes stores reminders and notes locally. New reminders can schedule Android local notifications after the user grants notification permission; exact delivery can still be affected by OEM battery restrictions. Saved bills, notes and reminders are stored in account-specific local device storage.
 - Family & Friends Live Location supports phone-number invitations, two-way opt-in, live satellite map updates, location pause/resume and re-share requests.
 - Smart Calculator includes standard arithmetic, GST add/remove, discount percentage and profit/margin calculations.
 - AI Teacher Academy includes four course categories, short lesson notes, course quizzes, locally saved progress, push-to-talk speech-to-text, spoken answers and a five-minute daily voice allowance enforced per signed-in account through Supabase; speech recognition and spoken answers use the Android/device speech services. Actual course video lessons are not bundled. Text Q&A uses the authenticated `ai-teacher-assistant` Edge Function.
