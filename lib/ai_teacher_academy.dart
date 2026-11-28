@@ -51,8 +51,13 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     _tts.setErrorHandler((_) { if (mounted) setState(() => _speaking = false); });
   }
 
+  String get _accountId {
+    try { return Supabase.instance.client.auth.currentUser?.id ?? 'guest'; }
+    catch (_) { return 'guest'; }
+  }
+
   String get _voiceUsageKey {
-    final userId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
+    final userId = _accountId;
     final day = DateTime.now().toIso8601String().substring(0, 10);
     return 'bs_ai_teacher_voice_' + userId + '_' + day;
   }
@@ -60,7 +65,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   int get _voiceRemaining => (300 - _voiceUsedSeconds).clamp(0, 300);
 
   String get _progressKey {
-    final userId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
+    final userId = _accountId;
     return 'bs_ai_teacher_quiz_progress_' + userId;
   }
 
@@ -181,7 +186,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   }
 
   String get _voicePendingKey {
-    final userId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
+    final userId = _accountId;
     return 'bs_ai_teacher_voice_pending_' + userId;
   }
   String get _voicePendingSessionKey => _voicePendingKey + '_session';
@@ -192,7 +197,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       final pending = prefs.getInt(_voicePendingKey) ?? 0;
       if (pending > 0) {
         var sessionId = prefs.getString(_voicePendingSessionKey);
-        sessionId ??= '${Supabase.instance.client.auth.currentUser?.id ?? 'user'}_${DateTime.now().microsecondsSinceEpoch}';
+        sessionId ??= '${_accountId}_${DateTime.now().microsecondsSinceEpoch}';
         await prefs.setString(_voicePendingSessionKey, sessionId);
         await Supabase.instance.client.rpc(
           'consume_ai_teacher_voice_seconds',
