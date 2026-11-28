@@ -225,6 +225,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       for (var i = 0; i < facts.length; i++) {
         bank.add(_quizQuestion('business_$i', facts[i][0], facts[i][1], facts[i].sublist(2)));
       }
+      _addBusinessGeneratedQuestions(bank);
     }
     return bank;
   }
