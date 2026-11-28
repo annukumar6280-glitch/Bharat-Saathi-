@@ -268,22 +268,22 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       }
       return '${verb}s';
     }
-    final verbs = <String>[
-      'ask','answer','arrive','bake','believe','call','change','check','clean',
-      'climb','close','collect','compare','cook','copy','dance','decide',
-      'deliver','describe','design','discuss','divide','dress','dry','enjoy',
-      'explain','finish','fix','follow','guess','help','hope','improve',
-      'include','invite','join','jump','kick','kiss','laugh','like','listen',
-      'live','look','love','manage','marry','measure','miss','mix','move',
-      'need','notice','offer','open','organize','paint','pass','play',
-      'practice','prefer','prepare','promise','push','reach','remember',
-      'repair','repeat','reply','return','save','search','share','show',
-      'smile','start','stay','study','talk','teach','thank','touch','try',
-      'use','visit','wait','walk','want','wash','watch','work','worry',
-      'carry','fly','cry','go','do','have','read','write','speak','learn',
-      'sleep','run','plan','travel','copy','dry','marry','reply','study',
-      'carry','play','stay','try','mix','pass','open','cook','dance','paint',
-    ].toSet();
+    final verbs = <String>{
+      'ask','answer','arrive','bake','believe','call','change','check',
+      'clean','climb','close','collect','compare','cook','copy','dance',
+      'decide','deliver','describe','design','discuss','divide','dress','dry',
+      'enjoy','explain','finish','fix','follow','guess','help','hope',
+      'improve','include','invite','join','jump','kick','kiss','laugh',
+      'like','listen','live','look','love','manage','marry','measure',
+      'miss','mix','move','need','notice','offer','open','organize',
+      'paint','pass','play','practice','prefer','prepare','promise','push',
+      'reach','remember','repair','repeat','reply','return','save','search',
+      'share','show','smile','start','stay','study','talk','teach',
+      'thank','touch','try','use','visit','wait','walk','want',
+      'wash','watch','work','worry','carry','fly','cry','go',
+      'do','have','read','write','speak','learn','sleep','run',
+      'plan','travel',
+    };;
     var verbIndex = 0;
     for (final subject in subjects) {
       for (final verb in verbs) {
