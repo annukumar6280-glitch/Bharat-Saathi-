@@ -73,16 +73,26 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   Future<void> _loadProgress() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getStringList(_progressKey) ?? <String>[];
+    // Progress is tracked per lesson, not merely per course. Ignore legacy
+    // course-only entries so the displayed 12-lesson total stays accurate.
+    final completedLessons = saved.where((value) => value.contains('::')).toSet();
     if (mounted) {
       setState(() {
-        _completedQuizzes..clear()..addAll(saved);
+        _completedQuizzes..clear()..addAll(completedLessons);
       });
     }
   }
 
   String _lessonSummary() {
     if (_topic == 'English Skills') {
-      if (_lesson == 'Daily conversation') return 'अभ्यास: अभिवादन, अपना परिचय और छोटे सवाल। उदाहरण: “Hello, how are you?” — “I am fine, thank you.” रोज़ 5 वाक्य बोलकर अभ्यास करें।';
+      if (_lesson == 'Daily conversation') {
+        return 'अभ्यास: इन पाँच बातचीतों को बोलकर दोहराएँ। टेस्ट में इन्हीं वाक्यों के जवाब पूछे जाएँगे।\\n'
+            '1. Hello, how are you? — I am fine, thank you. (आप कैसे हैं? — मैं ठीक हूँ, धन्यवाद।)\\n'
+            '2. What is your name? — My name is Ravi. (आपका नाम क्या है? — मेरा नाम रवि है।)\\n'
+            '3. Where are you from? — I am from India. (आप कहाँ से हैं? — मैं भारत से हूँ।)\\n'
+            '4. What do you do? — I am a student. (आप क्या करते हैं? — मैं विद्यार्थी हूँ।)\\n'
+            '5. Nice to meet you. — Nice to meet you too. (आपसे मिलकर अच्छा लगा। — मुझे भी।)';
+      }
       if (_lesson == 'Grammar basics') return 'I के साथ am, he/she/it के साथ is और you/we/they के साथ are आता है। उदाहरण: “I am ready.”, “She is happy.”, “They are here.”';
       return 'छोटे और साफ वाक्य लिखें। वाक्य का पहला अक्षर बड़ा रखें और अंत में full stop या question mark लगाएँ। लिखने के बाद spelling जाँचें।';
     }
@@ -102,7 +112,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   }
 
 
-  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_${_accountId}_$_topic';
+  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_${_accountId}_$_topic_$_lesson';
 
   Map<String, dynamic> _quizQuestion(String id, String question, String answer, List<String> distractors) {
     final options = <String>[];
@@ -420,10 +430,117 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     }
   }
 
+
+  // Every quiz is built from the selected lesson's own teaching material.
+  // Each lesson has five focused questions; completing all five completes that lesson.
+  List<Map<String, dynamic>> _questionsForLesson() {
+    final rows = <List<String>>[];
+    if (_topic == 'English Skills' && _lesson == 'Daily conversation') {
+      rows.addAll([
+        ['“Hello, how are you?” का सही जवाब क्या है?', 'I am fine, thank you.', 'My name is Ravi.', 'I am from India.', 'Nice to meet you.'],
+        ['“What is your name?” का सही जवाब क्या है?', 'My name is Ravi.', 'I am fine, thank you.', 'I am a student.', 'Good morning.'],
+        ['“Where are you from?” का सही जवाब क्या है?', 'I am from India.', 'My name is Ravi.', 'I am fine, thank you.', 'See you tomorrow.'],
+        ['“What do you do?” का सही जवाब क्या है?', 'I am a student.', 'I am from India.', 'My name is Ravi.', 'Nice to meet you too.'],
+        ['“Nice to meet you.” के जवाब में क्या कहेंगे?', 'Nice to meet you too.', 'I am fine, thank you.', 'Where are you from?', 'Good night.'],
+      ]);
+    } else if (_topic == 'English Skills' && _lesson == 'Grammar basics') {
+      rows.addAll([
+        ['I ___ ready.', 'am', 'is', 'are', 'be'],
+        ['She ___ happy.', 'is', 'am', 'are', 'be'],
+        ['They ___ here.', 'are', 'am', 'is', 'be'],
+        ['He ___ a teacher.', 'is', 'are', 'am', 'be'],
+        ['We ___ friends.', 'are', 'is', 'am', 'be'],
+      ]);
+    } else if (_topic == 'English Skills') {
+      rows.addAll([
+        ['वाक्य की शुरुआत कैसे लिखनी चाहिए?', 'बड़े अक्षर से', 'छोटे अक्षर से', 'अंक से', 'कॉमा से'],
+        ['साधारण कथन के अंत में क्या लगाते हैं?', 'Full stop (.)', 'Comma (,)', 'Colon (:)', 'Apostrophe (\\')'],
+        ['सवाल के अंत में कौन-सा चिन्ह लगता है?', 'Question mark (?)', 'Full stop (.)', 'Comma (,)', 'Hyphen (-)'],
+        ['लिखने के बाद क्या जाँचना चाहिए?', 'Spelling और विराम चिह्न', 'केवल पन्ने का रंग', 'फोन की बैटरी', 'इंटरनेट की गति'],
+        ['“I am fine.” किस प्रकार का वाक्य है?', 'साधारण कथन', 'प्रश्न', 'आदेश', 'विस्मयादिबोधक'],
+      ]);
+    } else if (_topic == 'Computer & Digital Skills' && _lesson == 'Computer basics') {
+      rows.addAll([
+        ['कंप्यूटर में टाइप करने के लिए क्या उपयोग होता है?', 'Keyboard', 'Monitor', 'Printer', 'Speaker'],
+        ['स्क्रीन पर जानकारी कौन दिखाता है?', 'Monitor', 'Mouse', 'Keyboard', 'Printer'],
+        ['कागज़ पर प्रिंट कौन निकालता है?', 'Printer', 'Router', 'Webcam', 'Speaker'],
+        ['स्क्रीन पर किसी चीज़ को चुनने में क्या मदद करता है?', 'Mouse', 'Printer', 'Speaker', 'Microphone'],
+        ['फाइल सेव करने का लाभ क्या है?', 'बाद में फिर खोल सकते हैं', 'बैटरी चार्ज होती है', 'इंटरनेट तेज होता है', 'स्क्रीन बड़ी होती है'],
+      ]);
+    } else if (_topic == 'Computer & Digital Skills' && _lesson == 'Internet safety') {
+      rows.addAll([
+        ['OTP किसे बताना चाहिए?', 'किसी को नहीं', 'अनजान कॉलर को', 'सोशल मीडिया पर', 'दुकानदार को'],
+        ['अनजान लिंक मिलने पर क्या करें?', 'जाँच किए बिना न खोलें', 'तुरंत खोलें', 'सबको भेजें', 'पासवर्ड डालें'],
+        ['मजबूत पासवर्ड कैसा होना चाहिए?', 'लंबा और अलग-अलग अक्षरों वाला', '123456', 'अपना नाम', 'मोबाइल नंबर'],
+        ['स्क्रीन शेयर करने से पहले क्या करें?', 'व्यक्ति और कारण की पुष्टि करें', 'OTP दिखाएँ', 'बैंक PIN बताएँ', 'अनजान ऐप इंस्टॉल करें'],
+        ['बैंक कर्मचारी बनकर कोई PIN माँगे तो?', 'PIN न बताएँ', 'तुरंत बता दें', 'मैसेज में भेजें', 'सोशल मीडिया पर लिखें'],
+      ]);
+    } else if (_topic == 'Computer & Digital Skills') {
+      rows.addAll([
+        ['UPI भुगतान से पहले क्या जाँचना चाहिए?', 'प्राप्तकर्ता का नाम और राशि', 'फोन का रंग', 'मौसम', 'बैटरी का ब्रांड'],
+        ['पैसा प्राप्त करने के लिए UPI PIN डालना जरूरी है?', 'नहीं', 'हाँ, हमेशा', 'केवल रात में', 'केवल दुकानदार के लिए'],
+        ['UPI PIN डालने का सामान्य अर्थ क्या है?', 'भुगतान की अनुमति देना', 'पैसा अपने-आप मिलना', 'मोबाइल रिचार्ज होना', 'बैंक खाता बंद होना'],
+        ['गलत व्यक्ति को भुगतान दिखे तो क्या करें?', 'भुगतान विवरण जाँचकर बैंक/ऐप सहायता लें', 'OTP सबको बताएँ', 'फोन बंद कर दें', 'दोबारा बिना जाँच भुगतान करें'],
+        ['QR कोड स्कैन करने के बाद क्या जाँचें?', 'नाम और भुगतान राशि', 'केवल स्क्रीन की चमक', 'फोन मॉडल', 'नेटवर्क का नाम'],
+      ]);
+    } else if (_topic == 'Maths & General Knowledge' && _lesson == 'Basic mathematics') {
+      rows.addAll([
+        ['25 + 15 कितना होगा?', '40', '35', '45', '50'],
+        ['50 − 20 कितना होगा?', '30', '20', '40', '70'],
+        ['6 × 4 कितना होगा?', '24', '20', '18', '28'],
+        ['36 ÷ 6 कितना होगा?', '6', '5', '7', '8'],
+        ['एक दर्जन में कितनी वस्तुएँ होती हैं?', '12', '10', '6', '20'],
+      ]);
+    } else if (_topic == 'Maths & General Knowledge' && _lesson == 'Percentages') {
+      rows.addAll([
+        ['प्रतिशत का अर्थ क्या है?', 'प्रति 100', 'प्रति 10', 'प्रति 1000', 'प्रति 5'],
+        ['200 का 25% कितना है?', '50', '25', '40', '75'],
+        ['100 का 10% कितना है?', '10', '5', '20', '100'],
+        ['400 का 50% कितना है?', '200', '100', '150', '250'],
+        ['छूट की गणना में किसका उपयोग होता है?', 'प्रतिशत', 'केवल जोड़', 'केवल भाग', 'तापमान'],
+      ]);
+    } else if (_topic == 'Maths & General Knowledge') {
+      rows.addAll([
+        ['भारत की राजधानी क्या है?', 'नई दिल्ली', 'मुंबई', 'जयपुर', 'लखनऊ'],
+        ['भारत का राष्ट्रीय पशु कौन है?', 'बाघ', 'हाथी', 'शेर', 'हिरण'],
+        ['भारत का राष्ट्रीय पक्षी कौन है?', 'मोर', 'तोता', 'कबूतर', 'हंस'],
+        ['सौरमंडल का सबसे बड़ा ग्रह कौन है?', 'बृहस्पति', 'पृथ्वी', 'मंगल', 'शुक्र'],
+        ['पानी का रासायनिक सूत्र क्या है?', 'H₂O', 'CO₂', 'O₂', 'NaCl'],
+      ]);
+    } else if (_topic == 'Business Skills' && _lesson == 'Business basics') {
+      rows.addAll([
+        ['व्यवसाय में बिक्री का अर्थ क्या है?', 'सामान या सेवा बेचना', 'सामान छिपाना', 'खर्च मिटाना', 'दुकान बंद करना'],
+        ['रोज़ का हिसाब क्यों रखना चाहिए?', 'आय और खर्च समझने के लिए', 'रंग चुनने के लिए', 'फोन तेज करने के लिए', 'समय बदलने के लिए'],
+        ['स्टॉक रिकॉर्ड किसलिए होता है?', 'सामान की उपलब्ध मात्रा जानने के लिए', 'मौसम देखने के लिए', 'ग्राहक की उम्र जानने के लिए', 'मोबाइल चलाने के लिए'],
+        ['बजट बनाने का लाभ क्या है?', 'खर्च पर नियंत्रण', 'खर्च बढ़ाना', 'रिकॉर्ड मिटाना', 'स्टॉक छिपाना'],
+        ['कुल लागत में क्या शामिल हो सकता है?', 'खरीद, किराया और पैकिंग', 'केवल मुनाफा', 'केवल ग्राहक का नाम', 'केवल तारीख'],
+      ]);
+    } else if (_topic == 'Business Skills' && _lesson == 'Customer handling') {
+      rows.addAll([
+        ['ग्राहक की बात पर पहला कदम क्या है?', 'ध्यान से सुनना', 'बात काटना', 'अनदेखा करना', 'बहस करना'],
+        ['जरूरत समझने के बाद क्या करना चाहिए?', 'दोहराकर पुष्टि करना', 'बिना पूछे सामान देना', 'कीमत छिपाना', 'शिकायत मिटाना'],
+        ['कीमत और समय कैसे बताना चाहिए?', 'स्पष्ट और सही तरीके से', 'छिपाकर', 'हर बार बदलकर', 'बिना पूछे'],
+        ['शिकायत मिलने पर कैसा व्यवहार करें?', 'सम्मानपूर्वक समाधान करें', 'गुस्सा करें', 'अनदेखा करें', 'दोष दें'],
+        ['ग्राहक से बात करते समय क्या जरूरी है?', 'धैर्य और स्पष्टता', 'जल्दबाजी और बहस', 'गलत जानकारी', 'अनदेखी'],
+      ]);
+    } else {
+      rows.addAll([
+        ['मुनाफा कैसे निकालते हैं?', 'बिक्री मूल्य − कुल लागत', 'लागत + बिक्री', 'केवल बिक्री', 'बिक्री ÷ लागत'],
+        ['नुकसान कब होता है?', 'जब बिक्री मूल्य लागत से कम हो', 'जब बिक्री लागत से अधिक हो', 'जब ग्राहक आए', 'जब दुकान खुले'],
+        ['यदि लागत ₹100 और बिक्री ₹130 है, मुनाफा कितना है?', '₹30', '₹20', '₹40', '₹10'],
+        ['यदि लागत ₹200 और बिक्री ₹180 है, नुकसान कितना है?', '₹20', '₹10', '₹30', '₹40'],
+        ['मुनाफा निकालते समय किसे घटाते हैं?', 'बिक्री मूल्य में से कुल लागत', 'लागत में से ग्राहक', 'समय में से बिक्री', 'स्टॉक में से किराया'],
+      ]);
+    }
+    final lessonId = '\${_topic}_\${_lesson}'.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase();
+    return List<Map<String, dynamic>>.generate(rows.length, (index) =>
+      _quizQuestion('\${lessonId}_\${index + 1}', rows[index][0], rows[index][1], rows[index].sublist(2)));
+  }
+
   Future<void> _runQuiz() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
-    final bank = _questionsForTopic();
+    final bank = _questionsForLesson();
     final seen = (prefs.getStringList(_quizSeenKey) ?? <String>[]).toSet();
     var available = bank.where((q) => !seen.contains(q['id'])).toList();
     if (available.isEmpty) {
@@ -501,7 +618,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     );
     if (result == null) return;
     await prefs.setStringList(_quizSeenKey, seen.toList());
-    _completedQuizzes.add(_topic);
+    _completedQuizzes.add('${_topic}::${_lesson}');
     await prefs.setStringList(_progressKey, _completedQuizzes.toList());
     if (mounted) {
       setState(() {});
@@ -834,7 +951,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         Card(child: ListTile(
           leading: const Icon(Icons.quiz_outlined),
           title: const Text('अभ्यास टेस्ट', style: TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text('प्रगति: ${_completedQuizzes.length} / ${_courses.length} कोर्स के टेस्ट पूरे'),
+          subtitle: Text('प्रगति: ${_completedQuizzes.length} / 12 पाठ के टेस्ट पूरे • ${_completedQuizzes.contains('${_topic}::${_lesson}') ? 'यह पाठ पूरा है' : 'यह पाठ बाकी है'}'),
           trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
           onTap: _runQuiz,
         )),
