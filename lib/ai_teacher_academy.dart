@@ -21,6 +21,23 @@ class AiTeacherAcademyPage extends StatefulWidget {
 
 class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with WidgetsBindingObserver {
   final _question = TextEditingController();
+  final _studentNameController = TextEditingController();
+  String _studentName = '';
+  String _studentClass = '';
+  String _otherLearningGoal = '';
+  final Set<String> _learningGoals = <String>{};
+  bool _profileLoaded = false;
+  static const _learningGoalOptions = <String>[
+    'English Skills',
+    'Computer & Digital Skills',
+    'Maths & General Knowledge',
+    'Business Skills',
+  ];
+  static const _classOptions = <String>[
+    'कक्षा 1', 'कक्षा 2', 'कक्षा 3', 'कक्षा 4', 'कक्षा 5', 'कक्षा 6',
+    'कक्षा 7', 'कक्षा 8', 'कक्षा 9', 'कक्षा 10', 'कक्षा 11', 'कक्षा 12',
+    'कॉलेज / विश्वविद्यालय', 'नौकरी / प्रतियोगी परीक्षा', 'स्वयं सीखना / अन्य',
+  ];
   final SpeechToText _speech = SpeechToText();
   final FlutterTts _tts = FlutterTts();
   final Stopwatch _voiceStopwatch = Stopwatch();
@@ -217,6 +234,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     WidgetsBinding.instance.addObserver(this);
     _loadVoiceUsage();
     _loadProgress();
+    _loadLearnerProfile();
     _tts.awaitSpeakCompletion(true);
     _tts.setCompletionHandler(() { if (mounted) setState(() => _speaking = false); });
     _tts.setErrorHandler((_) { if (mounted) setState(() => _speaking = false); });
@@ -226,6 +244,163 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     try { return Supabase.instance.client.auth.currentUser?.id ?? 'guest'; }
     catch (_) { return 'guest'; }
   }
+
+  String get _learnerProfileKey => 'bs_ai_teacher_profile_' + _accountId;
+
+  Future<void> _loadLearnerProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    _studentName = prefs.getString(_learnerProfileKey + '_name') ?? '';
+    _studentClass = prefs.getString(_learnerProfileKey + '_class') ?? '';
+    _otherLearningGoal = prefs.getString(_learnerProfileKey + '_other') ?? '';
+    _learningGoals
+      ..clear()
+      ..addAll(prefs.getStringList(_learnerProfileKey + '_goals') ?? <String>[]);
+    _studentNameController.text = _studentName;
+    if (_learningGoals.isNotEmpty && !_learningGoals.contains(_topic)) {
+      _topic = _learningGoals.first;
+      final parts = _courseParts[_topic] ?? const [];
+      if (parts.isNotEmpty) {
+        _part = parts.first.title;
+        _lesson = parts.first.lessons.first;
+      }
+    }
+    if (mounted) {
+      setState(() => _profileLoaded = true);
+      if (_studentName.trim().isEmpty || _studentClass.isEmpty || _learningGoals.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showLearnerProfileDialog(required: true);
+        });
+      }
+    }
+  }
+
+  Future<void> _showLearnerProfileDialog({bool required = false}) async {
+    final goals = Set<String>.from(_learningGoals);
+    String selectedClass = _studentClass.isEmpty ? _classOptions.first : _studentClass;
+    final otherController = TextEditingController(text: _otherLearningGoal);
+    final nameController = TextEditingController(text: _studentName);
+    final saved = await showDialog<bool>(
+      context: context,
+      barrierDismissible: !required,
+      builder: (dialogContext) => StatefulBuilder(builder: (context, setDialogState) =>
+        AlertDialog(
+          title: const Text('AI Teacher से अपना परिचय दें'),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('आपका नाम क्या है?'),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: nameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    hintText: 'अपना नाम लिखें',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('आप किस क्लास में पढ़ते हैं या आपकी पढ़ाई का स्तर क्या है?'),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  value: selectedClass,
+                  isExpanded: true,
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                  items: _classOptions.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+                  onChanged: (value) {
+                    if (value != null) setDialogState(() => selectedClass = value);
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Text('आप क्या-क्या सीखना चाहते हैं? जो लागू हो, उन पर टिक करें।',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+                ..._learningGoalOptions.map((goal) => CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  value: goals.contains(goal),
+                  title: Text(goal),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (checked) => setDialogState(() {
+                    if (checked == true) { goals.add(goal); } else { goals.remove(goal); }
+                  }),
+                )),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: otherController,
+                  decoration: const InputDecoration(
+                    labelText: 'कोई और विषय (वैकल्पिक)',
+                    hintText: 'जैसे विज्ञान, हिंदी, सरकारी परीक्षा',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text('आपकी जानकारी के अनुसार लेसन और टेस्ट का स्तर तय होगा।',
+                  style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
+              ],
+            )),
+          ),
+          actions: [
+            if (!required) TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('बाद में'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (nameController.text.trim().isEmpty || goals.isEmpty) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(content: Text('कृपया नाम लिखें और कम-से-कम एक विषय चुनें।')),
+                  );
+                  return;
+                }
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text('सेव करें'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (saved == true) {
+      final name = nameController.text.trim();
+      final other = otherController.text.trim();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_learnerProfileKey + '_name', name);
+      await prefs.setString(_learnerProfileKey + '_class', selectedClass);
+      await prefs.setString(_learnerProfileKey + '_other', other);
+      await prefs.setStringList(_learnerProfileKey + '_goals', goals.toList());
+      if (!mounted) return;
+      setState(() {
+        _studentName = name;
+        _studentClass = selectedClass;
+        _otherLearningGoal = other;
+        _learningGoals
+          ..clear()
+          ..addAll(goals);
+        if (!_learningGoals.contains(_topic)) {
+          _topic = _learningGoals.first;
+          final parts = _courseParts[_topic] ?? const [];
+          if (parts.isNotEmpty) {
+            _part = parts.first.title;
+            _lesson = parts.first.lessons.first;
+          }
+        }
+        _answer = null;
+        _error = null;
+      });
+    }
+    nameController.dispose();
+    otherController.dispose();
+  }
+
+  String get _learnerContext =>
+      'Student name: $_studentName. Study level/class: $_studentClass. '
+      'Learning interests: ${_learningGoals.join(', ')}. '
+      'Additional requested subject: ${_otherLearningGoal.isEmpty ? 'None' : _otherLearningGoal}. '
+      'Adapt vocabulary, explanations, examples, lesson difficulty, homework and quiz difficulty to this learner. '
+      'Address the learner by their first name naturally when helpful. Do not assume knowledge above their class level.';
 
   String get _voiceUsageKey {
     final userId = _accountId;
@@ -418,7 +593,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     final response = await Supabase.instance.client.functions.invoke(
       'ai-teacher-assistant',
       body: {
-        'question': 'Create exactly 8 multiple-choice questions only about the selected lesson. Cover its actual concepts, from easy to challenging. Return ONLY valid JSON (no markdown) as an array of objects with keys question, options, answer. Each options array must contain exactly 4 distinct strings and answer must exactly match one option. Questions and options must be in the requested language. Do not include unrelated questions.',
+        'question': _learnerContext + '\\nCreate exactly 8 multiple-choice questions only about the selected lesson. Cover its actual concepts, from easy to challenging. Return ONLY valid JSON (no markdown) as an array of objects with keys question, options, answer. Each options array must contain exactly 4 distinct strings and answer must exactly match one option. Questions and options must be in the requested language. Do not include unrelated questions.',
         'course': _topic,
         'part': _part,
         'lesson': _lesson,
@@ -774,7 +949,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       final response = await Supabase.instance.client.functions.invoke(
         'ai-teacher-assistant',
         body: {
-          'question': question,
+          'question': _learnerContext + '\\nLearner question: ' + question,
           'course': _topic,
           'part': _part,
           'lesson': _lesson,
@@ -808,6 +983,11 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       appBar: AppBar(
         title: const Text('AI Teacher Academy'),
         actions: [
+          IconButton(
+            tooltip: 'विद्यार्थी प्रोफाइल बदलें',
+            onPressed: () => _showLearnerProfileDialog(),
+            icon: const Icon(Icons.account_circle_outlined),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 14),
             child: Container(
@@ -827,6 +1007,16 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         child: ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
       children: [
+        if (!_profileLoaded) const LinearProgressIndicator(),
+        if (_studentName.isNotEmpty) Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Card(child: ListTile(
+            leading: const CircleAvatar(child: Icon(Icons.person_outline)),
+            title: Text('नमस्ते, $_studentName'),
+            subtitle: Text('$_studentClass • ${_learningGoals.join(', ')}'),
+            trailing: IconButton(icon: const Icon(Icons.edit_outlined), onPressed: () => _showLearnerProfileDialog()),
+          )),
+        ),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -846,7 +1036,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         const SizedBox(height: 18),
         Text('अपना कोर्स चुनें', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 10),
-        ..._courses.map((course) {
+        ..._courses.where((course) => _learningGoals.isEmpty || _learningGoals.contains(course.title)).map((course) {
           final active = _topic == course.title;
           final accent = Theme.of(context).colorScheme.primary;
           return Card(
