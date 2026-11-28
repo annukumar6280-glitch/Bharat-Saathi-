@@ -84,11 +84,14 @@ Deno.serve(async (req: Request) => {
       const input: Record<string, unknown> = {
         prompt,
         duration: "5",
-        aspect_ratio: "9:16",
         enable_safety_checker: true,
         negative_prompt: "blur, distort, flicker, low quality, watermark, unreadable text",
       };
-      if (imageBase64) input.image_url = `data:${imageMimeType};base64,${imageBase64}`;
+      if (imageBase64) {
+        input.image_url = `data:${imageMimeType};base64,${imageBase64}`;
+      } else {
+        input.aspect_ratio = "9:16";
+      }
       const submit = await fetch(`https://queue.fal.run/${model}`, {
         method: "POST",
         headers: { "Authorization": `Key ${falKey}`, "Content-Type": "application/json" },
