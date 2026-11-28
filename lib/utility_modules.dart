@@ -350,6 +350,33 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
   final result=remove?amount/(1+rate/100):amount*(1+rate/100);
   setState((){expression=remove?'GST $rate% हटाया':'GST $rate% जोड़ा';display=_fmt(result);fresh=true;first=null;operator=null;});
  }
+ Future<void> _discount()async{
+  final controller=TextEditingController();
+  final rate=await showDialog<double>(context:context,builder:(context)=>AlertDialog(
+   title:const Text('डिस्काउंट प्रतिशत'),
+   content:TextField(controller:controller,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'डिस्काउंट %',hintText:'जैसे 10')),
+   actions:[TextButton(onPressed:()=>Navigator.pop(context),child:const Text('रद्द करें')),FilledButton(onPressed:(){final v=double.tryParse(controller.text.trim());if(v!=null&&v>=0&&v<=100)Navigator.pop(context,v);},child:const Text('लागू करें'))],
+  ));
+  controller.dispose();if(rate==null)return;
+  final amount=double.tryParse(display);if(amount==null||!amount.isFinite||amount<0)return;
+  final finalAmount=amount*(1-rate/100);
+  setState((){history.add('Discount ${_fmt(rate)}%: ${_fmt(amount)} → ${_fmt(finalAmount)}');expression='Discount ${_fmt(rate)}%';display=_fmt(finalAmount);first=null;operator=null;fresh=true;});
+ }
+ Future<void> _profit()async{
+  final cost=TextEditingController(),selling=TextEditingController();
+  final values=await showDialog<List<double>>(context:context,builder:(context)=>AlertDialog(
+   title:const Text('मुनाफा कैलकुलेटर'),
+   content:Column(mainAxisSize:MainAxisSize.min,children:[
+    TextField(controller:cost,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'खरीद / लागत राशि (₹)')),
+    const SizedBox(height:8),
+    TextField(controller:selling,keyboardType:const TextInputType.numberWithOptions(decimal:true),decoration:const InputDecoration(labelText:'बिक्री राशि (₹)')),
+   ]),
+   actions:[TextButton(onPressed:()=>Navigator.pop(context),child:const Text('रद्द करें')),FilledButton(onPressed:(){final a=double.tryParse(cost.text.trim()),b=double.tryParse(selling.text.trim());if(a!=null&&b!=null&&a>=0&&b>=0)Navigator.pop(context,[a,b]);},child:const Text('गणना करें'))],
+  ));
+  cost.dispose();selling.dispose();if(values==null)return;
+  final profit=values[1]-values[0],margin=values[1]>0?profit/values[1]*100:0.0;
+  setState((){history.add('लागत ${_fmt(values[0])}, बिक्री ${_fmt(values[1])}, मुनाफा ${_fmt(profit)}');expression='मुनाफा • Margin ${_fmt(margin)}%';display=_fmt(profit);first=null;operator=null;fresh=true;});
+ }
  Widget _key(String label,{Color? color,Color? textColor,VoidCallback? onTap,bool wide=false}){
   return Expanded(flex:wide?2:1,child:Padding(padding:const EdgeInsets.all(5),child:Material(color:color??Colors.white,elevation:2,shadowColor:const Color(0x1D5369B5),borderRadius:BorderRadius.circular(18),child:InkWell(borderRadius:BorderRadius.circular(18),onTap:onTap,child:Container(height:64,alignment:Alignment.center,decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xFFE0E6F5))),child:Text(label,style:TextStyle(color:textColor??_ink,fontSize:label.length>3?17:23,fontWeight:FontWeight.w800)))))));
  }
@@ -360,6 +387,7 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
    Row(children:[_key('4',onTap:()=>_digit('4')),_key('5',onTap:()=>_digit('5')),_key('6',onTap:()=>_digit('6')),_key('−',color:const Color(0xFFDCD5FF),textColor:const Color(0xFF5944A8),onTap:()=>_choose('−'))]),
    Row(children:[_key('1',onTap:()=>_digit('1')),_key('2',onTap:()=>_digit('2')),_key('3',onTap:()=>_digit('3')),_key('+',color:const Color(0xFFDCD5FF),textColor:const Color(0xFF5944A8),onTap:()=>_choose('+'))]),
    Row(children:[_key('GST',color:const Color(0xFFFFE4A6),textColor:const Color(0xFF78520A),onTap:_gst),_key('0',onTap:()=>_digit('0')),_key('.',onTap:()=>_digit('.')),_key('=',color:const Color(0xFFBFEFE5),textColor:const Color(0xFF087A6A),onTap:_equals)]),
+   Row(children:[_key('Discount',color:const Color(0xFFE2F1FF),textColor:const Color(0xFF205A9B),onTap:_discount),_key('Profit',color:const Color(0xFFE1F4E9),textColor:const Color(0xFF176B45),onTap:_profit)]),
   ];
   return Container(decoration:const BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFFF1F4FF),Color(0xFFE8E7FF),Color(0xFFE1F6F1)])),child:SafeArea(child:Column(children:[
    Padding(padding:const EdgeInsets.fromLTRB(18,22,18,14),child:Row(children:[const Icon(Icons.calculate_rounded,color:Color(0xFF5D6FC6),size:26),const SizedBox(width:9),const Text('कैलकुलेटर',style:TextStyle(color:_ink,fontSize:20,fontWeight:FontWeight.w900)),const Spacer(),Container(padding:const EdgeInsets.symmetric(horizontal:12,vertical:7),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(20)),child:const Text('GST Ready',style:TextStyle(color:Color(0xFF9A6A12),fontWeight:FontWeight.w800,fontSize:11)))])),
