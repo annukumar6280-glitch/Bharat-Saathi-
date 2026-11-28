@@ -1,5 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class AiTeacherAcademyPage extends StatefulWidget {
   final bool supabaseAvailable;
@@ -12,6 +16,12 @@ class AiTeacherAcademyPage extends StatefulWidget {
 
 class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
   final _question = TextEditingController();
+  final SpeechToText _speech = SpeechToText();
+  final FlutterTts _tts = FlutterTts();
+  final Stopwatch _voiceStopwatch = Stopwatch();
+  bool _speechInitialized = false, _listening = false, _speaking = false;
+  int _voiceUsedSeconds = 0;
+  String? _voiceMessage;
   bool _asking = false;
   String? _answer;
   String? _error;
@@ -27,7 +37,102 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadVoiceUsage();
+    _tts.setCompletionHandler(() { if (mounted) setState(() => _speaking = false); });
+    _tts.setErrorHandler((_) { if (mounted) setState(() => _speaking = false); });
+  }
+
+  String get _voiceUsageKey {
+    final userId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
+    final day = DateTime.now().toIso8601String().substring(0, 10);
+    return 'bs_ai_teacher_voice_${userId}_${day}';
+  }
+
+  int get _voiceRemaining => (300 - _voiceUsedSeconds).clamp(0, 300);
+
+  Future<void> _loadVoiceUsage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final used = prefs.getInt(_voiceUsageKey) ?? 0;
+    if (mounted) setState(() => _voiceUsedSeconds = used.clamp(0, 300));
+  }
+
+  Future<void> _finishVoiceSession() async {
+    if (!_voiceStopwatch.isRunning) return;
+    _voiceStopwatch.stop();
+    final elapsed = _voiceStopwatch.elapsed.inSeconds;
+    _voiceStopwatch.reset();
+    final updated = (_voiceUsedSeconds + elapsed).clamp(0, 300);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_voiceUsageKey, updated);
+    if (mounted) setState(() { _voiceUsedSeconds = updated; _listening = false; });
+  }
+
+  Future<void> _startVoiceInput() async {
+    if (_listening) { await _speech.stop(); await _finishVoiceSession(); return; }
+    final remaining = _voiceRemaining;
+    if (remaining <= 0) {
+      setState(() => _voiceMessage = 'आज की 5 मिनट की वॉइस सीमा पूरी हो गई है।');
+      return;
+    }
+    final microphone = await Permission.microphone.request();
+    if (!microphone.isGranted) {
+      setState(() => _voiceMessage = 'बोलकर सवाल पूछने के लिए माइक्रोफोन की अनुमति दें।');
+      return;
+    }
+    if (!_speechInitialized) {
+      _speechInitialized = await _speech.initialize(
+        onStatus: (status) { if (status == 'notListening') _finishVoiceSession(); },
+        onError: (_) { _finishVoiceSession(); if (mounted) setState(() => _voiceMessage = 'आवाज़ पहचान नहीं हो पाई। दोबारा कोशिश करें।'); },
+      );
+    }
+    if (!_speechInitialized) {
+      setState(() => _voiceMessage = 'इस फोन में Speech Recognition उपलब्ध नहीं है।');
+      return;
+    }
+    setState(() { _voiceMessage = null; _listening = true; });
+    _voiceStopwatch.start();
+    try {
+      await _speech.listen(
+        onResult: (result) {
+          if (result.recognizedWords.isNotEmpty && mounted) {
+            setState(() => _question.text = result.recognizedWords);
+          }
+          if (result.finalResult) { _speech.stop(); _finishVoiceSession(); }
+        },
+        localeId: widget.english ? 'en-IN' : 'hi-IN',
+        listenFor: Duration(seconds: remaining),
+        pauseFor: const Duration(seconds: 5),
+      );
+    } catch (_) {
+      await _finishVoiceSession();
+      if (mounted) setState(() => _voiceMessage = 'माइक्रोफोन शुरू नहीं हो पाया।');
+    }
+  }
+
+  Future<void> _speakAnswer() async {
+    final answer = _answer;
+    if (answer == null || answer.isEmpty) return;
+    try {
+      await _tts.setLanguage(widget.english ? 'en-IN' : 'hi-IN');
+      await _tts.setSpeechRate(0.45);
+      if (mounted) setState(() => _speaking = true);
+      await _tts.speak(answer);
+    } catch (_) {
+      if (mounted) setState(() { _speaking = false; _voiceMessage = 'इस फोन में चुनी गई भाषा की आवाज़ उपलब्ध नहीं है।'; });
+    }
+  }
+
+  Future<void> _stopSpeech() async {
+    await _tts.stop();
+    if (mounted) setState(() => _speaking = false);
+  }
+
+  @override
   void dispose() {
+    _speech.cancel();
+    _tts.stop();
     _question.dispose();
     super.dispose();
   }
@@ -123,11 +228,21 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
             const SizedBox(height: 10),
             TextField(controller: _question, minLines: 2, maxLines: 4, decoration: const InputDecoration(filled: true, fillColor: Colors.white, hintText: 'अपना सवाल यहाँ लिखें…', border: OutlineInputBorder())),
             const SizedBox(height: 10),
-            SizedBox(width: double.infinity, child: FilledButton.icon(
-              onPressed: _asking ? null : _askTeacher,
-              icon: _asking ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.send_rounded),
-              label: Text(_asking ? 'टीचर जवाब तैयार कर रहे हैं…' : 'सवाल पूछें'),
-            )),
+            Row(children: [
+              Expanded(child: FilledButton.icon(
+                onPressed: _asking ? null : _askTeacher,
+                icon: _asking ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.send_rounded),
+                label: Text(_asking ? 'जवाब तैयार हो रहा है…' : 'सवाल पूछें'),
+              )),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                tooltip: _listening ? 'सुनना बंद करें' : 'बोलकर सवाल पूछें',
+                onPressed: _asking ? null : _startVoiceInput,
+                icon: Icon(_listening ? Icons.stop_circle_outlined : Icons.mic_none_rounded),
+              ),
+            ]),
+            Padding(padding: const EdgeInsets.only(top: 8), child: Text('आज की वॉइस सीमा: ${(_voiceRemaining ~/ 60)} मिनट ${(_voiceRemaining % 60)} सेकंड बाकी', style: const TextStyle(color: Colors.blueGrey, fontSize: 11))),
+            if (_voiceMessage != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(_voiceMessage!, style: const TextStyle(color: Colors.deepOrange, fontSize: 11))),
             if (_error != null) Padding(padding: const EdgeInsets.only(top: 10), child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 12))),
           ]),
         ),
@@ -137,6 +252,11 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
             const Text('AI Teacher का जवाब', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
             const SizedBox(height: 10),
             SelectableText(_answer!, style: const TextStyle(fontSize: 14, height: 1.55)),
+            Align(alignment: Alignment.centerRight, child: TextButton.icon(
+              onPressed: _speaking ? _stopSpeech : _speakAnswer,
+              icon: Icon(_speaking ? Icons.stop_circle_outlined : Icons.volume_up_rounded),
+              label: Text(_speaking ? 'आवाज़ रोकें' : 'जवाब सुनें'),
+            )),
             if (_provider.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 10), child: Text(_provider, style: TextStyle(color: Colors.blueGrey.shade500, fontSize: 10))),
           ]))),
         ],
