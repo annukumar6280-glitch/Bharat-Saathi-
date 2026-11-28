@@ -5,8 +5,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -16,33 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const _ink=Color(0xFF25345B), _teal=Color(0xFF159B88);
-const _vault=FlutterSecureStorage();
-
-class UtilityModulesPage extends StatelessWidget {
-  const UtilityModulesPage({super.key});
-  static const modules=[
-    ('QR Code Tools','QR बनाएँ और स्कैन करें',Icons.qr_code_2,'qr'),
-    ('Poster Maker','FLUX AI से फोटो और पोस्टर बनाएँ',Icons.auto_awesome,'poster'),
-    ('Reminders & Notes','काम और भुगतान की याद दिलाएँ',Icons.notifications_active_outlined,'reminders'),
-    ('Smart Calculator','सामान्य कैलकुलेटर + GST',Icons.calculate_outlined,'calculator'),
-    ('Payment Sound Box','पेमेंट API कनेक्शन',Icons.volume_up_outlined,'soundbox'),
-  ];
-  @override Widget build(BuildContext context)=>Scaffold(
-    appBar:AppBar(title:const Text('दुकानदार के स्मार्ट टूल')),
-    body:ListView(padding:const EdgeInsets.all(16),children:[
-      Container(padding:const EdgeInsets.all(17),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFFDDE8FF),Color(0xFFEDE5FF),Color(0xFFDDF7EF)]),borderRadius:BorderRadius.circular(20)),child:const Row(children:[Icon(Icons.dashboard_customize_rounded,color:Color(0xFF536CC0),size:30),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Smart Tools',style:TextStyle(color:_ink,fontSize:20,fontWeight:FontWeight.w900)),Text('आपके कारोबार के लिए आसान डिजिटल टूल',style:TextStyle(color:Color(0xFF657295),fontSize:12))]))])),
-      const SizedBox(height:16),
-      Text('रोज़ के काम के लिए उपयोगी सुविधाएँ',style:TextStyle(color:_ink,fontSize:17,fontWeight:FontWeight.w800)),
-      const SizedBox(height:12),
-      GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:modules.length,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,mainAxisSpacing:12,crossAxisSpacing:12,childAspectRatio:1.12),itemBuilder:(context,i){
-        final m=modules[i];
-        final colors=[const Color(0xFFE7F0FF),const Color(0xFFFFE8F0),const Color(0xFFE6F8F1),const Color(0xFFFFF2D9),const Color(0xFFEDE9FF),const Color(0xFFE4F6FA)];
-        return Material(color:Colors.white,elevation:3,shadowColor:const Color(0x20526FC4),borderRadius:BorderRadius.circular(20),child:InkWell(borderRadius:BorderRadius.circular(20),onTap:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>UtilityModulePage(kind:m.$4,title:m.$1))),child:Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Colors.white,Color.lerp(colors[i],Colors.white,.48)!]),borderRadius:BorderRadius.circular(20),border:Border.all(color:Color.lerp(colors[i],const Color(0xFF8498D8),.3)!)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Container(width:49,height:49,decoration:BoxDecoration(gradient:LinearGradient(colors:[colors[i],Color.lerp(colors[i],Colors.white,.2)!]),borderRadius:BorderRadius.circular(15)),child:Icon(m.$3,color:const Color(0xFF4E64AF),size:27)),const Spacer(),Text(m.$1,style:const TextStyle(color:_ink,fontWeight:FontWeight.w900,fontSize:14)),const SizedBox(height:4),Text(m.$2,style:const TextStyle(color:Color(0xFF78839C),fontSize:11))]))));
-      })
-    ])
-  );
-}
+const _ink=Color(0xFF25345B);
 
 class UtilityModulePage extends StatelessWidget {
   final String kind,title;
@@ -53,7 +25,6 @@ class UtilityModulePage extends StatelessWidget {
       'poster'=>const _PosterTool(),
       'reminders'=>const _ReminderTool(),
       'calculator'=>const _BusinessCalculator(),
-      'soundbox'=>const _SoundboxInfo(),
       _=>const _QrTool(),
     };
     return Scaffold(appBar:AppBar(title:Text(title)),body:page);
@@ -323,37 +294,3 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
  }
 }
 
-class _SoundboxInfo extends StatefulWidget{const _SoundboxInfo();@override State<_SoundboxInfo> createState()=>_SoundboxInfoState();}
-class _SoundboxInfoState extends State<_SoundboxInfo>{
- final endpoint=TextEditingController(),token=TextEditingController();
- bool loading=true,testing=false,connected=false,obscure=true;
- String status='API अभी कनेक्ट नहीं है।';
- @override void initState(){super.initState();_load();}
- @override void dispose(){endpoint.dispose();token.dispose();super.dispose();}
- Future<void> _load()async{endpoint.text=await _vault.read(key:'soundbox_api_url')??'';token.text=await _vault.read(key:'soundbox_api_token')??'';if(mounted)setState(()=>loading=false);}
- Future<void> _save()async{await _vault.write(key:'soundbox_api_url',value:endpoint.text.trim());await _vault.write(key:'soundbox_api_token',value:token.text.trim());if(mounted)setState(()=>status='API सेटिंग सेव हो गई। अब कनेक्शन टेस्ट करें।');}
- Future<void> _disconnect()async{await _vault.delete(key:'soundbox_api_url');await _vault.delete(key:'soundbox_api_token');endpoint.clear();token.clear();if(mounted)setState((){connected=false;status='API डिस्कनेक्ट कर दी गई है।';});}
- Future<void> _test()async{
-  final uri=Uri.tryParse(endpoint.text.trim());
-  if(uri==null||!uri.hasScheme||!uri.hasAuthority){setState(()=>status='सही HTTPS API URL दर्ज करें।');return;}
-  setState((){testing=true;status='API कनेक्शन जाँचा जा रहा है...';});
-  try{
-   final headers=<String,String>{'Accept':'application/json'};
-   if(token.text.trim().isNotEmpty)headers['Authorization']='Bearer ${token.text.trim()}';
-   final response=await http.get(uri,headers:headers).timeout(const Duration(seconds:20));
-   if(response.statusCode>=200&&response.statusCode<300){connected=true;status='API endpoint से सफल response मिला (HTTP ${response.statusCode})। Payment feed की पुष्टि अलग से करनी होगी.';}
-   else{connected=false;status='API ने HTTP ${response.statusCode} लौटाया। URL, token या provider का सही endpoint जाँचें.';}
-  }catch(e){connected=false;status='कनेक्शन नहीं हुआ: $e';}
-  if(mounted)setState(()=>testing=false);
- }
- @override Widget build(BuildContext context)=>loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(18),children:[
-  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFFDDF7EF),Color(0xFFDDE8FF)]),borderRadius:BorderRadius.circular(20)),child:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Icon(Icons.volume_up_rounded,color:Color(0xFF218C83),size:34),SizedBox(height:10),Text('Payment Sound Box',style:TextStyle(color:_ink,fontSize:21,fontWeight:FontWeight.w900)),Text('अपने payment provider का API endpoint जोड़ें',style:TextStyle(color:Color(0xFF647393),fontSize:12))])),
-  const SizedBox(height:16),TextField(controller:endpoint,keyboardType:TextInputType.url,decoration:const InputDecoration(labelText:'API Endpoint URL',hintText:'https://api.example.com/payments')),
-  const SizedBox(height:10),TextField(controller:token,obscureText:obscure,decoration:InputDecoration(labelText:'API Token / Secret (वैकल्पिक)',suffixIcon:IconButton(onPressed:()=>setState(()=>obscure=!obscure),icon:Icon(obscure?Icons.visibility:Icons.visibility_off)))),
-  const SizedBox(height:14),OutlinedButton.icon(onPressed:_save,icon:const Icon(Icons.save_outlined),label:const Text('API सेटिंग सेव करें')),
-  const SizedBox(height:8),FilledButton.icon(onPressed:testing?null:_test,icon:testing?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2,color:Colors.white)):const Icon(Icons.link),label:Text(testing?'कनेक्शन जाँच रहे हैं...':'API Connect / Test Connection')),
-  TextButton.icon(onPressed:_disconnect,icon:const Icon(Icons.link_off),label:const Text('Disconnect / API हटाएँ')),
-  const SizedBox(height:14),Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:connected?const Color(0xFFE5F7EF):const Color(0xFFFFF4DF),borderRadius:BorderRadius.circular(14)),child:Row(children:[Icon(connected?Icons.check_circle:Icons.info_outline,color:connected?Colors.green:Colors.orange),const SizedBox(width:10),Expanded(child:Text(status,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w600)))])),
-  const SizedBox(height:12),const Text('ध्यान दें: यह endpoint और token को सेव करके API की पहुँच जाँचता है। असली पेमेंट की आवाज़ तभी चलेगी जब आपके payment provider का webhook/event format और verified payment callback जोड़ा जाएगा। केवल HTTP response को भुगतान की पुष्टि नहीं माना जाएगा।',style:TextStyle(color:Colors.blueGrey,fontSize:11))
- ]);
-}
