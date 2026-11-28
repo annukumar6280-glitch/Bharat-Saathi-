@@ -268,7 +268,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       }
       return '${verb}s';
     }
-    final verbs = <String>{
+    final verbs = <String>[
       'ask','answer','arrive','bake','believe','call','change','check',
       'clean','climb','close','collect','compare','cook','copy','dance',
       'decide','deliver','describe','design','discuss','divide','dress','dry',
@@ -283,7 +283,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       'wash','watch','work','worry','carry','fly','cry','go',
       'do','have','read','write','speak','learn','sleep','run',
       'plan','travel',
-    };
+    ];
     var verbIndex = 0;
     for (final subject in subjects) {
       for (final verb in verbs) {
