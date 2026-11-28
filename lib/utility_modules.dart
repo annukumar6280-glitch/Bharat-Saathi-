@@ -32,18 +32,28 @@ class UtilityModulePage extends StatelessWidget {
 
 class _QrTool extends StatefulWidget{const _QrTool();@override State<_QrTool> createState()=>_QrToolState();}
 class _QrToolState extends State<_QrTool>{
- final input=TextEditingController();String mode='text';String? scanned;
+ final input=TextEditingController();final qrKey=GlobalKey();String mode='text';String? scanned;
  @override void dispose(){input.dispose();super.dispose();}
+ Future<void> _shareQr()async{
+  try{
+   final boundary=qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+   if(boundary==null)throw Exception('पहले QR कोड बनाएँ।');
+   final image=await boundary.toImage(pixelRatio:3);
+   final data=await image.toByteData(format:ui.ImageByteFormat.png);
+   if(data==null)throw Exception('QR इमेज तैयार नहीं हुई।');
+   await Share.shareXFiles([XFile.fromData(data.buffer.asUint8List(),mimeType:'image/png',name:'bharat-saathi-qr.png')],text:'Bharat Saathi QR Code');
+  }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}
+ }
  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:[
   SegmentedButton<String>(segments:const [ButtonSegment(value:'text',label:Text('Text / Link')),ButtonSegment(value:'upi',label:Text('UPI QR'))],selected:{mode},onSelectionChanged:(s)=>setState(()=>mode=s.first)),
   const SizedBox(height:14),
   TextField(controller:input,onChanged:(_)=>setState((){}),decoration:InputDecoration(labelText:mode=='upi'?'UPI ID (जैसे name@upi)':'Text या Website URL',hintText:mode=='upi'?'yourname@upi':'https://example.com')),
   const SizedBox(height:16),
-  if(input.text.trim().isNotEmpty)Center(child:Container(color:Colors.white,padding:const EdgeInsets.all(14),child:QrImageView(data:mode=='upi'?'upi://pay?pa=${input.text.trim()}&pn=Bharat%20Saathi':input.text.trim(),size:220))),
+  if(input.text.trim().isNotEmpty)Center(child:RepaintBoundary(key:qrKey,child:Container(color:Colors.white,padding:const EdgeInsets.all(14),child:QrImageView(data:mode=='upi'?'upi://pay?pa=${input.text.trim()}&pn=Bharat%20Saathi':input.text.trim(),size:220)))),
   FilledButton(onPressed:()=>setState((){}),child:const Text('QR कोड बनाएँ')),
   OutlinedButton.icon(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>_QrScanner(onValue:(v){setState(()=>scanned=v);Navigator.pop(context);}))),icon:const Icon(Icons.qr_code_scanner),label:const Text('QR स्कैन करें')),
   if(scanned!=null)SelectableText('स्कैन परिणाम: $scanned'),
-  if(input.text.trim().isNotEmpty)TextButton.icon(onPressed:()=>Share.share('QR content: ${mode=='upi'?'upi://pay?pa=${input.text.trim()}&pn=Bharat%20Saathi':input.text.trim()}'),icon:const Icon(Icons.share),label:const Text('कंटेंट शेयर करें')),
+  if(input.text.trim().isNotEmpty)FilledButton.icon(onPressed:_shareQr,icon:const Icon(Icons.download_rounded),label:const Text('QR इमेज डाउनलोड / शेयर करें')),
  ]);
 }
 class _QrScanner extends StatelessWidget{final ValueChanged<String> onValue;const _QrScanner({required this.onValue});@override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('QR स्कैन करें')),body:MobileScanner(onDetect:(capture){final value=(capture.barcodes.isNotEmpty?capture.barcodes.first.rawValue:null);if(value!=null&&value.isNotEmpty)onValue(value);}));}
