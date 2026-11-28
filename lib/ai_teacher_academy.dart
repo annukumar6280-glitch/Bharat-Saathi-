@@ -27,12 +27,35 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   String _otherLearningGoal = '';
   final Set<String> _learningGoals = <String>{};
   bool _profileLoaded = false;
-  static const _learningGoalOptions = <String>[
-    'English Skills',
-    'Computer & Digital Skills',
-    'Maths & General Knowledge',
-    'Business Skills',
+  static const _skillCourseOptions = <String>[
+    'कंप्यूटर', 'कोडिंग और प्रोग्रामिंग', 'सामान्य ज्ञान', 'प्रतियोगी परीक्षा',
+    'बिजनेस और उद्यमिता', 'डिजिटल स्किल', 'कला और संगीत', 'व्यक्तित्व विकास',
   ];
+
+  List<String> _subjectOptionsForClass(String studyClass) {
+    if (studyClass == 'कॉलेज / विश्वविद्यालय') {
+      return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'भौतिक विज्ञान', 'रसायन विज्ञान',
+        'जीव विज्ञान', 'कंप्यूटर साइंस', 'इतिहास', 'राजनीति विज्ञान',
+        'अर्थशास्त्र', 'वाणिज्य', 'लेखांकन', 'कानून', 'मनोविज्ञान'];
+    }
+    if (studyClass == 'नौकरी / प्रतियोगी परीक्षा') {
+      return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'रीजनिंग', 'सामान्य ज्ञान',
+        'सामान्य विज्ञान', 'भारतीय इतिहास', 'भूगोल', 'संविधान', 'करंट अफेयर्स'];
+    }
+    if (studyClass == 'स्वयं सीखना / अन्य') {
+      return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'विज्ञान', 'सामाजिक विज्ञान'];
+    }
+    final match = RegExp(r'कक्षा (\\d+)').firstMatch(studyClass);
+    final grade = int.tryParse(match?.group(1) ?? '') ?? 5;
+    if (grade <= 2) return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'पर्यावरण अध्ययन'];
+    if (grade <= 5) return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'पर्यावरण अध्ययन', 'सामान्य ज्ञान'];
+    if (grade <= 8) return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'विज्ञान', 'सामाजिक विज्ञान', 'संस्कृत'];
+    return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'भौतिक विज्ञान', 'रसायन विज्ञान',
+      'जीव विज्ञान', 'इतिहास', 'भूगोल', 'नागरिक शास्त्र', 'अर्थशास्त्र', 'संस्कृत'];
+  }
+
+  List<String> _availableLearningOptions(String studyClass) =>
+      [..._subjectOptionsForClass(studyClass), ..._skillCourseOptions];
   static const _classOptions = <String>[
     'कक्षा 1', 'कक्षा 2', 'कक्षा 3', 'कक्षा 4', 'कक्षा 5', 'कक्षा 6',
     'कक्षा 7', 'कक्षा 8', 'कक्षा 9', 'कक्षा 10', 'कक्षा 11', 'कक्षा 12',
@@ -67,7 +90,9 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   static const _courseParts = AiTeacherCurriculum.courseParts;
 
   List<({String title, List<String> lessons})> get _selectedParts =>
-      _courseParts[_topic] ?? const [];
+      _courseParts[_topic] ?? <({String title, List<String> lessons})>[
+        (title: 'आपकी पसंद का विषय', lessons: ['$_topic की शुरुआत से पढ़ाई']),
+      ];
 
   ({String title, List<String> lessons}) get _selectedPart =>
       _selectedParts.firstWhere((part) => part.title == _part,
@@ -312,13 +337,13 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
                   decoration: const InputDecoration(border: OutlineInputBorder()),
                   items: _classOptions.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
                   onChanged: (value) {
-                    if (value != null) setDialogState(() => selectedClass = value);
+                    if (value != null) setDialogState(() { selectedClass = value; goals.removeWhere((goal) => !_availableLearningOptions(value).contains(goal) && goal != _otherLearningGoal); });
                   },
                 ),
                 const SizedBox(height: 16),
                 const Text('आप क्या-क्या सीखना चाहते हैं? जो लागू हो, उन पर टिक करें।',
                   style: TextStyle(fontWeight: FontWeight.w700)),
-                ..._learningGoalOptions.map((goal) => CheckboxListTile(
+                ..._availableLearningOptions(selectedClass).map((goal) => CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                   value: goals.contains(goal),
@@ -350,9 +375,9 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
             ),
             FilledButton(
               onPressed: () {
-                if (nameController.text.trim().isEmpty || goals.isEmpty) {
+                if (nameController.text.trim().isEmpty || (goals.isEmpty && otherController.text.trim().isEmpty)) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    const SnackBar(content: Text('कृपया नाम लिखें और कम-से-कम एक विषय चुनें।')),
+                    const SnackBar(content: Text('कृपया नाम लिखें और कम-से-कम एक विषय चुनें या खुद लिखें।')),
                   );
                   return;
                 }
@@ -371,7 +396,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       await prefs.setString(_learnerProfileKey + '_name', name);
       await prefs.setString(_learnerProfileKey + '_class', selectedClass);
       await prefs.setString(_learnerProfileKey + '_other', other);
-      await prefs.setStringList(_learnerProfileKey + '_goals', goals.toList());
+      if (other.isNotEmpty) goals.add(other);\n      await prefs.setStringList(_learnerProfileKey + '_goals', goals.toList());
       if (!mounted) return;
       setState(() {
         _studentName = name;
@@ -400,7 +425,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       'Student name: $_studentName. Study level/class: $_studentClass. '
       'Learning interests: ${_learningGoals.join(', ')}. '
       'Additional requested subject: ${_otherLearningGoal.isEmpty ? 'None' : _otherLearningGoal}. '
-      'Adapt vocabulary, explanations, examples, lesson difficulty, homework and quiz difficulty to this learner. '
+      'Selected subject/course: $_topic. Selected part: $_part. Selected lesson: $_lesson. ' +\n      'If this is a custom subject, create a complete, accurate, age-appropriate curriculum for it. Adapt vocabulary, explanations, examples, lesson difficulty, homework and quiz difficulty to this learner. '
       'Address the learner by their first name naturally when helpful. Do not assume knowledge above their class level.';
 
   String get _voiceUsageKey {
@@ -456,7 +481,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     }
     if (_lesson == 'Customer handling') return 'ग्राहक की बात ध्यान से सुनें, जरूरत दोहराकर पुष्टि करें, कीमत और समय साफ बताएँ और शिकायत का सम्मानपूर्वक समाधान करें।';
     if (_lesson == 'Profit and loss') return 'मुनाफा = बिक्री मूल्य − कुल लागत। यदि बिक्री मूल्य लागत से कम है तो नुकसान होता है। किराया, पैकिंग और डिलीवरी जैसी लागत भी जोड़ें।';
-    return 'व्यवसाय में बिक्री, लागत, बचत और ग्राहक संतुष्टि का रिकॉर्ड रखें। रोज़ का हिसाब लिखने से सही निर्णय लेने में मदद मिलती है।';
+    return 'इस विषय की पूरी पढ़ाई आपके चुने हुए स्तर के अनुसार AI Teacher तैयार करेगा। “पूरा लेसन सीखें” दबाएँ और शुरुआत से उदाहरणों सहित पढ़ना शुरू करें।';
   }
 
 
@@ -946,7 +971,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   }
 
   Future<void> _teachFullLesson() async {
-    _question.text = 'मुझे इस चुने हुए लेसन को बिल्कुल शुरुआत से विस्तार से पढ़ाइए। पहले सीखने के लक्ष्य बताइए, फिर सरल परिभाषाएँ और जरूरी शब्द समझाइए, हर अवधारणा को क्रमवार उदाहरणों के साथ सिखाइए, जहाँ लागू हो वहाँ हल किए हुए सवाल या व्यावहारिक चरण दिखाइए, आम गलतियाँ और उनसे बचने के तरीके बताइए, फिर आसान से कठिन अभ्यास दीजिए। अंत में 5 जाँच प्रश्न और एक छोटा गृहकार्य दीजिए। उत्तर इतना पूरा हो कि विद्यार्थी बिना दूसरी वेबसाइट खोले इस लेसन का अध्ययन कर सके।';
+    _question.text = 'मुझे $_topic विषय को $_studentClass के स्तर के अनुसार बिल्कुल शुरुआत से विस्तार से पढ़ाइए। पहले सीखने के लक्ष्य बताइए, फिर सरल परिभाषाएँ और जरूरी शब्द समझाइए, हर अवधारणा को क्रमवार उदाहरणों के साथ सिखाइए, जहाँ लागू हो वहाँ हल किए हुए सवाल या व्यावहारिक चरण दिखाइए, आम गलतियाँ और उनसे बचने के तरीके बताइए, फिर आसान से कठिन अभ्यास दीजिए। अंत में 5 जाँच प्रश्न और एक छोटा गृहकार्य दीजिए। उत्तर इतना पूरा हो कि विद्यार्थी बिना दूसरी वेबसाइट खोले इस लेसन का अध्ययन कर सके।';
     await _askTeacher();
   }
 
@@ -1070,11 +1095,12 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
           ]),
         ),
         const SizedBox(height: 18),
-        Text('अपना कोर्स चुनें', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
+        Text('आपकी क्लास के विषय और चुने हुए कोर्स', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 10),
-        ..._courses.where((course) => _learningGoals.isEmpty || _learningGoals.contains(course.title)).map((course) {
-          final active = _topic == course.title;
+        ..._learningGoals.map((subject) {
+          final active = _topic == subject;
           final accent = Theme.of(context).colorScheme.primary;
+          final hasCurriculum = _courseParts.containsKey(subject);
           return Card(
             margin: const EdgeInsets.only(bottom: 9),
             elevation: active ? 2 : 0.5,
@@ -1084,22 +1110,28 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
             ),
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              leading: Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [course.color, Color.lerp(course.color, Colors.white, .48)!]),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(course.icon, color: accent, size: 27),
+              leading: CircleAvatar(
+                backgroundColor: accent.withValues(alpha: .10),
+                child: Icon(hasCurriculum ? Icons.menu_book_rounded : Icons.auto_stories_rounded, color: accent),
               ),
-              title: Text(course.title, style: const TextStyle(fontWeight: FontWeight.w800)),
-              subtitle: Padding(padding: const EdgeInsets.only(top: 3), child: Text(course.subtitle)),
+              title: Text(subject, style: const TextStyle(fontWeight: FontWeight.w800)),
+              subtitle: Text(hasCurriculum ? 'तैयार पाठ्यक्रम और अभ्यास' : 'आपके स्तर के अनुसार AI से तैयार पढ़ाई'),
               trailing: Icon(active ? Icons.check_circle_rounded : Icons.arrow_forward_ios_rounded, size: active ? 22 : 16, color: active ? accent : Colors.blueGrey),
-              onTap: () => setState(() { _topic = course.title; _part = _courseParts[course.title]!.first.title; _lesson = _courseParts[course.title]!.first.lessons.first; _answer = null; _error = null; }),
+              onTap: () => setState(() {
+                _topic = subject;
+                final parts = _courseParts[subject];
+                _part = parts?.first.title ?? 'आपकी पसंद का विषय';
+                _lesson = parts?.first.lessons.first ?? '$subject की शुरुआत से पढ़ाई';
+                _answer = null; _error = null;
+              }),
             ),
           );
         }),
+        Align(alignment: Alignment.centerLeft, child: TextButton.icon(
+          onPressed: () => _showLearnerProfileDialog(),
+          icon: const Icon(Icons.add_circle_outline),
+          label: const Text('और विषय जोड़ें / विषय बदलें'),
+        )),
         const SizedBox(height: 10),
         Text('अपना पार्ट चुनें', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 8),
@@ -1136,7 +1168,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         Card(child: ExpansionTile(
           leading: const Icon(Icons.menu_book_rounded),
           title: const Text('पाठ सामग्री', style: TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: const Text('चुने हुए पार्ट और लेसन की सामग्री'),
+          subtitle: Text(_courseParts.containsKey(_topic) ? 'चुने हुए पार्ट और लेसन की सामग्री' : 'आपके चुने विषय के लिए AI पाठ'),
           children: [
             Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 10), child: Text(_lessonSummary(), style: const TextStyle(height: 1.5))),
             Padding(
@@ -1155,7 +1187,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         Card(child: ListTile(
           leading: const Icon(Icons.quiz_outlined),
           title: const Text('अभ्यास टेस्ट', style: TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text('प्रगति: ${_completedQuizzes.length} / $totalLessons लेसन पूरे • $currentLessonStatus'),
+          subtitle: Text(_courseParts.containsKey(_topic) ? 'प्रगति: ${_completedQuizzes.length} / $totalLessons लेसन पूरे • $currentLessonStatus' : 'इस विषय पर AI से अभ्यास टेस्ट तैयार करें'),
           trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
           onTap: _runQuiz,
         )),
