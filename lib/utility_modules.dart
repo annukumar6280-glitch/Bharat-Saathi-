@@ -283,10 +283,13 @@ class _ReminderToolState extends State<_ReminderTool>{
    actions:[TextButton(onPressed:()=>Navigator.pop(context),child:const Text('रद्द करें')),FilledButton(onPressed:()=>Navigator.pop(context,controller.text.trim()),child:const Text('आगे'))],
   ));
   controller.dispose();
+  if(!mounted)return;
   if(newTitle==null||newTitle.isEmpty)return;
   final pickedDate=await showDatePicker(context:context,initialDate:oldDue.isBefore(DateTime.now())?DateTime.now():oldDue,firstDate:DateTime.now(),lastDate:DateTime.now().add(const Duration(days:3650)));
+  if(!mounted)return;
   if(pickedDate==null)return;
   final pickedTime=await showTimePicker(context:context,initialTime:TimeOfDay.fromDateTime(oldDue));
+  if(!mounted)return;
   if(pickedTime==null)return;
   final when=DateTime(pickedDate.year,pickedDate.month,pickedDate.day,pickedTime.hour,pickedTime.minute);
   if(!when.isAfter(DateTime.now())){if(mounted)setState(()=>notificationMessage='भविष्य की तारीख और समय चुनें।');return;}
