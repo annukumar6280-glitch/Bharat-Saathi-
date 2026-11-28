@@ -746,7 +746,6 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
 
   @override
   Widget build(BuildContext context) {
-    final selected = _courses.firstWhere((c) => c.title == _topic, orElse: () => _courses.first);
     final selectedPart = _selectedPart;
     final totalLessons = _courseParts.values.fold<int>(0, (total, parts) => total + parts.fold<int>(0, (count, part) => count + part.lessons.length));
     final currentLessonStatus = _completedQuizzes.contains(_topic + '::' + _part + '::' + _lesson)
