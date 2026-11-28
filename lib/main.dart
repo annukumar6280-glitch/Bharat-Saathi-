@@ -660,8 +660,34 @@ class _BillListPageState extends State<BillListPage>{
  final _name=TextEditingController(),_phone=TextEditingController();
  final List<_BillRow> _rows=[_BillRow()];
  String _mode='bill';bool _started=false,_pdfBusy=false,_homeUse=false;
+ List<Map<String,dynamic>> _history=[];
+ String get _historyKey=>'bs_bill_history_${Supabase.instance.client.auth.currentUser?.id??'guest'}';
  static const Map<String,String> _units={'kg':'किलो','g':'ग्राम','packet':'पैकेट','piece':'पीस','ft':'फिट','m':'मीटर'};
- @override void initState(){super.initState();_watch(_rows.first);}
+ @override void initState(){super.initState();_watch(_rows.first);_loadHistory();}
+ Future<void> _loadHistory()async{final p=await SharedPreferences.getInstance();final raw=p.getString(_historyKey);if(raw!=null){try{_history=List<Map<String,dynamic>>.from(jsonDecode(raw));}catch(_){}}if(mounted)setState((){});}
+ Future<void> _persistHistory()async{final p=await SharedPreferences.getInstance();await p.setString(_historyKey,jsonEncode(_history));}
+ Future<void> _saveCurrentToHistory()async{
+  if(_validRows.isEmpty){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('सेव करने के लिए कम से कम एक सामान जोड़ें।')));return;}
+  final now=DateTime.now();
+  final record=<String,dynamic>{'id':now.microsecondsSinceEpoch.toString(),'mode':_mode,'homeUse':_homeUse,'name':_name.text.trim(),'phone':_phone.text.trim(),'createdAt':now.toIso8601String(),'rows':_validRows.map((r)=>{'item':r.item.text.trim(),'qty':r.qty.text.trim(),'price':r.price.text.trim(),'unit':r.unit}).toList()};
+  _history.insert(0,record);if(_history.length>100)_history.removeLast();
+  await _persistHistory();if(mounted){setState((){});ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('बिल / सामान लिस्ट इस फोन में सेव हो गई।')));}
+ }
+ void _loadSavedRecord(Map<String,dynamic> record){
+  for(final row in _rows){row.dispose();}
+  _rows.clear();
+  final savedRows=record['rows'] is List?List<Map<String,dynamic>>.from(record['rows'] as List):<Map<String,dynamic>>[];
+  for(final saved in savedRows){final row=_BillRow();row.item.text=saved['item']?.toString()??'';row.qty.text=saved['qty']?.toString()??'1';row.price.text=saved['price']?.toString()??'0';row.unit=saved['unit']?.toString()??'piece';_watch(row);_rows.add(row);}
+  if(_rows.isEmpty){final row=_BillRow();_watch(row);_rows.add(row);}
+  _name.text=record['name']?.toString()??'';_phone.text=record['phone']?.toString()??'';_mode=record['mode']=='list'?'list':'bill';_homeUse=record['homeUse']==true;_started=true;
+  setState((){});
+ }
+ Future<void> _openHistory()async{
+  await showModalBottomSheet<void>(context:context,isScrollControlled:true,showDragHandle:true,builder:(sheetContext)=>SafeArea(child:SizedBox(height:MediaQuery.of(sheetContext).size.height*0.72,child:Column(children:[
+   const Padding(padding:EdgeInsets.all(16),child:Text('सेव किए गए बिल / लिस्ट',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900))),
+   Expanded(child:_history.isEmpty?const Center(child:Text('अभी कोई बिल या लिस्ट सेव नहीं है।')):ListView.builder(itemCount:_history.length,itemBuilder:(context,index){final record=_history[index];final rows=record['rows'] is List?(record['rows'] as List).length:0;final created=DateTime.tryParse(record['createdAt']?.toString()??'');final title=record['name']?.toString().isNotEmpty==true?record['name'].toString():'बिना नाम का दस्तावेज़';return ListTile(leading:Icon(record['mode']=='list'?Icons.shopping_bag_outlined:Icons.receipt_long),title:Text(title),subtitle:Text('${record['mode']=='list'?'सामान लिस्ट':'बिल'} • $rows सामान • ${created==null?'तारीख उपलब्ध नहीं':created.toLocal().toString().substring(0,16)}'),onTap:(){_loadSavedRecord(record);Navigator.pop(sheetContext);},trailing:IconButton(tooltip:'हटाएँ',icon:const Icon(Icons.delete_outline),onPressed:()async{_history.removeAt(index);await _persistHistory();if(mounted)setState((){});(sheetContext as Element).markNeedsBuild();}));})),
+  ]))));
+ }
  void _watch(_BillRow r){r.item.addListener(_refresh);r.qty.addListener(_refresh);r.price.addListener(_refresh);}
  void _refresh(){if(mounted)setState((){});}
  @override void dispose(){_name.dispose();_phone.dispose();for(final r in _rows){r.dispose();}super.dispose();}
@@ -733,12 +759,14 @@ class _BillListPageState extends State<BillListPage>{
  @override Widget build(BuildContext context){
   return Scaffold(appBar:AppBar(title:const Text('बिल / सामान लिस्ट')),body:!_started?ListView(padding:const EdgeInsets.all(18),children:[
    const Text('किस तरह इस्तेमाल करना है?',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
+   const SizedBox(height:8),OutlinedButton.icon(onPressed:_openHistory,icon:const Icon(Icons.history),label:const Text('सेव किए गए बिल / लिस्ट खोलें')),
    const SizedBox(height:12),Wrap(spacing:10,children:[ChoiceChip(label:const Text('दुकानदार'),selected:!_homeUse,onSelected:(_)=>setState(()=>_homeUse=false)),ChoiceChip(label:const Text('घर के लिए'),selected:_homeUse,onSelected:(_)=>setState((){_homeUse=true;_mode='list';}))]),
    const SizedBox(height:14),if(!_homeUse)TextField(controller:_name,decoration:const InputDecoration(labelText:'ग्राहक / दुकान का नाम',border:OutlineInputBorder())),
    if(!_homeUse)const SizedBox(height:12),TextField(controller:_phone,keyboardType:TextInputType.phone,decoration:const InputDecoration(labelText:'WhatsApp मोबाइल नंबर',hintText:'10 अंकों का नंबर',border:OutlineInputBorder())),
    const SizedBox(height:18),FilledButton(onPressed:(){if((!_homeUse&&_name.text.trim().isEmpty)||_phoneForWhatsApp().length<11){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('सही जानकारी और WhatsApp नंबर भरें।')));return;}setState(()=>_started=true);},child:const Text('आगे बढ़ें'))
   ]):ListView(padding:const EdgeInsets.all(16),children:[
    Text(_name.text.trim().isNotEmpty?'दुकान / ग्राहक: ${_name.text.trim()}  •  WhatsApp: ${_phone.text.trim()}':'WhatsApp: ${_phone.text.trim()}',style:const TextStyle(fontWeight:FontWeight.w800)),
+   Align(alignment:Alignment.centerRight,child:TextButton.icon(onPressed:_openHistory,icon:const Icon(Icons.history),label:const Text('पुराने बिल'))),
    const SizedBox(height:12),if(!_homeUse)SegmentedButton<String>(segments:const [ButtonSegment(value:'bill',label:Text('बिल'),icon:Icon(Icons.receipt_long)),ButtonSegment(value:'list',label:Text('सामान लिस्ट'),icon:Icon(Icons.shopping_bag_outlined))],selected:{_mode},onSelectionChanged:(v)=>setState(()=>_mode=v.first)) else const Text('घर के लिए सामान लिस्ट',style:TextStyle(fontWeight:FontWeight.w900,color:Color(0xFF0D9488))),
    const SizedBox(height:8),
    Text(_mode=='bill'?'हर सामान की मात्रा और उस सामान की कुल कीमत भरें।':'सामान का नाम, मात्रा और उसकी यूनिट चुनें। कीमत भरना जरूरी नहीं है।',style:TextStyle(color:muted,fontSize:12)),
@@ -761,6 +789,7 @@ class _BillListPageState extends State<BillListPage>{
    const SizedBox(height:8),OutlinedButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:_pdfBusy?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2)):const Icon(Icons.picture_as_pdf),label:Text(_pdfBusy?'PDF तैयार हो रहा है...':'PDF बनाएं / डाउनलोड या शेयर करें')),
    const SizedBox(height:8),FilledButton.icon(onPressed:_pdfBusy?null:_sharePdf,icon:const Icon(Icons.picture_as_pdf),label:const Text('PDF WhatsApp पर भेजें')),
    if(_mode=='bill')OutlinedButton.icon(onPressed:_pdfBusy?null:_printPdf,icon:const Icon(Icons.print_outlined),label:const Text('प्रिंट / PDF सेव करें')),
+   const SizedBox(height:8),OutlinedButton.icon(onPressed:_saveCurrentToHistory,icon:const Icon(Icons.save_outlined),label:const Text('बिल / लिस्ट सेव करें')),
    const SizedBox(height:8),const Text('WhatsApp टेक्स्ट भेजने पर संदेश पहले से लिखा हुआ खुलेगा। PDF शेयर करने पर WhatsApp, Drive या उपलब्ध ऐप चुन सकते हैं। भेजने के लिए चुने हुए ऐप में Send दबाएँ।',style:TextStyle(fontSize:11,color:Colors.grey))
   ]));
  }
