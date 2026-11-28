@@ -193,6 +193,8 @@ class _PosterToolState extends State<_PosterTool>{
  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
   Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF4338CA),Color(0xFF9333EA),Color(0xFFEC4899)]),borderRadius:BorderRadius.circular(22)),child:const Row(children:[Icon(Icons.auto_awesome,color:Colors.white,size:32),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('AI Creative Studio',style:TextStyle(color:Colors.white,fontSize:20,fontWeight:FontWeight.w900)),Text('AI से फोटो और पोस्टर बनाएँ',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
   const SizedBox(height:16),
+  SegmentedButton<String>(segments:const [ButtonSegment(value:'image',label:Text('फोटो / पोस्टर'),icon:Icon(Icons.image_outlined)),ButtonSegment(value:'video',label:Text('वीडियो'),icon:Icon(Icons.video_library_outlined))],selected:{generationType},onSelectionChanged:(v)=>setState(()=>generationType=v.first)),
+  const SizedBox(height:10),
   SegmentedButton<String>(segments:const [ButtonSegment(value:'creative',label:Text('अपनी पसंद का')),ButtonSegment(value:'shop',label:Text('दुकान / बिजनेस'))],selected:{creativeMode},onSelectionChanged:(v)=>setState(()=>creativeMode=v.first)),
   const SizedBox(height:12),
   if(creativeMode=='shop')...[
