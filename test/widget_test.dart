@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:bharat_saathi/main.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
@@ -68,6 +69,7 @@ void main() {
     sqflite.databaseFactory = databaseFactoryFfi;
   });
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     SharedPreferencesAsyncPlatform.instance = InMemorySharedPreferencesAsync.empty();
     await LocalStore.clear();
     bannerAdsEnabled = false;
@@ -132,15 +134,16 @@ void main() {
     expect(await LocalStore.read('account-b'), '{"cash":75}');
   });
 
-  testWidgets('Home shows the retained modules and six dashboard tools', (tester) async {
+  testWidgets('Home shows all eight dashboard features and preserves Expenses tab', (tester) async {
     await pumpDashboardPhone(tester);
     expect(find.text('आपका खाता'), findsOneWidget);
     expect(find.text('खाता बुक'), findsOneWidget);
     expect(find.text('बिल / सामान लिस्ट'), findsOneWidget);
-    for (final title in ['QR Code Tools','Poster Maker','Reminders & Notes','Smart Calculator','Family & Friends Live Location']) {
+    for (final title in ['QR Code Maker','AI Poster Maker & Video Maker','AI Teacher Academy','Reminders & Notes','Smart Calculator','Family & Friends Live Location']) {
       await tester.ensureVisible(find.text(title));
       expect(find.text(title), findsOneWidget);
     }
+    expect(find.text('खर्च'), findsOneWidget);
     expect(find.text('मोबाइल रिचार्ज'), findsNothing);
     expect(find.text('बिल पेमेंट'), findsNothing);
     expect(find.text('चालान पेमेंट'), findsNothing);
@@ -150,11 +153,31 @@ void main() {
 
   testWidgets('QR tools open and render QR generation and scanner action', (tester) async {
     await pumpDashboardPhone(tester);
-    await tester.ensureVisible(find.text('QR Code Tools'));
-    await tester.tap(find.text('QR Code Tools'));
+    await tester.ensureVisible(find.text('QR Code Maker'));
+    await tester.tap(find.text('QR Code Maker'));
     await tester.pumpAndSettle();
     expect(find.text('QR कोड बनाएँ'), findsOneWidget);
     expect(find.text('QR स्कैन करें'), findsOneWidget);
+  });
+
+  testWidgets('Notes can be saved and edited in Reminders & Notes', (tester) async {
+    await pumpDashboardPhone(tester);
+    await tester.ensureVisible(find.text('Reminders & Notes'));
+    await tester.tap(find.text('Reminders & Notes'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('नोट्स'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(0), 'टेस्ट नोट');
+    await tester.enterText(find.byType(TextField).at(1), 'पहला विवरण');
+    await tester.tap(find.text('नोट सेव करें'));
+    await tester.pumpAndSettle();
+    expect(find.text('टेस्ट नोट'), findsOneWidget);
+    await tester.tap(find.text('टेस्ट नोट'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(1), 'अपडेट किया विवरण');
+    await tester.tap(find.text('नोट अपडेट करें'));
+    await tester.pumpAndSettle();
+    expect(find.text('अपडेट किया विवरण'), findsOneWidget);
   });
 
   testWidgets('Business calculator exposes GST, discount and profit calculations', (tester) async {
