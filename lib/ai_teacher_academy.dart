@@ -218,6 +218,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
 
   Future<void> _runQuiz() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     final bank = _questionsForTopic();
     final seen = (prefs.getStringList(_quizSeenKey) ?? <String>[]).toSet();
     var available = bank.where((q) => !seen.contains(q['id'])).toList();
