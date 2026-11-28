@@ -683,10 +683,31 @@ class _BillListPageState extends State<BillListPage>{
   setState((){});
  }
  Future<void> _openHistory()async{
-  await showModalBottomSheet<void>(context:context,isScrollControlled:true,showDragHandle:true,builder:(sheetContext)=>SafeArea(child:SizedBox(height:MediaQuery.of(sheetContext).size.height*0.72,child:Column(children:[
-   const Padding(padding:EdgeInsets.all(16),child:Text('सेव किए गए बिल / लिस्ट',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900))),
-   Expanded(child:_history.isEmpty?const Center(child:Text('अभी कोई बिल या लिस्ट सेव नहीं है।')):ListView.builder(itemCount:_history.length,itemBuilder:(context,index){final record=_history[index];final rows=record['rows'] is List?(record['rows'] as List).length:0;final created=DateTime.tryParse(record['createdAt']?.toString()??'');final title=record['name']?.toString().isNotEmpty==true?record['name'].toString():'बिना नाम का दस्तावेज़';return ListTile(leading:Icon(record['mode']=='list'?Icons.shopping_bag_outlined:Icons.receipt_long),title:Text(title),subtitle:Text('${record['mode']=='list'?'सामान लिस्ट':'बिल'} • $rows सामान • ${created==null?'तारीख उपलब्ध नहीं':created.toLocal().toString().substring(0,16)}'),onTap:(){_loadSavedRecord(record);Navigator.pop(sheetContext);},trailing:IconButton(tooltip:'हटाएँ',icon:const Icon(Icons.delete_outline),onPressed:()async{_history.removeAt(index);await _persistHistory();if(mounted)setState((){});(sheetContext as Element).markNeedsBuild();}));})),
-  ]))));
+  await showModalBottomSheet<void>(
+   context:context,isScrollControlled:true,showDragHandle:true,
+   builder:(sheetContext)=>StatefulBuilder(builder:(sheetContext,setSheetState)=>SafeArea(
+    child:SizedBox(height:MediaQuery.of(sheetContext).size.height*0.72,child:Column(children:[
+     const Padding(padding:EdgeInsets.all(16),child:Text('सेव किए गए बिल / लिस्ट',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900))),
+     Expanded(child:_history.isEmpty
+      ?const Center(child:Text('अभी कोई बिल या लिस्ट सेव नहीं है।'))
+      :ListView.builder(itemCount:_history.length,itemBuilder:(context,index){
+       final record=_history[index];
+       final rows=record['rows'] is List?(record['rows'] as List).length:0;
+       final created=DateTime.tryParse(record['createdAt']?.toString()??'');
+       final title=record['name']?.toString().isNotEmpty==true?record['name'].toString():'बिना नाम का दस्तावेज़';
+       return ListTile(
+        leading:Icon(record['mode']=='list'?Icons.shopping_bag_outlined:Icons.receipt_long),
+        title:Text(title),
+        subtitle:Text('${record['mode']=='list'?'सामान लिस्ट':'बिल'} • $rows सामान • ${created==null?'तारीख उपलब्ध नहीं':created.toLocal().toString().substring(0,16)}'),
+        onTap:(){_loadSavedRecord(record);Navigator.pop(sheetContext);},
+        trailing:IconButton(tooltip:'हटाएँ',icon:const Icon(Icons.delete_outline),onPressed:()async{
+         _history.removeAt(index);await _persistHistory();if(mounted)setState((){});setSheetState((){});
+        }),
+       );
+      })),
+    ])),
+   )),
+  );
  }
  void _watch(_BillRow r){r.item.addListener(_refresh);r.qty.addListener(_refresh);r.price.addListener(_refresh);}
  void _refresh(){if(mounted)setState((){});}
