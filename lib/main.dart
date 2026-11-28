@@ -183,27 +183,30 @@ class LocalStore {
 }
 final ValueNotifier<int> homeTabRequest=ValueNotifier<int>(0);
 bool get darkModeEnabled=>false;
-Color get navy=>const Color(0xFF18264A);
-Color get blue=>const Color(0xFF4F46E5);
-Color get gold=>const Color(0xFFF59E0B);
-Color get bg=>const Color(0xFFF3F6FC);
-Color get muted=>const Color(0xFF69758C);
-Color get green=>const Color(0xFF0F9D78);
+Color get navy=>const Color(0xFF25205C);
+Color get blue=>const Color(0xFF6246EA);
+Color get gold=>const Color(0xFFFFB02E);
+Color get bg=>const Color(0xFFECEBFF);
+Color get muted=>const Color(0xFF68708F);
+Color get green=>const Color(0xFF0B9F83);
 Color get red=>const Color(0xFFDC4C64);
-Color get surfaceColor=>Colors.white;
-Color get appBgColor=>const Color(0xFFF4F6FB);
-Color get borderColor=>const Color(0xFFE3E8F2);
+Color get surfaceColor=>const Color(0xFFFFFBFF);
+Color get appBgColor=>const Color(0xFFECEFFF);
+Color get borderColor=>const Color(0xFFD9D7F5);
 ThemeData buildAppTheme(bool dark){
- const ink=Color(0xFF17234A),primary=Color(0xFF5146D8),teal=Color(0xFF00A99A),amber=Color(0xFFFFA928),canvas=Color(0xFFEAF0FF),line=Color(0xFFD4DDF5),pale=Color(0xFFDCD9FF);
- final scheme=ColorScheme.fromSeed(seedColor:primary,brightness:Brightness.light).copyWith(primary:primary,secondary:teal,tertiary:amber,surface:Colors.white,onSurface:ink);
- return ThemeData(useMaterial3:true,brightness:Brightness.light,scaffoldBackgroundColor:canvas,colorScheme:scheme,
- appBarTheme:const AppBarTheme(backgroundColor:Color(0xFFEAF0FF),foregroundColor:ink,elevation:0,scrolledUnderElevation:0,centerTitle:false,toolbarHeight:62,titleTextStyle:TextStyle(color:ink,fontSize:19,fontWeight:FontWeight.w800),iconTheme:IconThemeData(color:primary)),
- cardTheme:CardThemeData(color:const Color(0xFFFCFDFF),elevation:3,shadowColor:const Color(0x283F4CC0),margin:const EdgeInsets.symmetric(vertical:6),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(22),side:const BorderSide(color:line))),
- inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:Colors.white,contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:15),hintStyle:const TextStyle(color:Color(0xFF98A2B3)),border:OutlineInputBorder(borderRadius:BorderRadius.circular(15),borderSide:const BorderSide(color:line)),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(15),borderSide:const BorderSide(color:line)),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(15),borderSide:const BorderSide(color:primary,width:1.6))),
- filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:primary,foregroundColor:Colors.white,minimumSize:const Size(0,49),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),textStyle:const TextStyle(fontWeight:FontWeight.w800),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15)))),
- outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:primary,minimumSize:const Size(0,46),side:const BorderSide(color:line),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),
- snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating,backgroundColor:ink,contentTextStyle:TextStyle(color:Colors.white,fontWeight:FontWeight.w600)),dividerColor:line,
- navigationBarTheme:NavigationBarThemeData(backgroundColor:Colors.white,elevation:8,indicatorColor:pale,labelTextStyle:WidgetStateProperty.resolveWith((states)=>TextStyle(fontSize:11,fontWeight:states.contains(WidgetState.selected)?FontWeight.w800:FontWeight.w500,color:states.contains(WidgetState.selected)?primary:const Color(0xFF8993A8)))));
+ const ink=Color(0xFF25205C),primary=Color(0xFF6246EA),teal=Color(0xFF00A995),amber=Color(0xFFFFB02E),canvas=Color(0xFFECEFFF),line=Color(0xFFD9D7F5),pale=Color(0xFFFFDFA1);
+ final scheme=ColorScheme.fromSeed(seedColor:primary,brightness:Brightness.light).copyWith(primary:primary,secondary:teal,tertiary:amber,surface:const Color(0xFFFFFBFF),onSurface:ink);
+ return ThemeData(
+  useMaterial3:true,brightness:Brightness.light,scaffoldBackgroundColor:canvas,colorScheme:scheme,
+  appBarTheme:const AppBarTheme(backgroundColor:Color(0xFFE4E0FF),foregroundColor:ink,elevation:0,scrolledUnderElevation:0,centerTitle:false,toolbarHeight:62,titleTextStyle:TextStyle(color:ink,fontSize:19,fontWeight:FontWeight.w800),iconTheme:IconThemeData(color:primary)),
+  cardTheme:CardThemeData(color:const Color(0xFFFFFBFF),elevation:4,shadowColor:Color(0x333D2A9A),margin:const EdgeInsets.symmetric(vertical:6),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(22),side:const BorderSide(color:line))),
+  inputDecorationTheme:InputDecorationTheme(filled:true,fillColor:const Color(0xFFF6F3FF),contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:15),hintStyle:const TextStyle(color:Color(0xFF8583A5)),border:OutlineInputBorder(borderRadius:BorderRadius.circular(15),borderSide:const BorderSide(color:line)),enabledBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(15),borderSide:const BorderSide(color:line)),focusedBorder:OutlineInputBorder(borderRadius:BorderRadius.circular(15),borderSide:const BorderSide(color:primary,width:1.8))),
+  filledButtonTheme:FilledButtonThemeData(style:FilledButton.styleFrom(backgroundColor:primary,foregroundColor:Colors.white,minimumSize:const Size(0,49),padding:const EdgeInsets.symmetric(horizontal:18,vertical:13),textStyle:const TextStyle(fontWeight:FontWeight.w800),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15)))),
+  outlinedButtonTheme:OutlinedButtonThemeData(style:OutlinedButton.styleFrom(foregroundColor:primary,minimumSize:const Size(0,46),side:const BorderSide(color:Color(0xFFBEB6F1),width:1.2),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)))),
+  snackBarTheme:const SnackBarThemeData(behavior:SnackBarBehavior.floating,backgroundColor:ink,contentTextStyle:TextStyle(color:Colors.white,fontWeight:FontWeight.w600)),
+  dividerColor:line,
+  navigationBarTheme:NavigationBarThemeData(backgroundColor:const Color(0xFF30266F),elevation:12,indicatorColor:amber,labelTextStyle:WidgetStateProperty.resolveWith((states)=>TextStyle(fontSize:11,fontWeight:states.contains(WidgetState.selected)?FontWeight.w900:FontWeight.w500,color:Colors.white)),iconTheme:WidgetStateProperty.resolveWith((states)=>IconThemeData(color:states.contains(WidgetState.selected)?ink:Colors.white,size:23))),
+ );
 }
 class BharatSaathiApp extends StatelessWidget{
  final bool supabaseAvailable,requireAuth,testModeSkipRestore;
@@ -463,7 +466,7 @@ class Dashboard extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFDDE8FF), Color(0xFFE8E1FF), Color(0xFFDDF7F0)],
+                colors: [Color(0xFF6554E8), Color(0xFF9A54D6), Color(0xFF12B9A5)],
               ),
               borderRadius: BorderRadius.circular(22),
             ),
