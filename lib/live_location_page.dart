@@ -146,6 +146,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       return false;
     }
     var locationStatus = await Permission.location.request();
+    if (!mounted) return false;
     if (!locationStatus.isGranted) {
       _message(t('सटीक लोकेशन की अनुमति जरूरी है। ऐप सेटिंग में अनुमति दें।',
           'Precise location permission is required. Allow it in app settings.'));
@@ -153,6 +154,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       return false;
     }
     var alwaysStatus = await Permission.locationAlways.request();
+    if (!mounted) return false;
     if (!alwaysStatus.isGranted) {
       if (!mounted) return false;
       final openSettings = await showDialog<bool>(
@@ -179,6 +181,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       return false;
     }
     final notificationStatus = await Permission.notification.request();
+    if (!mounted) return false;
     if (!notificationStatus.isGranted) {
       if (!mounted) return false;
       final openSettings = await showDialog<bool>(
@@ -200,6 +203,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       if (!await Permission.notification.isGranted) return false;
     }
     final batteryStatus = await Permission.ignoreBatteryOptimizations.status;
+    if (!mounted) return false;
     if (!batteryStatus.isGranted) {
       if (!mounted) return false;
       final requestBattery = await showDialog<bool>(
@@ -229,6 +233,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
       return;
     }
     if (enabled && !await _permission()) return;
+    if (!mounted) return;
     setState(() => _busy = true);
     try {
       await _db.rpc('set_location_sharing', params: {'p_enabled': enabled});
@@ -303,6 +308,7 @@ class _LiveLocationPageState extends State<LiveLocationPage> with WidgetsBinding
     try {
       if (accept) {
         if (!await _permission()) return;
+        if (!mounted) return;
         await _db.rpc('set_location_sharing', params: {'p_enabled': true});
         await _tracker.start(_db);
       }
