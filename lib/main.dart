@@ -238,7 +238,39 @@ class _AuthGateState extends State<AuthGate>{
   return _signedIn?RetailerHome(key:ValueKey(widget.supabaseAvailable?Supabase.instance.client.auth.currentUser?.id:'local'),supabaseAvailable:widget.supabaseAvailable):AuthPage(supabaseAvailable:widget.supabaseAvailable);
  }
 }
-class Record{String name,detail;double amount;IconData icon;DateTime? createdAt;Record(this.name,this.detail,this.amount,this.icon,[DateTime? timestamp]):createdAt=timestamp??DateTime.now();Map<String,dynamic> toJson()=>{'name':name,'detail':detail,'amount':amount,'icon':icon.codePoint,'createdAt':createdAt?.toIso8601String()};factory Record.fromJson(Map<String,dynamic> j){final timestamp=j['createdAt'] is String?DateTime.tryParse(j['createdAt'] as String):null;return Record(j['name'] as String,j['detail'] as String,(j['amount'] as num).toDouble(),Icons.receipt_long,timestamp)..createdAt=timestamp;}}
+class Record {
+ String name, detail;
+ double amount;
+ IconData icon;
+ DateTime? createdAt;
+ Record(this.name, this.detail, this.amount, this.icon, [DateTime? timestamp])
+     : createdAt = timestamp ?? DateTime.now();
+
+ Map<String, dynamic> toJson() => {
+  'name': name,
+  'detail': detail,
+  'amount': amount,
+  'icon': icon.codePoint,
+  'createdAt': createdAt?.toIso8601String(),
+ };
+
+ factory Record.fromJson(Map<String, dynamic> json) {
+  final timestamp = json['createdAt'] is String
+      ? DateTime.tryParse(json['createdAt'] as String)
+      : null;
+  final iconCode = (json['icon'] as num?)?.toInt();
+  final icon = iconCode == null
+      ? Icons.receipt_long
+      : IconData(iconCode, fontFamily: 'MaterialIcons');
+  return Record(
+    json['name']?.toString() ?? 'रिकॉर्ड',
+    json['detail']?.toString() ?? '',
+    (json['amount'] as num?)?.toDouble() ?? 0,
+    icon,
+    timestamp,
+  )..createdAt = timestamp;
+ }
+}
 class RetailerHome extends StatefulWidget{final bool supabaseAvailable,testModeSkipRestore;const RetailerHome({super.key,this.supabaseAvailable=false,this.testModeSkipRestore=false});@override State<RetailerHome> createState()=>_RetailerHomeState();}
 class _RetailerHomeState extends State<RetailerHome> with WidgetsBindingObserver{
  Timer? _autoSyncDebounce;
@@ -302,7 +334,7 @@ final serviceTransactions=<Record>[];
  Future<void> _restore({bool syncCloud=true})async{
   if(mounted)setState(()=>loaded=false);
   cash=0;expenses=0;personalBudget=0;personalBudgetName='व्यक्तिगत खर्च सीमा';
-  expensesList.clear();khata.clear();personalTransactions.clear();serviceTransactions.clear();
+  expensesList.clear();khata.clear();personalKhata.clear();personalTransactions.clear();serviceTransactions.clear();
   var shouldSanitizeSnapshot=false;
   try{
    final userId=_localUserId;
