@@ -76,6 +76,17 @@ void main() {
   });
   tearDown(() { SharedPreferencesAsyncPlatform.instance = null; bannerAdsEnabled = true; });
 
+  test('Record JSON round-trip preserves icon and timestamp', () {
+    final createdAt = DateTime(2026, 11, 28, 12, 30);
+    final original = Record('किराना', 'दुकान खर्च', 250, Icons.payments_outlined, createdAt);
+    final restored = Record.fromJson(original.toJson());
+    expect(restored.name, original.name);
+    expect(restored.detail, original.detail);
+    expect(restored.amount, original.amount);
+    expect(restored.icon.codePoint, Icons.payments_outlined.codePoint);
+    expect(restored.createdAt, createdAt);
+  });
+
   test('Local snapshots are isolated by signed-in user ID', () async {
     await LocalStore.write('account-a', '{"cash":100}');
     await LocalStore.write('account-b', '{"cash":250}');
