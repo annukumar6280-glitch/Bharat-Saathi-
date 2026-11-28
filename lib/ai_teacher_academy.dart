@@ -40,6 +40,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
   void initState() {
     super.initState();
     _loadVoiceUsage();
+    _tts.awaitSpeakCompletion(true);
     _tts.setCompletionHandler(() { if (mounted) setState(() => _speaking = false); });
     _tts.setErrorHandler((_) { if (mounted) setState(() => _speaking = false); });
   }
@@ -115,10 +116,16 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> {
     final answer = _answer;
     if (answer == null || answer.isEmpty) return;
     try {
+      if (_voiceRemaining <= 0) {
+        if (mounted) setState(() => _voiceMessage = 'आज की 5 मिनट की वॉइस सीमा पूरी हो गई है।');
+        return;
+      }
       await _tts.setLanguage(widget.english ? 'en-IN' : 'hi-IN');
       await _tts.setSpeechRate(0.45);
       if (mounted) setState(() => _speaking = true);
+      _voiceStopwatch.start();
       await _tts.speak(answer);
+      await _finishVoiceSession();
     } catch (_) {
       if (mounted) setState(() { _speaking = false; _voiceMessage = 'इस फोन में चुनी गई भाषा की आवाज़ उपलब्ध नहीं है।'; });
     }
