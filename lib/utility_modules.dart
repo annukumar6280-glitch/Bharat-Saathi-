@@ -16,7 +16,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const _ink=Color(0xFF25345B);
+const _ink=Color(0xFF25205C);
 
 class UtilityModulePage extends StatelessWidget {
   final String kind,title;
@@ -48,6 +48,8 @@ class _QrToolState extends State<_QrTool>{
   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}
  }
  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(18),children:[
+  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF3D4CE0),Color(0xFF8B45D6),Color(0xFF10AFA2)]),borderRadius:BorderRadius.circular(22),boxShadow:const [BoxShadow(color:Color(0x333D4CE0),blurRadius:16,offset:Offset(0,7))]),child:const Row(children:[CircleAvatar(radius:25,backgroundColor:Color(0x33FFFFFF),child:Icon(Icons.qr_code_2_rounded,color:Colors.white,size:30)),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('QR Code Studio',style:TextStyle(color:Colors.white,fontSize:19,fontWeight:FontWeight.w900)),SizedBox(height:4),Text('QR बनाएँ, शेयर करें और तुरंत स्कैन करें',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
+  const SizedBox(height:16),
   SegmentedButton<String>(segments:const [ButtonSegment(value:'text',label:Text('Text / Link')),ButtonSegment(value:'upi',label:Text('UPI QR'))],selected:{mode},onSelectionChanged:(s)=>setState(()=>mode=s.first)),
   const SizedBox(height:14),
   TextField(controller:input,onChanged:(_)=>setState((){}),decoration:InputDecoration(labelText:mode=='upi'?'UPI ID (जैसे name@upi)':'Text या Website URL',hintText:mode=='upi'?'yourname@upi':'https://example.com')),
@@ -332,6 +334,8 @@ class _ReminderToolState extends State<_ReminderTool>{
  }
  void _cancelNoteEdit(){noteTitle.clear();noteBody.clear();setState(()=>editingNoteIndex=null);}
  @override Widget build(BuildContext context)=>loading?const Center(child:CircularProgressIndicator()):ListView(padding:const EdgeInsets.all(16),children:[
+  Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF087F8C),Color(0xFF2864C8),Color(0xFF7854C8)]),borderRadius:BorderRadius.circular(22),boxShadow:const [BoxShadow(color:Color(0x332864C8),blurRadius:15,offset:Offset(0,6))]),child:const Row(children:[CircleAvatar(radius:24,backgroundColor:Color(0x33FFFFFF),child:Icon(Icons.notifications_active_rounded,color:Colors.white,size:27)),SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Reminders & Notes',style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.w900)),SizedBox(height:4),Text('काम, भुगतान और जरूरी बातें याद रखें',style:TextStyle(color:Colors.white70,fontSize:12))]))])),
+  const SizedBox(height:16),
   SegmentedButton<String>(segments:const [ButtonSegment(value:'reminders',label:Text('रिमाइंडर'),icon:Icon(Icons.notifications_active_outlined)),ButtonSegment(value:'notes',label:Text('नोट्स'),icon:Icon(Icons.sticky_note_2_outlined))],selected:{tab},onSelectionChanged:(v)=>setState(()=>tab=v.first)),
   const SizedBox(height:14),
   if(tab=='reminders')...[
@@ -482,7 +486,7 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
   setState((){history.add('लागत ${_fmt(values[0])}, बिक्री ${_fmt(values[1])}, मुनाफा ${_fmt(profit)}');expression='मुनाफा • Margin ${_fmt(margin)}%';display=_fmt(profit);first=null;operator=null;fresh=true;});
  }
  Widget _key(String label,{Color? color,Color? textColor,VoidCallback? onTap,bool wide=false}){
-  return Expanded(flex:wide?2:1,child:Padding(padding:const EdgeInsets.all(5),child:Material(color:color??Colors.white,elevation:2,shadowColor:const Color(0x1D5369B5),borderRadius:BorderRadius.circular(18),child:InkWell(borderRadius:BorderRadius.circular(18),onTap:onTap,child:Container(height:64,alignment:Alignment.center,decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xFFE0E6F5))),child:Text(label,style:TextStyle(color:textColor??_ink,fontSize:label.length>3?17:23,fontWeight:FontWeight.w800)))))));
+  return Expanded(flex:wide?2:1,child:Padding(padding:const EdgeInsets.all(5),child:Material(color:color??const Color(0xFFF5F2FF),elevation:3,shadowColor:const Color(0x1D5369B5),borderRadius:BorderRadius.circular(18),child:InkWell(borderRadius:BorderRadius.circular(18),onTap:onTap,child:Container(height:64,alignment:Alignment.center,decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),border:Border.all(color:const Color(0xFFE0E6F5))),child:Text(label,style:TextStyle(color:textColor??_ink,fontSize:label.length>3?17:23,fontWeight:FontWeight.w800)))))));
  }
  @override Widget build(BuildContext context){
   final rows=<Widget>[
@@ -495,7 +499,7 @@ class _BusinessCalculatorState extends State<_BusinessCalculator>{
   ];
   return Container(decoration:const BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFFF1F4FF),Color(0xFFE8E7FF),Color(0xFFE1F6F1)])),child:SafeArea(child:Column(children:[
    Padding(padding:const EdgeInsets.fromLTRB(18,22,18,14),child:Row(children:[const Icon(Icons.calculate_rounded,color:Color(0xFF5D6FC6),size:26),const SizedBox(width:9),const Text('कैलकुलेटर',style:TextStyle(color:_ink,fontSize:20,fontWeight:FontWeight.w900)),const Spacer(),Container(padding:const EdgeInsets.symmetric(horizontal:12,vertical:7),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(20)),child:const Text('GST Ready',style:TextStyle(color:Color(0xFF9A6A12),fontWeight:FontWeight.w800,fontSize:11)))])),
-   Expanded(child:Container(width:double.infinity,margin:const EdgeInsets.fromLTRB(14,6,14,14),padding:const EdgeInsets.fromLTRB(20,18,20,20),decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(26),border:Border.all(color:const Color(0xFFDDE4F5)),boxShadow:const [BoxShadow(color:Color(0x18536FC4),blurRadius:18,offset:Offset(0,7))]),child:Column(mainAxisAlignment:MainAxisAlignment.end,crossAxisAlignment:CrossAxisAlignment.end,children:[if(history.isNotEmpty)SizedBox(height:118,width:double.infinity,child:ListView.builder(reverse:true,itemCount:history.length,itemBuilder:(context,index){final line=history[history.length-1-index];return Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Text(line,textAlign:TextAlign.right,style:const TextStyle(color:Color(0xFF66728D),fontSize:13,fontWeight:FontWeight.w600),maxLines:1,overflow:TextOverflow.ellipsis));})),Text(expression,style:const TextStyle(color:Color(0xFF8993AC),fontSize:16),maxLines:1),const SizedBox(height:12),FittedBox(fit:BoxFit.scaleDown,child:Text(display,style:const TextStyle(color:_ink,fontSize:48,fontWeight:FontWeight.w900)))]))),
+   Expanded(child:Container(width:double.infinity,margin:const EdgeInsets.fromLTRB(14,6,14,14),padding:const EdgeInsets.fromLTRB(20,18,20,20),decoration:BoxDecoration(color:const Color(0xFFFAF8FF),borderRadius:BorderRadius.circular(26),border:Border.all(color:const Color(0xFFDDE4F5)),boxShadow:const [BoxShadow(color:Color(0x18536FC4),blurRadius:18,offset:Offset(0,7))]),child:Column(mainAxisAlignment:MainAxisAlignment.end,crossAxisAlignment:CrossAxisAlignment.end,children:[if(history.isNotEmpty)SizedBox(height:118,width:double.infinity,child:ListView.builder(reverse:true,itemCount:history.length,itemBuilder:(context,index){final line=history[history.length-1-index];return Padding(padding:const EdgeInsets.symmetric(vertical:3),child:Text(line,textAlign:TextAlign.right,style:const TextStyle(color:Color(0xFF66728D),fontSize:13,fontWeight:FontWeight.w600),maxLines:1,overflow:TextOverflow.ellipsis));})),Text(expression,style:const TextStyle(color:Color(0xFF8993AC),fontSize:16),maxLines:1),const SizedBox(height:12),FittedBox(fit:BoxFit.scaleDown,child:Text(display,style:const TextStyle(color:_ink,fontSize:48,fontWeight:FontWeight.w900)))]))),
    Padding(padding:const EdgeInsets.fromLTRB(10,0,10,14),child:Column(children:rows))
   ])));
  }
