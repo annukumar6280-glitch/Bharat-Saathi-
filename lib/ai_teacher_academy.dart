@@ -102,7 +102,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   }
 
 
-  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_\${_accountId}_$_topic';
+  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_${_accountId}_$_topic';
 
   Map<String, dynamic> _quizQuestion(String id, String question, String answer, List<String> distractors) {
     final options = <String>[answer, ...distractors.where((item) => item != answer).take(3)];
@@ -115,11 +115,11 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     if (_topic == 'Maths & General Knowledge') {
       for (var a = 2; a <= 30; a++) {
         for (var b = 2; b <= 12; b++) {
-          bank.add(_quizQuestion('mul_\${a}_$b', '$a × $b कितना होगा?', '\${a * b}',
-              ['\${a * b + b}', '\${a * b - a}', '\${a + b}']));
+          bank.add(_quizQuestion('mul_${a}_$b', '$a × $b कितना होगा?', '${a * b}',
+              ['${a * b + b}', '${a * b - a}', '${a + b}']));
           if (a >= b) {
-            bank.add(_quizQuestion('sub_\${a}_$b', '$a − $b कितना होगा?', '\${a - b}',
-                ['\${a + b}', '\${a - b + 2}', '\${a * b}']));
+            bank.add(_quizQuestion('sub_${a}_$b', '$a − $b कितना होगा?', '${a - b}',
+                ['${a + b}', '${a - b + 2}', '${a * b}']));
           }
         }
       }
@@ -127,8 +127,8 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         for (final percent in <int>[5, 10, 15, 20, 25, 30, 40, 50, 75]) {
           if ((base * percent) % 100 == 0) {
             final answer = base * percent ~/ 100;
-            bank.add(_quizQuestion('pct_\${base}_$percent', '$base का $percent% कितना है?', '$answer',
-                ['$base', '\${answer + 5}', '\${answer * 2}']));
+            bank.add(_quizQuestion('pct_${base}_$percent', '$base का $percent% कितना है?', '$answer',
+                ['$base', '${answer + 5}', '${answer * 2}']));
           }
         }
       }
@@ -230,7 +230,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         return AlertDialog(
           title: Text('$_topic • अभ्यास टेस्ट'),
           content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('प्रश्न \${index + 1} / \${questions.length}  •  सही उत्तर $score', style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
+            Text('प्रश्न ${index + 1} / ${questions.length}  •  सही उत्तर $score', style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
             const SizedBox(height: 12),
             ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: (index + 1) / questions.length, minHeight: 7)),
             const SizedBox(height: 16),
@@ -245,7 +245,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
             ),
             if (feedback == 'wrong') Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text('यह उत्तर सही नहीं है। सही उत्तर: \${options[question['a'] as int]}। फिर से प्रयास करें।',
+              child: Text('यह उत्तर सही नहीं है। सही उत्तर: ${options[question['a'] as int]}। फिर से प्रयास करें।',
                 style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
             ),
             if (feedback == 'correct') const Padding(
@@ -289,7 +289,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       setState(() {});
       showDialog<void>(context: context, builder: (context) => AlertDialog(
         title: const Text('टेस्ट पूरा हुआ'),
-        content: Text('आपका स्कोर: $result / \${questions.length}. \${result == questions.length ? 'बहुत अच्छा! सभी उत्तर सही हैं।' : 'अभ्यास जारी रखें—अगली बार नए सवाल मिलेंगे।'}'),
+        content: Text('आपका स्कोर: $result / ${questions.length}. ${result == questions.length ? 'बहुत अच्छा! सभी उत्तर सही हैं।' : 'अभ्यास जारी रखें—अगली बार नए सवाल मिलेंगे।'}'),
         actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('ठीक है'))],
       ));
     }
