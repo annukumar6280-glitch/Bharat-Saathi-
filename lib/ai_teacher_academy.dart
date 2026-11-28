@@ -283,7 +283,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       'wash','watch','work','worry','carry','fly','cry','go',
       'do','have','read','write','speak','learn','sleep','run',
       'plan','travel',
-    };;
+    };
     var verbIndex = 0;
     for (final subject in subjects) {
       for (final verb in verbs) {
