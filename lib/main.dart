@@ -16,6 +16,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'utility_modules.dart';
 import 'live_location_page.dart';
+import 'ai_teacher_academy.dart';
 const supabaseUrl='https://nlfdqkkrwthobvwqfepl.supabase.co';
 const supabasePublishableKey='sb_publishable_m7oDiOBmOztXrL93smgRsQ_MQXfbqKk';
 const privacyPolicyUrl='https://annukumar6280-glitch.github.io/Bharat-Saathi-/privacy-policy.html';
@@ -412,7 +413,7 @@ final serviceTransactions=<Record>[];
  final metadataName=currentUser?.userMetadata?['full_name'];
  final accountName=metadataName is String&&metadataName.trim().isNotEmpty?metadataName.trim():(currentUser?.email?.split('@').first??'').trim();
  final pages=<Widget>[
-  Dashboard(english:english,accountName:accountName,onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>kind=='location'?LiveLocationPage(supabaseAvailable:widget.supabaseAvailable,english:english):UtilityModulePage(kind:kind,title:const {'qr':'QR Code Tools','poster':'Poster Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator','location':'Family & Friends Live Location'}[kind]??'Tools')))),
+  Dashboard(english:english,accountName:accountName,onKhata:()=>setState(()=>tab=1),onDocument:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const BillListPage())),onTools:(kind)=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>switch(kind){'location'=>LiveLocationPage(supabaseAvailable:widget.supabaseAvailable,english:english),'academy'=>AiTeacherAcademyPage(supabaseAvailable:widget.supabaseAvailable,english:english),_=>UtilityModulePage(kind:kind,title:const {'qr':'QR Code Maker','poster':'AI Poster Maker & Video Maker','reminders':'Reminders & Notes','calculator':'Smart Calculator'}[kind]??'Tools')}))),
   KhataHubPage(shop:khata,personal:personalKhata,onShop:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'दुकानदार का खाता',items:khata,onAddPerson:()=>addLedgerPerson(khata),onCreditForPerson:(n)=>entry(false,n),onPaymentForPerson:(n)=>entry(true,n),onEditRecord:(r)=>editLedgerRecord(r,khata),onRenamePerson:(n)=>renameLedgerPerson(n,khata)))),onPersonal:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LocalLedgerPage(title:'पर्सनल उधार',items:personalKhata,onAddPerson:()=>addLedgerPerson(personalKhata),onCreditForPerson:(n)=>personalLoanEntry(false,n),onPaymentForPerson:(n)=>personalLoanEntry(true,n),onEditRecord:(r)=>editLedgerRecord(r,personalKhata),onRenamePerson:(n)=>renameLedgerPerson(n,personalKhata)))),onLinked:()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:widget.supabaseAvailable)))),
   ExpenseOnlyPage(items:expensesList,onAdd:expense,onEdit:editExpense),
    ProfilePage(supabaseAvailable:widget.supabaseAvailable,onRestore:_restore,english:english,darkMode:darkMode,onDarkMode:(v){setState(()=>darkMode=v);_persist();},onLanguage:(v){setState(()=>english=v);_persist();},expensesList:expensesList,khata:khata,personalTransactions:personalTransactions)
@@ -537,7 +538,7 @@ class Dashboard extends StatelessWidget {
             children: [
               _tile('QR Code Tools', 'QR बनाएँ और स्कैन करें', Icons.qr_code_2,
                   const Color(0xFFE8F0FF), () => onTools('qr')),
-              _tile('Poster Maker', 'ऑफर पोस्टर बनाएँ', Icons.palette_outlined,
+              _tile('AI Poster Maker & Video Maker', 'AI से पोस्टर, फोटो और वीडियो बनाएँ', Icons.auto_awesome_rounded,
                   const Color(0xFFFFF2DE), () => onTools('poster')),
               _tile('Reminders & Notes', 'काम और भुगतान याद रखें',
                   Icons.notifications_active_outlined, const Color(0xFFDDF6EB),
@@ -548,6 +549,8 @@ class Dashboard extends StatelessWidget {
               _tile('Family & Friends Live Location', 'फैमिली की लाइव लोकेशन',
                   Icons.location_on_outlined, const Color(0xFFDDF6EB),
                   () => onTools('location')),
+              _tile('AI Teacher Academy', 'सीखें, अभ्यास करें और AI टीचर से पूछें', Icons.school_rounded,
+                  const Color(0xFFEAE3FF), () => onTools('academy')),
             ],
           ),
           const SizedBox(height: 12),
@@ -1297,8 +1300,6 @@ class ProfilePage extends StatelessWidget{
    setting(Icons.privacy_tip_outlined,english?'Privacy Policy':'प्राइवेसी पॉलिसी',english?'How Bharat Saathi handles your data':'आपका डेटा कैसे उपयोग होता है',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>const PrivacyPolicyPage(english:false)))),
    Card(color:surfaceColor,child:ListTile(leading:Icon(Icons.language),title:Text('भाषा / Language'),trailing:DropdownButton<bool>(value:english,items:const[DropdownMenuItem(value:false,child:Text('हिंदी')),DropdownMenuItem(value:true,child:Text('English'))],onChanged:(v){if(v!=null)onLanguage(v);}))),
    setting(Icons.account_balance_wallet_outlined,english?'Coin Wallet':'कॉइन वॉलेट',english?'Balance and history for AI photo/video credits':'AI फोटो और वीडियो के कॉइन का बैलेंस और हिस्ट्री',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CoinWalletPage(supabaseAvailable:supabaseAvailable)))),
-    setting(Icons.location_on_outlined,english?'Family & Friends Live Location':'फैमिली लाइव लोकेशन',english?'Share live location with accepted family and friends':'परिवार और दोस्तों के साथ लाइव लोकेशन शेयर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LiveLocationPage(supabaseAvailable:supabaseAvailable,english:english)))),
-   setting(Icons.card_giftcard,english?'Refer & Earn':'रेफर एंड अर्न',english?'Earn 10 coins for every successful referral':'सफल रेफरल पर 10 कॉइन पाएँ',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>ReferralPage(supabaseAvailable:supabaseAvailable)))),
     setting(Icons.sync,english?'Connected Khata':'लिंक किया हुआ खाता',english?'Shared shopkeeper and customer ledger':'दुकानदार और ग्राहक का साझा खाता',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>LinkedKhataPage(supabaseAvailable:supabaseAvailable)))),
    setting(Icons.help_outline,english?'Help Centre':'सहायता केंद्र','WhatsApp: 6283398317',()=>launchUrl(Uri.parse('https://wa.me/916283398317?text='+Uri.encodeComponent('नमस्ते Bharat Saathi सहायता केंद्र')),mode:LaunchMode.externalApplication)),
    setting(Icons.cloud_sync,english?'Automatic cloud sync':'ऑटोमैटिक क्लाउड सिंक',english?'Records sync automatically; restore from cloud':'रिकॉर्ड अपने-आप सिंक होते हैं; क्लाउड से रीस्टोर करें',()=>Navigator.push(context,MaterialPageRoute<void>(builder:(_)=>CloudBackupPage(supabaseAvailable:supabaseAvailable,onRestore:onRestore)))),
