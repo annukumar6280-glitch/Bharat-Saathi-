@@ -454,7 +454,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     } else if (_topic == 'English Skills') {
       rows.addAll([
         ['वाक्य की शुरुआत कैसे लिखनी चाहिए?', 'बड़े अक्षर से', 'छोटे अक्षर से', 'अंक से', 'कॉमा से'],
-        ['साधारण कथन के अंत में क्या लगाते हैं?', 'Full stop (.)', 'Comma (,)', 'Colon (:)', 'Apostrophe (\\')'],
+        ['साधारण कथन के अंत में क्या लगाते हैं?', 'Full stop (.)', 'Comma (,)', 'Colon (:)', 'Exclamation mark (!)'],
         ['सवाल के अंत में कौन-सा चिन्ह लगता है?', 'Question mark (?)', 'Full stop (.)', 'Comma (,)', 'Hyphen (-)'],
         ['लिखने के बाद क्या जाँचना चाहिए?', 'Spelling और विराम चिह्न', 'केवल पन्ने का रंग', 'फोन की बैटरी', 'इंटरनेट की गति'],
         ['“I am fine.” किस प्रकार का वाक्य है?', 'साधारण कथन', 'प्रश्न', 'आदेश', 'विस्मयादिबोधक'],
