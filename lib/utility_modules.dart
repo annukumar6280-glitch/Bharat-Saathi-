@@ -235,6 +235,8 @@ class _ReminderToolState extends State<_ReminderTool>{
  TimeOfDay dueTime=const TimeOfDay(hour:9,minute:0);
  final FlutterLocalNotificationsPlugin _notifications=FlutterLocalNotificationsPlugin();
  bool loading=true,notificationsReady=false;String tab='reminders';String? notificationMessage;
+ String get _reminderStorageKey=>'bs_reminders_v1_${Supabase.instance.client.auth.currentUser?.id??'guest'}';
+ String get _notesStorageKey=>'bs_notes_v1_${Supabase.instance.client.auth.currentUser?.id??'guest'}';
  DateTime get dueAt=>DateTime(due.year,due.month,due.day,dueTime.hour,dueTime.minute);
  @override void initState(){super.initState();_initNotifications();_load();}
  Future<void> _initNotifications()async{
@@ -263,14 +265,14 @@ class _ReminderToolState extends State<_ReminderTool>{
  @override void dispose(){title.dispose();noteTitle.dispose();noteBody.dispose();super.dispose();}
  Future<void> _load()async{
   final p=await SharedPreferences.getInstance();
-  for(final entry in [('bs_reminders_v1','reminders'),('bs_notes_v1','notes')]){
+  for(final entry in [(_reminderStorageKey,'reminders'),(_notesStorageKey,'notes')]){
    final raw=p.getString(entry.$1);
    if(raw!=null){try{final data=List<Map<String,dynamic>>.from(jsonDecode(raw));if(entry.$2=='reminders')items=data;else notes=data;}catch(_){}}
   }
   if(mounted)setState(()=>loading=false);
  }
- Future<void> _saveReminders()async{final p=await SharedPreferences.getInstance();await p.setString('bs_reminders_v1',jsonEncode(items));}
- Future<void> _saveNotes()async{final p=await SharedPreferences.getInstance();await p.setString('bs_notes_v1',jsonEncode(notes));}
+ Future<void> _saveReminders()async{final p=await SharedPreferences.getInstance();await p.setString(_reminderStorageKey,jsonEncode(items));}
+ Future<void> _saveNotes()async{final p=await SharedPreferences.getInstance();await p.setString(_notesStorageKey,jsonEncode(notes));}
  Future<void> _add()async{
   if(title.text.trim().isEmpty)return;
   final when=dueAt;
