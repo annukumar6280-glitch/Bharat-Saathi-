@@ -552,7 +552,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF243A76), Color(0xFF6552B8), Color(0xFF9C6ACB)]),
+            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF3D4CE0), Color(0xFF8B45D6), Color(0xFFEC4899)]),
             borderRadius: BorderRadius.circular(22),
           ),
           child: const Row(children: [
@@ -646,7 +646,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Row(children: [Icon(Icons.auto_awesome, color: Color(0xFF6252B8)), SizedBox(width: 8), Text('AI Teacher से पूछें', style: TextStyle(color: Color(0xFF25345B), fontSize: 16, fontWeight: FontWeight.w900))]),
             const SizedBox(height: 10),
-            TextField(controller: _question, minLines: 2, maxLines: 4, decoration: const InputDecoration(filled: true, fillColor: Colors.white, hintText: 'अपना सवाल यहाँ लिखें…', border: OutlineInputBorder())),
+            TextField(controller: _question, minLines: 2, maxLines: 4, decoration: const InputDecoration(hintText: 'अपना सवाल यहाँ लिखें…', border: OutlineInputBorder())),
             const SizedBox(height: 10),
             Row(children: [
               Expanded(child: FilledButton.icon(
