@@ -346,7 +346,7 @@ void main() {
     await tester.tap(find.text('प्रोफाइल'));
     await tester.pumpAndSettle();
     expect(find.text('डार्क थीम'), findsNothing);
-    expect(find.text('रेफर एंड अर्न'), findsOneWidget);
+    expect(find.text('रेफर एंड अर्न'), findsNothing);
   });
 
   testWidgets('Account and Security is first in profile and exposes login and register', (tester) async {
