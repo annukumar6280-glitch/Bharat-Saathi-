@@ -32,8 +32,8 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   String? _answer;
   String? _error;
   String _topic = 'English Skills';
-  String _part = 'Speaking & Conversation';
-  String _lesson = 'Daily conversation';
+  String _part = 'Level 1 • English Foundations';
+  String _lesson = 'Alphabet and pronunciation';
   String _provider = '';
 
   static const _courses = <({String title, String subtitle, IconData icon, Color color, List<String> lessons})>[
