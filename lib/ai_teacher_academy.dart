@@ -112,7 +112,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   }
 
 
-  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_${_accountId}_$_topic_$_lesson';
+  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_${_accountId}_${_topic}_${_lesson}';
 
   Map<String, dynamic> _quizQuestion(String id, String question, String answer, List<String> distractors) {
     final options = <String>[];
@@ -232,9 +232,9 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         ['मुनाफा निकालते समय किसे घटाते हैं?', 'बिक्री मूल्य में से कुल लागत', 'लागत में से ग्राहक', 'समय में से बिक्री', 'स्टॉक में से किराया'],
       ]);
     }
-    final lessonId = '\${_topic}_\${_lesson}'.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase();
+    final lessonId = '${_topic}_${_lesson}'.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase();
     return List<Map<String, dynamic>>.generate(rows.length, (index) =>
-      _quizQuestion('\${lessonId}_\${index + 1}', rows[index][0], rows[index][1], rows[index].sublist(2)));
+      _quizQuestion('${lessonId}_${index + 1}', rows[index][0], rows[index][1], rows[index].sublist(2)));
   }
 
   Future<void> _runQuiz() async {
