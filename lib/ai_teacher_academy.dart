@@ -288,6 +288,9 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       if (parts.isNotEmpty) {
         _part = parts.first.title;
         _lesson = parts.first.lessons.first;
+      } else {
+        _part = 'आपकी पसंद का विषय';
+        _lesson = '$_topic की शुरुआत से पढ़ाई';
       }
     }
     if (mounted) {
@@ -411,6 +414,9 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
           if (parts.isNotEmpty) {
             _part = parts.first.title;
             _lesson = parts.first.lessons.first;
+          } else {
+            _part = 'आपकी पसंद का विषय';
+            _lesson = '$_topic की शुरुआत से पढ़ाई';
           }
         }
         _answer = null;
