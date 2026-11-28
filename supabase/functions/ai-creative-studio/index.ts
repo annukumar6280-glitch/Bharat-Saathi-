@@ -246,15 +246,11 @@ async function videoStatus(
       return json({ status: "COMPLETED", videoUrl: result.video.url, contentType: result.video.content_type ?? "video/mp4" });
     }
     if (status === "FAILED" || status === "CANCELLED") {
-      const { data: claimed } = await admin.from("ai_video_jobs")
-        .update({ status: "FAILED", refunded_at: new Date().toISOString() })
-        .eq("request_id", requestId).eq("user_id", userId).is("refunded_at", null)
-        .select("request_id").maybeSingle();
-      if (claimed) {
-        await admin.rpc("refund_ai_coin_credit", {
-          p_user_id: userId, p_source: job.credit_source, p_generation_type: "video",
-        });
-      }
+      const { error: refundError } = await admin.rpc("refund_ai_video_job", {
+        p_request_id: requestId,
+        p_user_id: userId,
+      });
+      if (refundError) throw new Error("वीडियो असफल हुआ, लेकिन कॉइन रिफंड पूरा नहीं हो पाया। सपोर्ट से संपर्क करें।");
       return json({ status: "FAILED", error: "वीडियो नहीं बन पाया। आपके कॉइन वापस कर दिए गए हैं।" });
     }
     const normalized = status === "IN_QUEUE" ? "IN_QUEUE" : "IN_PROGRESS";
