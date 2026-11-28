@@ -84,7 +84,7 @@ class _PosterToolState extends State<_PosterTool>{
   videoController=null;
   try{
    final prompt=generationType=='video'
-    ? 'Create a polished short vertical 9:16 video with natural synchronized audio. Scene and motion brief: ${brief.text.trim()}. Use cinematic camera movement, coherent motion, professional lighting and a clean composition. If a reference image is supplied, use it as the visual starting reference. Do not add watermarks, fake text, prices or contact details.'
+    ? 'Create a polished short vertical 9:16 silent video. Scene and motion brief: ${brief.text.trim()}. Use cinematic camera movement, coherent motion, professional lighting and a clean composition. If a reference image is supplied, use it as the visual starting reference. Do not add watermarks, fake text, prices or contact details.'
     : creativeMode=='shop'
      ? 'Create a premium, polished Indian business advertising design. Business/shop name: ${shop.text.trim()}. Contact number: ${phone.text.trim()}. Design brief: ${brief.text.trim()}. Make it suitable for a shop, service, product promotion or offer. Compose a visually striking vertical 4:5 poster. Render any short requested text legibly; do not invent phone numbers or prices.'
      : 'Create an original high-quality creative image based on this brief: ${brief.text.trim()}. This is general-purpose creative work, not necessarily a shop advertisement. It may be a personal portrait concept, birthday or wedding design, festival greeting, social media creative, wallpaper, illustration, artwork or any other safe creative idea. Use a polished professional composition and vertical 4:5 format.';
@@ -102,18 +102,48 @@ class _PosterToolState extends State<_PosterTool>{
    if(data is! Map)throw Exception('AI सर्वर से सही response नहीं मिला।');
    if(data['error']!=null)throw Exception(data['error'].toString());
    if(generationType=='video'){
-    final encoded=data['videoBase64']?.toString();
-    if(encoded==null||encoded.isEmpty)throw Exception('AI ने वीडियो डेटा नहीं लौटाया।');
-    final bytes=base64Decode(encoded);
-    final directory=await getTemporaryDirectory();
-    final file=File('${directory.path}/bharat-saathi-ai-video.mp4');
-    await file.writeAsBytes(bytes,flush:true);
-    final controller=VideoPlayerController.file(file);
-    await controller.initialize();
-    await controller.setLooping(true);
-    if(!mounted){await controller.dispose();return;}
-    setState(()=>videoController=controller);
-    await controller.play();
+    final requestId=data['requestId']?.toString();
+    final model=data['model']?.toString();
+    if(requestId==null||requestId.isEmpty||model==null||model.isEmpty)throw Exception('AI सर्वर ने वीडियो जॉब ID नहीं लौटाई।');
+    String? videoUrl;
+    for(var attempt=0;attempt<120;attempt++){
+     await Future.delayed(const Duration(seconds:5));
+     if(!mounted)return;
+     final statusResponse=await Supabase.instance.client.functions.invoke(
+      'ai-creative-studio',
+      body:{'action':'video_status','generationType':'video','requestId':requestId,'model':model},
+     );
+     final statusData=statusResponse.data;
+     if(statusData is! Map)throw Exception('वीडियो की स्थिति जाँची नहीं जा सकी।');
+     if(statusData['error']!=null)throw Exception(statusData['error'].toString());
+     final status=statusData['status']?.toString()??'IN_PROGRESS';
+     if(status=='COMPLETED'){videoUrl=statusData['videoUrl']?.toString();break;}
+     if(status=='FAILED')throw Exception('वीडियो नहीं बन पाया। आपके कॉइन वापस कर दिए गए हैं।');
+    }
+    if(videoUrl==null||videoUrl.isEmpty)throw Exception('वीडियो अभी प्रोसेस हो रहा है। जॉब सर्वर पर जारी रह सकती है; थोड़ी देर बाद फिर कोशिश करें।');
+    final httpClient=HttpClient();
+    try{
+     final request=await httpClient.getUrl(Uri.parse(videoUrl));
+     final videoResponse=await request.close();
+     if(videoResponse.statusCode!=200)throw Exception('बनी हुई वीडियो डाउनलोड नहीं हो पाई।');
+     final builder=BytesBuilder();
+     await for(final chunk in videoResponse){
+      builder.add(chunk);
+      if(builder.length>100*1024*1024)throw Exception('वीडियो 100 MB से बड़ी है।');
+     }
+     final bytes=builder.takeBytes();
+     if(bytes.isEmpty)throw Exception('AI ने खाली वीडियो लौटाई।');
+     final directory=await getTemporaryDirectory();
+     final file=File('${directory.path}/bharat-saathi-ai-video.mp4');
+     await file.writeAsBytes(bytes,flush:true);
+     final controller=VideoPlayerController.file(file);
+     await controller.initialize();
+     await controller.setLooping(true);
+     if(!mounted){await controller.dispose();return;}
+     setState(()=>generatedVideo=bytes);
+     setState(()=>videoController=controller);
+     await controller.play();
+    }finally{httpClient.close(force:true);}
    }else{
     final encoded=data['imageBase64']?.toString();
     if(encoded==null||encoded.isEmpty)throw Exception('AI ने इमेज डेटा नहीं लौटाया।');
