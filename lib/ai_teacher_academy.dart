@@ -45,7 +45,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     if (studyClass == 'स्वयं सीखना / अन्य') {
       return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'विज्ञान', 'सामाजिक विज्ञान'];
     }
-    final match = RegExp(r'कक्षा (\\d+)').firstMatch(studyClass);
+    final match = RegExp(r'कक्षा (\d+)').firstMatch(studyClass);
     final grade = int.tryParse(match?.group(1) ?? '') ?? 5;
     if (grade <= 2) return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'पर्यावरण अध्ययन'];
     if (grade <= 5) return ['हिंदी', 'अंग्रेज़ी', 'गणित', 'पर्यावरण अध्ययन', 'सामान्य ज्ञान'];
@@ -456,7 +456,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
 
   String _lessonSummary() {
     final lessonContent = _lessonContent[_lesson];
-    if (lessonContent != null) return lessonContent;
+    if (lessonContent != null) return lessonContent;\n    if (!_courseParts.containsKey(_topic)) return '$_topic को $_studentClass के स्तर पर शुरुआत से सीखें। AI Teacher इस विषय का क्रमवार पाठ, उदाहरण, अभ्यास और टेस्ट तैयार करेगा।';
     if (_topic == 'English Skills') {
       if (_lesson == 'Daily conversation') {
         return 'अभ्यास: इन पाँच बातचीतों को बोलकर दोहराएँ। टेस्ट में इन्हीं वाक्यों के जवाब पूछे जाएँगे।\\n'
