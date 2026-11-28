@@ -31,6 +31,7 @@ Deno.serve(async (req: Request) => {
 
   const question = typeof body.question === "string" ? body.question.trim() : "";
   const course = typeof body.course === "string" ? body.course.slice(0, 100) : "General learning";
+  const part = typeof body.part === "string" ? body.part.slice(0, 120) : "";
   const lesson = typeof body.lesson === "string" ? body.lesson.slice(0, 120) : "";
   const language = body.language === "English" ? "English" : "Hindi";
   if (!question || question.length > 2000) {
@@ -48,7 +49,7 @@ Deno.serve(async (req: Request) => {
     "Answer in " + language + ".",
   ].join(" ");
 
-  const prompt = "Course: " + course + "\nLesson: " + lesson + "\nLearner question: " + question;
+  const prompt = "Course: " + course + "\nPart: " + part + "\nLesson: " + lesson + "\nTeach only the selected part and lesson. If the learner asks about something else, gently connect the answer back to the selected lesson.\nLearner question: " + question;
 
   const openAiKey = Deno.env.get("OPENAI_API_KEY");
   const geminiKey = Deno.env.get("GEMINI_API_KEY");
