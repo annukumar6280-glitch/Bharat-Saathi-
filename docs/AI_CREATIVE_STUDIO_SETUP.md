@@ -1,29 +1,32 @@
 # AI Creative Studio setup
 
-The Android client never asks customers for a Gemini API key. Image and video generation are routed through the authenticated Supabase Edge Function `ai-creative-studio`.
+The Android app calls the authenticated Supabase Edge Function `ai-creative-studio`. Image and video generation use **fal.ai**; Gemini is not used by this feature.
 
 ## Backend setup
 
 1. Deploy `supabase/functions/ai-creative-studio/index.ts` as the `ai-creative-studio` Edge Function.
-2. Add the Google AI Studio key as a Supabase Edge Function secret named `GEMINI_API_KEY`.
-3. Keep the Gemini key server-side. Never add it to Flutter assets, source constants, Remote Config, or the Android APK.
-4. Keep Edge Function JWT verification enabled and require a signed-in user.
-5. Test with a non-production account before enabling customer access.
+2. Add the provider key as a Supabase Edge Function secret named `FAL_KEY`.
+3. Keep `SUPABASE_SERVICE_ROLE_KEY` and `FAL_KEY` server-side. Never add either key to Flutter assets, source constants, Remote Config, or the Android APK.
+4. Keep Edge Function JWT verification enabled. The function independently validates the caller's Supabase session.
+5. Confirm the AI coin wallet migrations and RPCs are applied before enabling customer generation.
 
 ## Image generation
 
-The image path uses Gemini image generation. The app supports general-purpose creative work and shop/business advertising. A customer may optionally upload a JPG, PNG, or WebP reference image. Shop name and phone number are optional and are only used in shop mode.
-
-The live quota RPC currently allows five free image generations per account per UTC month. Paid image generations use the configured coin wallet. Failed provider requests are refunded by the Edge Function.
+- Text-to-image uses `fal-ai/flux/schnell`.
+- Reference-image editing uses `fal-ai/flux-2/flash/edit`.
+- The app accepts JPG, PNG and WebP reference images and requests a vertical 4:5 composition.
+- The Edge Function charges the account through `consume_ai_coin_credit` and refunds failed provider requests through `refund_ai_coin_credit`.
 
 ## Video generation
 
-The video path uses the Gemini Interactions API with the `gemini-omni-1.2-flash` model. It supports text-to-video and image-to-video, returns an MP4 to the Android app, and the app previews and shares the result locally. It does not require the Google Flow app or a separate APK.
+- Text-to-video and image-to-video use the Fal Kling v2.5 Turbo Pro queue models.
+- Each generated clip is five seconds. The Android app polls the queue, downloads the MP4, previews it and shares it.
+- The app displays a 50-coin charge before starting a video. Fal provider usage is billed separately to the configured Fal account.
+- Failed queued jobs are refunded through the server-side `refund_ai_video_job` flow. Do not rely on a client-side balance update as proof of payment or refund.
 
-A successful video generation costs 50 Bharat Saathi coins according to the server-side quota RPC. The Google Gemini API may also incur separate provider charges. The Gemini Developer API video model requires an eligible paid project and available provider quota/billing. A saved API key alone does not guarantee video generation will work. Do not run live generation tests on a customer's account without their explicit confirmation because provider billing may apply.
+## Billing and release gate
 
-Google Flow and the Gemini Developer API are separate products. This app integrates the Gemini API directly; it does not automate or embed the Google Flow website.
-
-## Billing and safety release gate
-
-Before selling credits or subscriptions, add a verified payment webhook that updates paid entitlements server-side, idempotently, and only after a confirmed payment. The mobile app must never mark a payment successful based on a client callback alone. Preserve provider error details for support, but never log API keys or full user-uploaded media.
+- Coin purchase and rewarded-ad earning remain unavailable until verified server-side payment/reward webhooks are implemented.
+- Never credit a wallet from a mobile client callback alone.
+- Test with a non-production account before enabling customer access. Live generation consumes provider credits and may incur provider charges.
+- Keep prompts, uploaded images, provider responses and API keys out of application logs unless safely redacted.
