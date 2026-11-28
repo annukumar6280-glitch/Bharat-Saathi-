@@ -238,6 +238,15 @@ class _AuthGateState extends State<AuthGate>{
   return _signedIn?RetailerHome(key:ValueKey(widget.supabaseAvailable?Supabase.instance.client.auth.currentUser?.id:'local'),supabaseAvailable:widget.supabaseAvailable):AuthPage(supabaseAvailable:widget.supabaseAvailable);
  }
 }
+IconData _recordIconFromCodePoint(int? codePoint) {
+ if (codePoint == Icons.payments_outlined.codePoint) return Icons.payments_outlined;
+ if (codePoint == Icons.people_outline.codePoint) return Icons.people_outline;
+ if (codePoint == Icons.person.codePoint) return Icons.person;
+ if (codePoint == Icons.person_outline.codePoint) return Icons.person_outline;
+ if (codePoint == Icons.trending_up.codePoint) return Icons.trending_up;
+ return Icons.receipt_long;
+}
+
 class Record {
  String name, detail;
  double amount;
@@ -259,14 +268,11 @@ class Record {
       ? DateTime.tryParse(json['createdAt'] as String)
       : null;
   final iconCode = (json['icon'] as num?)?.toInt();
-  final icon = iconCode == null
-      ? Icons.receipt_long
-      : IconData(iconCode, fontFamily: 'MaterialIcons');
   return Record(
     json['name']?.toString() ?? 'रिकॉर्ड',
     json['detail']?.toString() ?? '',
     (json['amount'] as num?)?.toDouble() ?? 0,
-    icon,
+    _recordIconFromCodePoint(iconCode),
     timestamp,
   )..createdAt = timestamp;
  }
