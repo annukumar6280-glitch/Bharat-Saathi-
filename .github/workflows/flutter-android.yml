@@ -151,9 +151,9 @@ jobs:
           if app_start < 0:
               raise SystemExit("Android application tag missing")
           prefix, suffix = content[:app_start], content[app_start:]
-          permission = '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />'
-          if "android.permission.RECEIVE_BOOT_COMPLETED" not in content:
-              prefix += permission + "\n"
+          for permission_name in ["android.permission.POST_NOTIFICATIONS", "android.permission.RECEIVE_BOOT_COMPLETED", "android.permission.VIBRATE"]:
+              if permission_name not in content:
+                  prefix += f'    <uses-permission android:name="{permission_name}" />\\n'
           content = prefix + suffix
           receiver = """        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
                   <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
