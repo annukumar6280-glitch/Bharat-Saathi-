@@ -31,9 +31,18 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Invalid JSON request." }, 400);
   }
 
-  const generationType = body.generationType === "image" ? "image" : null;
-  if (!generationType) {
-    return json({ error: "फिलहाल AI फोटो और पोस्टर जनरेशन उपलब्ध है। वीडियो सुविधा अभी उपलब्ध नहीं है।" }, 400);
+  const action = typeof body.action === "string" ? body.action : "generate";
+  const generationType = body.generationType === "image" || body.generationType === "video"
+    ? body.generationType
+    : null;
+  const admin = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  if (action === "video_status") {
+    return await videoStatus(body, authData.user.id, admin, falKey);
+  }
+  if (action !== "generate" || !generationType) {
+    return json({ error: "Invalid AI generation request." }, 400);
   }
 
   const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
@@ -51,9 +60,6 @@ Deno.serve(async (req: Request) => {
     return json({ error: "AI image service is not configured. Please add FAL_KEY in Supabase Edge Function Secrets. No coins were charged." }, 503);
   }
 
-  const admin = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
   const { data: quota, error: quotaError } = await admin.rpc("consume_ai_coin_credit", {
     p_user_id: authData.user.id,
     p_generation_type: generationType,
@@ -70,6 +76,58 @@ Deno.serve(async (req: Request) => {
   }
 
   const source = String(quota.creditSource ?? "free");
+  if (generationType === "video") {
+    const model = imageBase64
+      ? "fal-ai/kling-video/v2.5-turbo/pro/image-to-video"
+      : "fal-ai/kling-video/v2.5-turbo/pro/text-to-video";
+    try {
+      const input: Record<string, unknown> = {
+        prompt,
+        duration: "5",
+        aspect_ratio: "9:16",
+        enable_safety_checker: true,
+        negative_prompt: "blur, distort, flicker, low quality, watermark, unreadable text",
+      };
+      if (imageBase64) input.image_url = `data:${imageMimeType};base64,${imageBase64}`;
+      const submit = await fetch(`https://queue.fal.run/${model}`, {
+        method: "POST",
+        headers: { "Authorization": `Key ${falKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const queued = await submit.json().catch(() => ({}));
+      if (!submit.ok || typeof queued?.request_id !== "string") {
+        throw new Error(typeof queued?.detail === "string" ? queued.detail : `fal.ai video queue failed (HTTP ${submit.status}).`);
+      }
+      const { error: jobError } = await admin.from("ai_video_jobs").insert({
+        request_id: queued.request_id,
+        user_id: authData.user.id,
+        credit_source: source,
+        status: "IN_QUEUE",
+      });
+      if (jobError) {
+        try {
+          await fetch(`https://queue.fal.run/${model}/requests/${queued.request_id}/cancel`, {
+            method: "PUT", headers: { "Authorization": `Key ${falKey}` },
+          });
+        } catch (_) {}
+        await admin.rpc("refund_ai_coin_credit", {
+          p_user_id: authData.user.id, p_source: source, p_generation_type: "video",
+        });
+        throw new Error("वीडियो जॉब सेव नहीं हो पाई; कॉइन वापस कर दिए गए हैं।");
+      }
+      return json({
+        requestId: queued.request_id, model, status: "IN_QUEUE",
+        coinCost: quota.coinCost ?? 50, coinBalance: quota.coinBalance ?? 0,
+        provider: "fal.ai",
+      }, 202);
+    } catch (error) {
+      await admin.rpc("refund_ai_coin_credit", {
+        p_user_id: authData.user.id, p_source: source, p_generation_type: "video",
+      });
+      const message = error instanceof Error ? error.message : "Video generation could not be queued.";
+      return json({ error: `AI वीडियो शुरू नहीं हो पाया: ${message}`, refund: true }, 502);
+    }
+  }
   try {
     const endpoint = imageBase64
       ? "https://fal.run/fal-ai/flux-2/flash/edit"
@@ -147,6 +205,70 @@ Deno.serve(async (req: Request) => {
     }, 502);
   }
 });
+
+
+async function videoStatus(
+  body: Record<string, unknown>,
+  userId: string,
+  admin: ReturnType<typeof createClient>,
+  falKey: string | undefined,
+): Promise<Response> {
+  if (!falKey) return json({ error: "FAL_KEY is not configured." }, 503);
+  const requestId = typeof body.requestId === "string" ? body.requestId : "";
+  const model = typeof body.model === "string" ? body.model : "";
+  const allowedModels = new Set([
+    "fal-ai/kling-video/v2.5-turbo/pro/text-to-video",
+    "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+  ]);
+  if (!/^[0-9a-f-]{20,60}$/i.test(requestId) || !allowedModels.has(model)) {
+    return json({ error: "Invalid video request reference." }, 400);
+  }
+  const { data: job, error: jobError } = await admin.from("ai_video_jobs")
+    .select("request_id,user_id,credit_source,status,refunded_at")
+    .eq("request_id", requestId).eq("user_id", userId).maybeSingle();
+  if (jobError || !job) return json({ error: "Video request not found." }, 404);
+  try {
+    const statusResponse = await fetch(
+      `https://queue.fal.run/${model}/requests/${requestId}/status`,
+      { headers: { "Authorization": `Key ${falKey}` } },
+    );
+    const statusData = await statusResponse.json().catch(() => ({}));
+    if (!statusResponse.ok) throw new Error(`Video status check failed (HTTP ${statusResponse.status}).`);
+    const status = String(statusData?.status ?? "IN_PROGRESS");
+    if (status === "COMPLETED") {
+      const resultResponse = await fetch(
+        `https://queue.fal.run/${model}/requests/${requestId}`,
+        { headers: { "Authorization": `Key ${falKey}` } },
+      );
+      const result = await resultResponse.json().catch(() => ({}));
+      if (!resultResponse.ok || typeof result?.video?.url !== "string") {
+        throw new Error("Video result is not available yet.");
+      }
+      await admin.from("ai_video_jobs").update({ status: "COMPLETED" })
+        .eq("request_id", requestId).eq("user_id", userId);
+      return json({ status: "COMPLETED", videoUrl: result.video.url, contentType: result.video.content_type ?? "video/mp4" });
+    }
+    if (status === "FAILED" || status === "CANCELLED") {
+      const { data: claimed } = await admin.from("ai_video_jobs")
+        .update({ status: "FAILED", refunded_at: new Date().toISOString() })
+        .eq("request_id", requestId).eq("user_id", userId).is("refunded_at", null)
+        .select("request_id").maybeSingle();
+      if (claimed) {
+        await admin.rpc("refund_ai_coin_credit", {
+          p_user_id: userId, p_source: job.credit_source, p_generation_type: "video",
+        });
+      }
+      return json({ status: "FAILED", error: "वीडियो नहीं बन पाया। आपके कॉइन वापस कर दिए गए हैं।" });
+    }
+    const normalized = status === "IN_QUEUE" ? "IN_QUEUE" : "IN_PROGRESS";
+    await admin.from("ai_video_jobs").update({ status: normalized })
+      .eq("request_id", requestId).eq("user_id", userId);
+    return json({ status: normalized });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not check video status.";
+    return json({ error: message }, 502);
+  }
+}
 
 function encodeBase64(bytes: Uint8Array): string {
   let binary = "";
