@@ -203,7 +203,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         'young','old','clean','neat','smart','famous','useful','important',
         'beautiful','comfortable','excited','curious','creative','successful',
         'available','different','correct','wrong','gentle','serious','proud',
-        'cheerful','active','responsible','talented','grateful',
+        'cheerful','responsible','talented','grateful',
       ];
       for (var s = 0; s < subjects.length; s++) {
         final subject = subjects[s].$1;
@@ -818,7 +818,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         return '${verb}s';
       }
 
-      final verbs = <String>[
+      final verbs = <String>{
         'ask','answer','arrive','bake','believe','call','change','check',
         'clean','climb','close','collect','compare','cook','copy','dance',
         'decide','deliver','describe','design','discuss','divide','dress',
@@ -832,7 +832,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         'talk','teach','thank','touch','try','use','visit','wait','walk',
         'want','wash','watch','work','worry','carry','study','fly','cry',
         'go','do','have','read','write','speak','learn','sleep','run',
-      ].map((verb) => verb.trim()).toList();
+      ].map((verb) => verb.trim()).toSet().toList();
       for (var s = 0; s < subjects.length; s++) {
         final subject = subjects[s].$1;
         for (var i = 0; i < verbs.length; i++) {
@@ -848,6 +848,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
       }
 
       String regularPast(String verb) {
+        if (verb == 'prefer') return 'preferred';
         if (verb.endsWith('e')) return '${verb}d';
         if (verb.endsWith('y') && verb.length > 1 &&
             !'aeiou'.contains(verb[verb.length - 2])) {
@@ -892,7 +893,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         ('teacher','teachers'),('student','students'),('friend','friends'),
         ('family','families'),('country','countries'),('story','stories'),
         ('party','parties'),('match','matches'),('brush','brushes'),
-        ('dress','dresses'),('wish','wishes'),('church','churches'),
+        ('dress','dresses'),('wish','wishes'),
         ('orange','oranges'),('table','tables'),('window','windows'),
       ];
       for (var i = 0; i < pluralPairs.length; i++) {
