@@ -18,9 +18,9 @@ a{display:inline-block;margin-top:16px;padding:13px 22px;border-radius:12px;back
 <main>
 <div class="mark" id="mark">✓</div>
 <h1 id="title">ईमेल सत्यापन पूरा हुआ</h1>
-<p id="message">आपका Bharat Saathi ईमेल सत्यापित हो गया है। अब इस पेज को बंद करके ऐप खोलें और अपने रजिस्टर्ड मोबाइल नंबर व पासवर्ड से लॉगिन करें।</p>
+<p id="message">आपका Bharat Saathi ईमेल सत्यापित हो गया है। Bharat Saathi ऐप खोलने का प्रयास किया जा रहा है। यदि ऐप नहीं खुले, तो नीचे दिए गए बटन से खोलें।</p>
 <p id="error"></p>
-<a href="https://annukumar6280-glitch.github.io/Bharat-Saathi-/">Bharat Saathi वेबसाइट खोलें</a>
+<a href="bharatsaathi://login-callback">Bharat Saathi ऐप खोलें</a>
 </main>
 <script>
 const params=new URLSearchParams(location.hash.slice(1));
@@ -30,6 +30,9 @@ document.getElementById('mark').textContent='!';
 document.getElementById('title').textContent='ईमेल सत्यापन पूरा नहीं हुआ';
 document.getElementById('message').textContent='लिंक की पुष्टि नहीं हो सकी।';
 const e=document.getElementById('error');e.style.display='block';e.textContent=params.get('error_description')||code;
+}else{
+  // Compatibility for confirmation links sent by older app builds.
+  setTimeout(()=>{ location.href='bharatsaathi://login-callback'+location.hash; },500);
 }
 </script>
 </body>
