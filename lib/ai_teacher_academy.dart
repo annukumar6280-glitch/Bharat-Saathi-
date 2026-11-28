@@ -112,7 +112,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   }
 
 
-  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_${_accountId}_${_topic}_${_lesson}';
+  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_' + _accountId + '_' + _topic + '_' + _lesson;
 
   Map<String, dynamic> _quizQuestion(String id, String question, String answer, List<String> distractors) {
     final options = <String>[];
@@ -232,9 +232,9 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         ['मुनाफा निकालते समय किसे घटाते हैं?', 'बिक्री मूल्य में से कुल लागत', 'लागत में से ग्राहक', 'समय में से बिक्री', 'स्टॉक में से किराया'],
       ]);
     }
-    final lessonId = '${_topic}_${_lesson}'.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase();
+    final lessonId = (_topic + '_' + _lesson).replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase();
     return List<Map<String, dynamic>>.generate(rows.length, (index) =>
-      _quizQuestion('${lessonId}_${index + 1}', rows[index][0], rows[index][1], rows[index].sublist(2)));
+      _quizQuestion(lessonId + '_' + (index + 1).toString(), rows[index][0], rows[index][1], rows[index].sublist(2)));
   }
 
   Future<void> _runQuiz() async {
@@ -318,7 +318,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     );
     if (result == null) return;
     await prefs.setStringList(_quizSeenKey, seen.toList());
-    _completedQuizzes.add('${_topic}::${_lesson}');
+    _completedQuizzes.add(_topic + '::' + _lesson);
     await prefs.setStringList(_progressKey, _completedQuizzes.toList());
     if (mounted) {
       setState(() {});
@@ -553,6 +553,8 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
   @override
   Widget build(BuildContext context) {
     final selected = _courses.firstWhere((c) => c.title == _topic, orElse: () => _courses.first);
+    final currentLessonStatus = _completedQuizzes.contains(_topic + '::' + _lesson)
+        ? 'यह पाठ पूरा है' : 'यह पाठ बाकी है';
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI Teacher Academy'),
@@ -651,7 +653,7 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         Card(child: ListTile(
           leading: const Icon(Icons.quiz_outlined),
           title: const Text('अभ्यास टेस्ट', style: TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text('प्रगति: ${_completedQuizzes.length} / 12 पाठ के टेस्ट पूरे • ${_completedQuizzes.contains('${_topic}::${_lesson}') ? 'यह पाठ पूरा है' : 'यह पाठ बाकी है'}'),
+          subtitle: Text('प्रगति: ${_completedQuizzes.length} / 12 पाठ के टेस्ट पूरे • $currentLessonStatus'),
           trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
           onTap: _runQuiz,
         )),
