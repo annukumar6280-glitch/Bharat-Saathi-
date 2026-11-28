@@ -123,23 +123,26 @@ jobs:
               raise SystemExit("Android app Gradle file was not generated")
 
           content = gradle.read_text()
-          patterns = [
+          updated = content
+          replacements = [
+              (r"compileSdk\s*=\s*flutter\.compileSdkVersion", "compileSdk = 36"),
+              (r"compileSdkVersion\s+flutter\.compileSdkVersion", "compileSdkVersion 36"),
               (r"targetSdk\s*=\s*flutter\.targetSdkVersion", "targetSdk = 36"),
               (r"targetSdkVersion\s+flutter\.targetSdkVersion", "targetSdkVersion 36"),
+              (r"minSdk\s*=\s*flutter\.minSdkVersion", "minSdk = 24"),
+              (r"minSdkVersion\s+flutter\.minSdkVersion", "minSdkVersion 24"),
           ]
-          updated = content
-          for pattern, replacement in patterns:
-              updated, count = re.subn(pattern, replacement, updated)
-              if count:
-                  break
-          if updated == content and not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", content):
+          for pattern, replacement in replacements:
+              updated, _ = re.subn(pattern, replacement, updated)
+          if not re.search(r"compileSdk(?:Version)?\s*(?:=\s*)?36\b", updated):
+              raise SystemExit("Could not safely set compileSdk to 36 in " + str(gradle))
+          if not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", updated):
               raise SystemExit("Could not safely set targetSdk to 36 in " + str(gradle))
+          if not re.search(r"minSdk(?:Version)?\s*(?:=\s*)?24\b", updated):
+              raise SystemExit("Could not safely set minSdk to 24 in " + str(gradle))
 
           gradle.write_text(updated)
-          verified = gradle.read_text()
-          if not re.search(r"targetSdk(?:Version)?\s*(?:=\s*)?36\b", verified):
-              raise SystemExit("Target API 36 verification failed")
-          print(f"Verified Android target API 36 in {gradle}")
+          print(f"Verified Android compileSdk 36, targetSdk 36 and minSdk 24 in {gradle}")
           PY
       - name: Configure scheduled reminder notifications
         run: |
