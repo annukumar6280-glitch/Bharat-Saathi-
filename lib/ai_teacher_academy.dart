@@ -262,7 +262,10 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
           !'aeiou'.contains(verb[verb.length - 2])) {
         return '${verb.substring(0, verb.length - 1)}ies';
       }
-      if (RegExp(r'(s|x|z|ch|sh|o)).hasMatch(verb)) return '${verb}es';
+      if (verb.endsWith('s') || verb.endsWith('x') || verb.endsWith('z') ||
+          verb.endsWith('ch') || verb.endsWith('sh') || verb.endsWith('o')) {
+        return '${verb}es';
+      }
       return '${verb}s';
     }
     final verbs = <String>{
