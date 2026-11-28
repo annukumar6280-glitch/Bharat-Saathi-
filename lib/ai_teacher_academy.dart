@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -100,38 +101,126 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
     return 'व्यवसाय में बिक्री, लागत, बचत और ग्राहक संतुष्टि का रिकॉर्ड रखें। रोज़ का हिसाब लिखने से सही निर्णय लेने में मदद मिलती है।';
   }
 
+
+  String get _quizSeenKey => 'bs_ai_teacher_seen_questions_\${_accountId}_$_topic';
+
+  Map<String, dynamic> _quizQuestion(String id, String question, String answer, List<String> distractors) {
+    final options = <String>[answer, ...distractors.where((item) => item != answer).take(3)];
+    while (options.length < 4) { options.add('इनमें से कोई नहीं'); }
+    return <String, dynamic>{'id': id, 'q': question, 'o': options, 'a': options.indexOf(answer)};
+  }
+
   List<Map<String, dynamic>> _questionsForTopic() {
-    if (_topic == 'English Skills') {
-      return [
-      {'q':'सुबह मिलने पर सही अभिवादन क्या है?','o':['Good morning','Good night','Goodbye'],'a':0},
-      {'q':'“I ___ a student.” में क्या आएगा?','o':['am','is','are'],'a':0},
-      {'q':'“Thank you” का सामान्य जवाब क्या है?','o':['You are welcome','Good night','Excuse me'],'a':0},
-    ];
-    }
-    if (_topic == 'Computer & Digital Skills') {
-      return [
-      {'q':'टाइप करने के लिए किसका उपयोग होता है?','o':['Keyboard','Monitor','Printer'],'a':0},
-      {'q':'OTP किसके साथ साझा करना चाहिए?','o':['किसी के साथ नहीं','अनजान कॉलर से','सोशल मीडिया पर'],'a':0},
-      {'q':'UPI PIN कब डालना चाहिए?','o':['जब आप भुगतान भेज रहे हों और विवरण जाँच लिया हो','पैसा प्राप्त करने के लिए','किसी को बताने के लिए'],'a':0},
-    ];
-    }
+    final bank = <Map<String, dynamic>>[];
     if (_topic == 'Maths & General Knowledge') {
-      return [
-      {'q':'200 का 25% कितना है?','o':['50','25','100'],'a':0},
-      {'q':'12 × 8 कितना है?','o':['96','88','108'],'a':0},
-      {'q':'आधा किस दशमलव के बराबर है?','o':['0.5','0.2','1.5'],'a':0},
-    ];
+      for (var a = 2; a <= 30; a++) {
+        for (var b = 2; b <= 12; b++) {
+          bank.add(_quizQuestion('mul_\${a}_$b', '$a × $b कितना होगा?', '\${a * b}',
+              ['\${a * b + b}', '\${a * b - a}', '\${a + b}']));
+          if (a >= b) {
+            bank.add(_quizQuestion('sub_\${a}_$b', '$a − $b कितना होगा?', '\${a - b}',
+                ['\${a + b}', '\${a - b + 2}', '\${a * b}']));
+          }
+        }
+      }
+      for (var base = 50; base <= 1000; base += 25) {
+        for (final percent in <int>[5, 10, 15, 20, 25, 30, 40, 50, 75]) {
+          if ((base * percent) % 100 == 0) {
+            final answer = base * percent ~/ 100;
+            bank.add(_quizQuestion('pct_\${base}_$percent', '$base का $percent% कितना है?', '$answer',
+                ['$base', '\${answer + 5}', '\${answer * 2}']));
+          }
+        }
+      }
+      final facts = <List<String>>[
+        ['भारत की राजधानी क्या है?', 'नई दिल्ली', 'मुंबई', 'जयपुर', 'लखनऊ'],
+        ['भारत का राष्ट्रीय पशु कौन है?', 'बाघ', 'हाथी', 'शेर', 'हिरण'],
+        ['भारत का राष्ट्रीय पक्षी कौन है?', 'मोर', 'तोता', 'कबूतर', 'हंस'],
+        ['सौरमंडल का सबसे बड़ा ग्रह कौन है?', 'बृहस्पति', 'पृथ्वी', 'मंगल', 'शुक्र'],
+        ['पानी का रासायनिक सूत्र क्या है?', 'H₂O', 'CO₂', 'O₂', 'NaCl'],
+        ['एक सप्ताह में कितने दिन होते हैं?', '7', '5', '6', '8'],
+        ['एक वर्ष में सामान्यतः कितने महीने होते हैं?', '12', '10', '11', '13'],
+      ];
+      for (var i = 0; i < facts.length; i++) {
+        bank.add(_quizQuestion('gk_$i', facts[i][0], facts[i][1], facts[i].sublist(2)));
+      }
+    } else if (_topic == 'English Skills') {
+      final facts = <List<String>>[
+        ['I ___ happy.', 'am', 'is', 'are', 'be'],
+        ['She ___ to school every day.', 'goes', 'go', 'going', 'gone'],
+        ['They ___ playing cricket.', 'are', 'is', 'am', 'be'],
+        ['He ___ a book yesterday.', 'read', 'reads', 'reading', 'will read'],
+        ['We ___ friends.', 'are', 'is', 'am', 'be'],
+        ['Choose the plural of “child”.', 'children', 'childs', 'childes', 'childrens'],
+        ['Choose the opposite of “hot”.', 'cold', 'warm', 'boiling', 'heat'],
+        ['What is the past tense of “go”?', 'went', 'goed', 'goes', 'going'],
+        ['Which word is a noun?', 'teacher', 'quickly', 'beautiful', 'run'],
+        ['Which sentence is a question?', 'Where are you?', 'I am fine.', 'She is here.', 'They play.'],
+        ['“धन्यवाद” का English क्या है?', 'Thank you', 'Sorry', 'Welcome', 'Goodbye'],
+        ['“कृपया” का English क्या है?', 'Please', 'Thanks', 'Never', 'Later'],
+        ['सुबह मिलने पर क्या कहते हैं?', 'Good morning', 'Good night', 'Good evening', 'Goodbye'],
+        ['“How are you?” का सही जवाब कौन सा है?', 'I am fine.', 'My name is.', 'Good night.', 'See you yesterday.'],
+        ['“मेरा नाम रवि है” का English क्या है?', 'My name is Ravi.', 'I name Ravi.', 'Me Ravi name.', 'My Ravi am.'],
+      ];
+      for (var i = 0; i < facts.length; i++) {
+        bank.add(_quizQuestion('eng_$i', facts[i][0], facts[i][1], facts[i].sublist(2)));
+      }
+    } else if (_topic == 'Computer & Digital Skills') {
+      final facts = <List<String>>[
+        ['कंप्यूटर में टाइप करने के लिए क्या उपयोग होता है?', 'Keyboard', 'Monitor', 'Printer', 'Speaker'],
+        ['स्क्रीन पर जानकारी किससे दिखाई देती है?', 'Monitor', 'Mouse', 'Keyboard', 'Scanner'],
+        ['कागज़ पर प्रिंट निकालने वाला उपकरण कौन सा है?', 'Printer', 'Router', 'Webcam', 'Speaker'],
+        ['OTP का पूरा अर्थ क्या है?', 'One Time Password', 'Open Transfer Pin', 'Online Text Pass', 'Only Two Passwords'],
+        ['OTP किसे बताना चाहिए?', 'किसी को नहीं', 'बैंक कर्मचारी को', 'अनजान कॉलर को', 'सोशल मीडिया पर'],
+        ['पैसा प्राप्त करने के लिए UPI PIN डालना जरूरी है?', 'नहीं', 'हाँ, हमेशा', 'केवल रात में', 'केवल दुकानदार के लिए'],
+        ['मजबूत पासवर्ड कैसा होना चाहिए?', 'लंबा और अलग-अलग अक्षरों वाला', 'अपना नाम', '123456', 'मोबाइल नंबर'],
+        ['अनजान लिंक मिलने पर क्या करें?', 'जाँच किए बिना न खोलें', 'तुरंत खोलें', 'सबको भेजें', 'पासवर्ड डालें'],
+        ['फाइल सेव करने का क्या लाभ है?', 'बाद में फिर खोल सकते हैं', 'इंटरनेट बंद हो जाता है', 'स्क्रीन बड़ी होती है', 'बैटरी चार्ज होती है'],
+        ['ईमेल में विषय (Subject) का काम क्या है?', 'संदेश का विषय बताना', 'पासवर्ड दिखाना', 'फोटो एडिट करना', 'कॉल करना'],
+        ['Wi-Fi किस काम आता है?', 'वायरलेस नेटवर्क से जुड़ने में', 'कागज़ छापने में', 'फोन चार्ज करने में', 'स्क्रीन साफ करने में'],
+        ['UPI भुगतान से पहले क्या जाँचना चाहिए?', 'प्राप्तकर्ता का नाम और राशि', 'केवल फोन का रंग', 'मौसम', 'बैटरी का ब्रांड'],
+      ];
+      for (var i = 0; i < facts.length; i++) {
+        bank.add(_quizQuestion('digital_$i', facts[i][0], facts[i][1], facts[i].sublist(2)));
+      }
+    } else {
+      final facts = <List<String>>[
+        ['मुनाफा कैसे निकालते हैं?', 'बिक्री मूल्य − कुल लागत', 'लागत + बिक्री', 'केवल बिक्री', 'बिक्री ÷ लागत'],
+        ['नुकसान कब होता है?', 'जब बिक्री मूल्य लागत से कम हो', 'जब बिक्री लागत से अधिक हो', 'जब कोई ग्राहक आए', 'जब दुकान खुले'],
+        ['दुकान का रोज़ का हिसाब क्यों रखना चाहिए?', 'आय और खर्च समझने के लिए', 'रंग चुनने के लिए', 'फोन तेज करने के लिए', 'समय बदलने के लिए'],
+        ['ग्राहक की शिकायत पर पहला कदम क्या है?', 'ध्यान से सुनना', 'बात काटना', 'अनदेखा करना', 'बहस करना'],
+        ['स्टॉक रिकॉर्ड किसलिए होता है?', 'सामान की उपलब्ध मात्रा जानने के लिए', 'मौसम देखने के लिए', 'कर्मचारी की उम्र जानने के लिए', 'मोबाइल चलाने के लिए'],
+        ['बिक्री मूल्य का अर्थ क्या है?', 'जिस कीमत पर सामान बेचा जाए', 'सामान खरीदने की कीमत', 'दुकान का किराया', 'बिजली का बिल'],
+        ['कुल लागत में क्या शामिल हो सकता है?', 'खरीद, किराया और पैकिंग', 'केवल मुनाफा', 'केवल ग्राहक का नाम', 'केवल तारीख'],
+        ['ग्राहक को कीमत कैसे बतानी चाहिए?', 'स्पष्ट और सही तरीके से', 'छिपाकर', 'हर बार बदलकर', 'बिना पूछे'],
+        ['बजट बनाने का लाभ क्या है?', 'खर्च पर नियंत्रण', 'खर्च बढ़ाना', 'रिकॉर्ड मिटाना', 'स्टॉक छिपाना'],
+        ['उधार बिक्री का रिकॉर्ड क्यों जरूरी है?', 'बकाया राशि याद रखने के लिए', 'दुकान सजाने के लिए', 'फोन अपडेट के लिए', 'मौसम जानने के लिए'],
+      ];
+      for (var i = 0; i < facts.length; i++) {
+        bank.add(_quizQuestion('business_$i', facts[i][0], facts[i][1], facts[i].sublist(2)));
+      }
     }
-    return [
-      {'q':'मुनाफा कैसे निकालते हैं?','o':['बिक्री मूल्य − लागत','लागत + बिक्री','केवल बिक्री'],'a':0},
-      {'q':'ग्राहक की शिकायत पर क्या करना चाहिए?','o':['ध्यान से सुनकर समाधान देना','बात काटना','अनदेखा करना'],'a':0},
-      {'q':'व्यवसाय में किसका रिकॉर्ड रखना चाहिए?','o':['बिक्री और लागत','केवल नाम','कुछ नहीं'],'a':0},
-    ];
+    return bank;
   }
 
   Future<void> _runQuiz() async {
-    final questions = _questionsForTopic();
+    final prefs = await SharedPreferences.getInstance();
+    final bank = _questionsForTopic();
+    final seen = (prefs.getStringList(_quizSeenKey) ?? <String>[]).toSet();
+    var available = bank.where((q) => !seen.contains(q['id'])).toList();
+    if (available.isEmpty) {
+      seen.clear();
+      available = List<Map<String, dynamic>>.from(bank);
+    }
+    available.shuffle(math.Random());
+    final questions = available.take(math.min(10, available.length)).map((source) {
+      final options = List<String>.from(source['o'] as List<String>);
+      final answerText = options[source['a'] as int];
+      options.shuffle(math.Random());
+      return <String, dynamic>{...source, 'o': options, 'a': options.indexOf(answerText)};
+    }).toList();
     var index = 0, selected = -1, score = 0;
+    String? feedback;
     final result = await showDialog<int>(
       context: context,
       barrierDismissible: false,
@@ -140,46 +229,67 @@ class _AiTeacherAcademyPageState extends State<AiTeacherAcademyPage> with Widget
         final options = question['o'] as List<String>;
         return AlertDialog(
           title: Text('$_topic • अभ्यास टेस्ट'),
-          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('प्रश्न ${index + 1} / ${questions.length}', style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
-            const SizedBox(height: 8),
-            Text(question['q'] as String, style: const TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
+          content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('प्रश्न \${index + 1} / \${questions.length}  •  सही उत्तर $score', style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
+            const SizedBox(height: 12),
+            ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: (index + 1) / questions.length, minHeight: 7)),
+            const SizedBox(height: 16),
+            Text(question['q'] as String, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            const SizedBox(height: 10),
             RadioGroup<int>(
               groupValue: selected,
-              onChanged: (value) => setDialogState(() => selected = value ?? -1),
+              onChanged: feedback == null ? (value) => setDialogState(() => selected = value ?? -1) : null,
               child: Column(children: List.generate(options.length, (i) => RadioListTile<int>(
-                dense: true, contentPadding: EdgeInsets.zero, value: i,
-                title: Text(options[i]),
+                dense: true, contentPadding: EdgeInsets.zero, value: i, title: Text(options[i]),
               ))),
             ),
-          ]),
+            if (feedback == 'wrong') Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text('यह उत्तर सही नहीं है। सही उत्तर: \${options[question['a'] as int]}। फिर से प्रयास करें।',
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+            ),
+            if (feedback == 'correct') const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text('बिल्कुल सही! अब अगला सवाल।', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w700)),
+            ),
+          ])),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('बंद करें')),
             FilledButton(
               onPressed: selected < 0 ? null : () {
-                if (selected == question['a']) score++;
-                if (index == questions.length - 1) {
-                  Navigator.pop(context, score);
+                if (feedback == 'wrong') {
+                  setDialogState(() { selected = -1; feedback = null; });
+                } else if (feedback == 'correct') {
+                  if (index == questions.length - 1) {
+                    Navigator.pop(context, score);
+                  } else {
+                    setDialogState(() { index++; selected = -1; feedback = null; });
+                  }
+                } else if (selected == question['a']) {
+                  score++;
+                  seen.add(question['id'] as String);
+                  setDialogState(() => feedback = 'correct');
                 } else {
-                  setDialogState(() { index++; selected = -1; });
+                  setDialogState(() => feedback = 'wrong');
                 }
               },
-              child: Text(index == questions.length - 1 ? 'परिणाम देखें' : 'अगला'),
+              child: Text(feedback == 'wrong' ? 'फिर कोशिश करें' : feedback == 'correct'
+                  ? (index == questions.length - 1 ? 'परिणाम देखें' : 'अगला सवाल')
+                  : 'उत्तर जाँचें'),
             ),
           ],
         );
       }),
     );
     if (result == null) return;
+    await prefs.setStringList(_quizSeenKey, seen.toList());
     _completedQuizzes.add(_topic);
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_progressKey, _completedQuizzes.toList());
     if (mounted) {
       setState(() {});
       showDialog<void>(context: context, builder: (context) => AlertDialog(
         title: const Text('टेस्ट पूरा हुआ'),
-        content: Text('आपका स्कोर: $result / ${questions.length}. ${result == questions.length ? 'बहुत अच्छा! आपने सभी उत्तर सही दिए।' : 'पाठ दोबारा पढ़ें और फिर अभ्यास करें।'}'),
+        content: Text('आपका स्कोर: $result / \${questions.length}. \${result == questions.length ? 'बहुत अच्छा! सभी उत्तर सही हैं।' : 'अभ्यास जारी रखें—अगली बार नए सवाल मिलेंगे।'}'),
         actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('ठीक है'))],
       ));
     }
