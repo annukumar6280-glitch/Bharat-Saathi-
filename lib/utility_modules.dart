@@ -367,10 +367,8 @@ class _CallingInfo extends StatefulWidget {
 
 class _CallingInfoState extends State<_CallingInfo> {
   final _phone = TextEditingController();
-  final _transfer = TextEditingController();
   final _instructions = TextEditingController();
   int _simSlot = 1;
-  String _forwardingMode = 'no_answer';
   bool _disclosureAccepted = false;
   bool _transcriptEnabled = false;
   bool _loading = true;
@@ -388,7 +386,6 @@ class _CallingInfoState extends State<_CallingInfo> {
   @override
   void dispose() {
     _phone.dispose();
-    _transfer.dispose();
     _instructions.dispose();
     super.dispose();
   }
@@ -414,38 +411,28 @@ class _CallingInfoState extends State<_CallingInfo> {
           .map((row) => Map<String, dynamic>.from(row as Map))
           .toList();
       final storedPhone = settings?['phone_number']?.toString() ?? '';
-      final displayDigits = storedPhone.replaceAll(RegExp(r'\D'), '');
+      final digits = storedPhone.replaceAll(RegExp(r'\D'), '');
       if (!mounted) return;
       setState(() {
         _signedIn = true;
-        _phone.text = displayDigits.length >= 10 ? displayDigits.substring(displayDigits.length - 10) : displayDigits;
-        _loading = false;
+        _phone.text = digits.length >= 10 ? digits.substring(digits.length - 10) : digits;
+        _instructions.text = settings?['assistant_instructions']?.toString() ?? '';
+        _simSlot = (settings?['sim_slot'] as num?)?.toInt() ?? 1;
+        _disclosureAccepted = settings?['disclosure_accepted_at'] != null;
+        _transcriptEnabled = settings?['transcript_enabled'] == true;
         _logs = logs;
-        if (settings != null) {
-          _transfer.text = settings['transfer_number']?.toString() ?? '';
-          _instructions.text = settings['assistant_instructions']?.toString() ?? '';
-          _simSlot = (settings['sim_slot'] as num?)?.toInt() ?? 1;
-          _forwardingMode = settings['forwarding_mode']?.toString() ?? 'no_answer';
-          _disclosureAccepted = settings['disclosure_accepted_at'] != null;
-          _transcriptEnabled = settings['transcript_enabled'] == true;
-        }
+        _loading = false;
       });
     } catch (error) {
-      if (mounted) setState(() { _loading = false; _status = 'सेटिंग लोड नहीं हुई: $error'; });
+      if (mounted) setState(() { _loading = false; _status = 'डेटा लोड नहीं हुआ: $error'; });
     }
   }
 
   String _normalisePhone(String value) {
     final digits = value.replaceAll(RegExp(r'\D'), '');
     if (digits.length == 10 && RegExp(r'^[6-9]\d{9}$').hasMatch(digits)) return '+91$digits';
-    if (digits.length == 12 && digits.startsWith('91') && RegExp(r'^[6-9]\d{9}$').hasMatch(digits.substring(2))) return '+$digits';
-    if (digits.length == 11 && digits.startsWith('0') && RegExp(r'^[6-9]\d{9}$').hasMatch(digits.substring(1))) return '+91' + digits.substring(1);
-    return value.trim().replaceAll(RegExp(r'\s+'), '');
+    return '';
   }
-
-  // SIM ownership verification stays separate from Supabase Auth.
-  // Carrier Number Verification (CAMARA/GSMA) will be enabled after operator
-  // access is provisioned. This screen never sends an SMS or changes the login phone.
 
   Future<void> _save() async {
     final db = Supabase.instance.client;
@@ -456,7 +443,7 @@ class _CallingInfoState extends State<_CallingInfo> {
     }
     final phone = _normalisePhone(_phone.text);
     if (phone.isEmpty) {
-      setState(() => _status = 'अपना मोबाइल नंबर दर्ज करें।');
+      setState(() => _status = 'सही 10 अंकों का भारतीय मोबाइल नंबर दर्ज करें।');
       return;
     }
     if (!_disclosureAccepted) {
@@ -470,15 +457,13 @@ class _CallingInfoState extends State<_CallingInfo> {
         'sim_slot': _simSlot,
         'phone_number': phone,
         'phone_verification_status': 'pending',
-        'transfer_number': _normalisePhone(_transfer.text),
         'assistant_instructions': _instructions.text.trim(),
         'enabled': false,
-        'forwarding_mode': _forwardingMode,
         'disclosure_accepted_at': DateTime.now().toUtc().toIso8601String(),
         'transcript_enabled': _transcriptEnabled,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
-      if (mounted) setState(() => _status = 'आपकी Calling Assistant सेटिंग सुरक्षित रूप से सेव हो गई है।');
+      if (mounted) setState(() => _status = 'नंबर और AI निर्देश सेव हो गए। कॉल संभालने की सेवा अभी कनेक्ट नहीं है।');
     } catch (error) {
       if (mounted) setState(() => _status = 'सेटिंग सेव नहीं हुई: $error');
     } finally {
@@ -489,7 +474,6 @@ class _CallingInfoState extends State<_CallingInfo> {
   String _statusLabel(String? value) {
     switch (value) {
       case 'completed': return 'पूरी हुई';
-      case 'transferred': return 'आपको ट्रांसफर हुई';
       case 'missed': return 'मिस्ड कॉल';
       case 'failed': return 'कनेक्शन विफल';
       case 'answered': return 'AI ने जवाब दिया';
@@ -520,88 +504,33 @@ class _CallingInfoState extends State<_CallingInfo> {
             children: [
               Icon(Icons.support_agent_rounded, size: 38, color: _teal),
               SizedBox(height: 10),
-              Text('आपका AI फोन असिस्टेंट', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: _ink)),
-              SizedBox(height: 5),
-              Text('AI आपकी ओर से आने वाली कॉल संभालेगा, ज़रूरी जानकारी लेगा और ज़रूरत पड़ने पर कॉल आपको ट्रांसफर करेगा।', style: TextStyle(color: Color(0xFF52627D), height: 1.4)),
-              SizedBox(height: 10),
-              Row(children: [
-                Icon(Icons.radio_button_checked, size: 13, color: Colors.orange),
-                SizedBox(width: 6),
-                Text('टेलीफोनी कनेक्शन सेटअप बाकी है', style: TextStyle(color: Color(0xFF8B5B13), fontWeight: FontWeight.w800, fontSize: 12)),
-              ]),
+              Text('Incoming AI Message Assistant', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _ink)),
+              SizedBox(height: 6),
+              Text('AI कॉलर का नाम, पता और काम पूछकर आपके लिए संदेश नोट करेगा। कोई आउटगोइंग कॉल या कॉल ट्रांसफर नहीं होगा।', style: TextStyle(color: Color(0xFF52627D), height: 1.4)),
             ],
           ),
         ),
         const SizedBox(height: 18),
-        const Text('1. अपना नंबर और SIM चुनें', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const Text('आपका मोबाइल नंबर और SIM', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
         const SizedBox(height: 8),
         TextField(
           controller: _phone,
-          enabled: true,
           keyboardType: TextInputType.phone,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
-          decoration: InputDecoration(
-            labelText: 'आपका मोबाइल नंबर',
-            hintText: '9876543210',
-            prefixText: '+91 ',
-          ),
+          decoration: const InputDecoration(labelText: 'आपका मोबाइल नंबर', hintText: '9876543210', prefixText: '+91 '),
         ),
         const SizedBox(height: 10),
         DropdownButtonFormField<int>(
           initialValue: _simSlot,
-          decoration: const InputDecoration(labelText: 'किस SIM पर कॉल आती हैं?'),
+          decoration: const InputDecoration(labelText: 'किस SIM पर आपकी कॉल आती हैं?'),
           items: const [
             DropdownMenuItem(value: 1, child: Text('SIM 1')),
             DropdownMenuItem(value: 2, child: Text('SIM 2')),
           ],
           onChanged: (value) { if (value != null) setState(() => _simSlot = value); },
         ),
-        const SizedBox(height: 8),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF6E5),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFFFE0A3)),
-          ),
-          child: const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.info_outline, color: Color(0xFF9A6818), size: 19),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'नंबर और SIM की सेटिंग सेव होगी। अभी कोई SMS OTP नहीं भेजा जाएगा और Bharat Saathi के मुख्य Google/Email लॉगिन में फोन नंबर नहीं बदलेगा। ऑपरेटर की Network Number Verification सेवा जुड़ने के बाद ही नंबर Verified दिखेगा।',
-                  style: TextStyle(color: Color(0xFF79551D), fontSize: 11, height: 1.4),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: _transfer,
-          keyboardType: TextInputType.phone,
-          decoration: const InputDecoration(labelText: 'कॉल ट्रांसफर नंबर', hintText: 'खाली छोड़ें तो ऊपर वाला नंबर इस्तेमाल होगा'),
-        ),
-        const SizedBox(height: 18),
-        const Text('2. कॉल फॉरवर्डिंग का तरीका', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _forwardingMode,
-          decoration: const InputDecoration(labelText: 'कब AI को कॉल भेजनी है?'),
-          items: const [
-            DropdownMenuItem(value: 'no_answer', child: Text('जब आप कॉल न उठाएँ')),
-            DropdownMenuItem(value: 'busy', child: Text('जब आपका नंबर व्यस्त हो')),
-            DropdownMenuItem(value: 'unreachable', child: Text('जब फोन बंद या नेटवर्क से बाहर हो')),
-          ],
-          onChanged: (value) { if (value != null) setState(() => _forwardingMode = value); },
-        ),
-        const SizedBox(height: 8),
-        const Text('कॉल फॉरवर्डिंग आपके मोबाइल ऑपरेटर के जरिए चालू होगी। अभी ऐप आपके SIM पर कोई कोड अपने-आप नहीं चलाता। सही ऑपरेटर सेटअप मिलने पर ऐप में चरण-दर-चरण निर्देश दिए जाएँगे।', style: TextStyle(color: Colors.blueGrey, fontSize: 12, height: 1.4)),
-        const SizedBox(height: 18),
-        const Text('3. AI को क्या करना है?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const SizedBox(height: 16),
+        const Text('AI के लिए निर्देश', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
         const SizedBox(height: 8),
         TextField(
           controller: _instructions,
@@ -609,8 +538,8 @@ class _CallingInfoState extends State<_CallingInfo> {
           maxLines: 7,
           maxLength: 4000,
           decoration: const InputDecoration(
-            labelText: 'अपने असिस्टेंट को निर्देश दें',
-            hintText: 'जैसे: कॉल करने वाले का नाम, पता और कॉल का कारण पूछें। जरूरी काम हो तो मुझे कॉल ट्रांसफर करें।',
+            labelText: 'AI कॉलर से क्या पूछे?',
+            hintText: 'कॉलर का नाम, पता और कॉल का कारण पूछें। अंत में कहें: आपका संदेश नोट कर लिया है, वे आपसे बात कर लेंगे।',
             alignLabelWithHint: true,
           ),
         ),
@@ -618,37 +547,30 @@ class _CallingInfoState extends State<_CallingInfo> {
           contentPadding: EdgeInsets.zero,
           value: _disclosureAccepted,
           onChanged: (value) => setState(() => _disclosureAccepted = value == true),
-          title: const Text('AI हर कॉल की शुरुआत में अपनी पहचान बताएगा और कॉलर को जानकारी देगा।', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          title: const Text('AI कॉल की शुरुआत में अपनी पहचान बताएगा।', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
           controlAffinity: ListTileControlAffinity.leading,
         ),
         CheckboxListTile(
           contentPadding: EdgeInsets.zero,
           value: _transcriptEnabled,
           onChanged: (value) => setState(() => _transcriptEnabled = value == true),
-          title: const Text('कॉलर को सूचना/सहमति देने के बाद बातचीत का टेक्स्ट और सारांश सेव करें।', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          title: const Text('कॉलर को सूचना देने के बाद बातचीत का टेक्स्ट और सारांश सेव करें।', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
           controlAffinity: ListTileControlAffinity.leading,
         ),
-        const SizedBox(height: 8),
         FilledButton.icon(
           onPressed: _saving ? null : _save,
           icon: _saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save_outlined),
           label: Text(_saving ? 'सेव हो रहा है...' : 'सेटिंग सेव करें'),
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: null,
-          icon: const Icon(Icons.call),
-          label: const Text('AI को कॉल करें — टेलीफोनी सेटअप के बाद'),
         ),
         if (_status != null) ...[
           const SizedBox(height: 10),
           Text(_status!, style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
         ],
         const SizedBox(height: 22),
-        const Text('हाल की कॉल', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
+        const Text('हाल के संदेश / कॉल रिकॉर्ड', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: _ink)),
         const SizedBox(height: 8),
         if (_logs.isEmpty)
-          const Text('अभी कोई AI कॉल रिकॉर्ड उपलब्ध नहीं है।', style: TextStyle(color: Colors.blueGrey, fontSize: 12))
+          const Text('अभी कोई संदेश उपलब्ध नहीं है।', style: TextStyle(color: Colors.blueGrey, fontSize: 12))
         else
           ..._logs.map((log) {
             final name = (log['caller_name']?.toString().trim().isNotEmpty ?? false)
@@ -669,7 +591,7 @@ class _CallingInfoState extends State<_CallingInfo> {
             );
           }),
         const SizedBox(height: 12),
-        const Text('सुरक्षा: AI कभी भी OTP, UPI PIN, बैंक पासवर्ड या कार्ड PIN नहीं माँगेगा। कॉल संभालना तभी शुरू होगा जब टेलीफोनी प्रोवाइडर, OpenAI SIP webhook और कॉल-फॉरवर्डिंग का परीक्षण पूरा होगा।', style: TextStyle(color: Colors.blueGrey, fontSize: 11, height: 1.4)),
+        const Text('ध्यान दें: यह स्क्रीन अभी नंबर और निर्देश सेव करती है। वास्तविक मोबाइल नेटवर्क कॉल को AI तक पहुँचाने वाला बिना प्रति-मिनट टेलीफोनी वाला तरीका अभी लागू नहीं है; इसलिए इसे चालू या काम करता हुआ नहीं दिखाया जा रहा।', style: TextStyle(color: Colors.blueGrey, fontSize: 11, height: 1.4)),
       ],
     );
   }
