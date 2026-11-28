@@ -235,8 +235,9 @@ class _ReminderToolState extends State<_ReminderTool>{
  TimeOfDay dueTime=const TimeOfDay(hour:9,minute:0);
  final FlutterLocalNotificationsPlugin _notifications=FlutterLocalNotificationsPlugin();
  bool loading=true,notificationsReady=false;String tab='reminders';String? notificationMessage;int? editingNoteIndex;
- String get _reminderStorageKey=>'bs_reminders_v1_${Supabase.instance.client.auth.currentUser?.id??'guest'}';
- String get _notesStorageKey=>'bs_notes_v1_${Supabase.instance.client.auth.currentUser?.id??'guest'}';
+ String get _accountStorageId{try{return Supabase.instance.client.auth.currentUser?.id??'guest';}catch(_){return 'guest';}}
+ String get _reminderStorageKey=>'bs_reminders_v1_$_accountStorageId';
+ String get _notesStorageKey=>'bs_notes_v1_$_accountStorageId';
  DateTime get dueAt=>DateTime(due.year,due.month,due.day,dueTime.hour,dueTime.minute);
  @override void initState(){super.initState();_initNotifications();_load();}
  Future<void> _initNotifications()async{
