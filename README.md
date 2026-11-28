@@ -1,16 +1,19 @@
 # Bharat Saathi
 
-Bharat Saathi is a Flutter Android app for personal finance, khata and expense management.
+Bharat Saathi is an Android-first Flutter app centred on eight core features: Khata Book, Bill / Item List, QR Code Maker, AI Poster Maker & Video Maker, Reminders & Notes, Family & Friends Live Location, Smart Calculator and AI Teacher Academy.
 
 ## Current app implementation
 
-- Hindi-first dashboard and account shell.
-- Five main navigation areas: Dashboard, Khata, Expenses, History and Profile.
-- Shop and personal khata, linked khata requests and linked-account entries.
-- Business expense recording and expense history.
-- Service category screens for recharge, bill payment and challan; provider-dependent transactions remain marked Coming Soon.
-- History lists successful service transactions only.
-- Profile settings include language/theme controls, cloud snapshot restore and Family & Friends Live Location.
+- Hindi-first dashboard with exactly eight primary feature tiles: Khata Book, Bill / Item List, QR Code Maker, AI Poster Maker & Video Maker, Reminders & Notes, Family & Friends Live Location, Smart Calculator and AI Teacher Academy.
+- Khata Book supports shop and personal ledgers, linked khata requests and linked-account entries.
+- Bill / Item List supports bill creation, item lists, PDF export and sharing.
+- QR Code Maker supports QR creation and scanning.
+- AI Poster Maker & Video Maker uses the existing AI creative studio flow; provider-side video support must be verified before release.
+- Reminders & Notes stores user reminders locally.
+- Family & Friends Live Location supports phone-number invitations, two-way opt-in, live satellite map updates, location pause/resume and re-share requests.
+- Smart Calculator includes standard arithmetic and GST calculations.
+- AI Teacher Academy includes course categories and authenticated text-based AI Q&A through the `ai-teacher-assistant` Edge Function. Push-to-talk voice questions, speech playback and the daily voice quota are not yet implemented.
+- Profile and account shell retain sign-in, privacy, language, help and cloud backup controls. Recharge, bill payment, challan, Payment Sound Box, AI Calling Assistant, referral and commission modules are retired from this branch.
 - Transactional on-device SQLite persistence with one-time import of older SharedPreferences records.
 - Google Mobile Ads SDK is included with Google's test ad identifiers in the development build.
 - Family & Friends Live Location supports phone-number invitations, two-way opt-in, live map updates, location pause/resume and re-share requests. Android foreground location notification is used while tracking; force-stop, revoked permission, GPS/network loss or battery restrictions can interrupt updates. Realtime request cards work while the app is connected; push notifications while the app is fully closed still require Firebase Cloud Messaging setup. 
@@ -48,12 +51,10 @@ GitHub Actions workflow: `.github/workflows/flutter-android.yml`
 
 ## Next implementation priorities
 
-1. Complete device-level testing of Family & Friends background location, permission flows, battery restrictions and Play Store background-location disclosures. 
-2. Strengthen and test account-scoped automatic cloud snapshot sync/restore, account switching, offline retry behavior and recovery from interrupted writes.
-3. Complete Auth hardening: enable leaked-password protection where the Supabase plan supports it, configure production SMTP, verify password recovery and document an MFA strategy.
-4. Move from whole-snapshot backup toward a normalized, conflict-aware server-side transaction ledger with audit history before relying on multi-device financial workflows.
-5. Improve current khata and expense workflows, account statements and Hindi PDF export.
+1. Complete AI Teacher Academy voice capture, speech playback and server-enforced daily voice quota; verify AI provider secrets and test text Q&A with an authenticated account.
+2. Complete device-level testing of Family & Friends background location, permission flows, battery restrictions and Play Store background-location disclosures.
+3. Verify end-to-end AI video generation with the selected provider before release.
+4. Strengthen and test account-scoped automatic cloud snapshot sync/restore, account switching, offline retry behavior and recovery from interrupted writes.
+5. Complete Auth hardening: enable leaked-password protection where the Supabase plan supports it, configure production SMTP, verify password recovery and document an MFA strategy.
 6. Complete signed Android release configuration, real-device testing and Play Store declarations.
-7. Configure a production map-tile provider; the public OpenStreetMap tile endpoint is used for development/testing and is not an unlimited production tile service.
-8. Configure Firebase Cloud Messaging for system push notifications when the app is closed; the current request inbox uses Supabase Realtime while connected.
-9. Integrate recharge, BBPS, UPI or other external services only after approved providers, credentials, webhook verification, reconciliation and compliance checks are available.
+7. Configure Firebase Cloud Messaging for system push notifications when the app is closed; the current request inbox uses Supabase Realtime while connected.
