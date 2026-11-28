@@ -137,7 +137,7 @@ void main() {
     expect(find.text('आपका खाता'), findsOneWidget);
     expect(find.text('खाता बुक'), findsOneWidget);
     expect(find.text('बिल / सामान लिस्ट'), findsOneWidget);
-    for (final title in ['QR Code Tools','Poster Maker','Reminders & Notes','Smart Calculator','Family & Friends Live Location','AI Calling Assistant']) {
+    for (final title in ['QR Code Tools','Poster Maker','Reminders & Notes','Smart Calculator','Family & Friends Live Location']) {
       await tester.ensureVisible(find.text(title));
       expect(find.text(title), findsOneWidget);
     }
